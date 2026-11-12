@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Seja Voluntário | Defesa Civil de Ivatuba – PR</title>
+<meta name="description" content="Cadastre-se como voluntário da Defesa Civil Municipal de Ivatuba – Paraná.">
+<meta name="theme-color" content="#1A3A6B">
+<meta property="og:title" content="Seja Voluntário da Defesa Civil de Ivatuba">
+<meta property="og:description" content="Quer ajudar o município? Cadastre-se como voluntário da Defesa Civil Municipal.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="/assets/logos/favicon.png">
+<link rel="apple-touch-icon" href="/assets/logos/icon-192.png">
+<style>
+:root {
+  --azul-escuro:#1A3A6B;
+  --azul-institucional:#1E4D8C;
+  --azul-medio:#2563EB;
+  --azul-claro:#3B82F6;
+  --azul-bg:#EFF6FF;
+  --branco:#FFFFFF;
+  --cinza-claro:#F1F5F9;
+  --cinza-medio:#94A3B8;
+  --cinza-escuro:#475569;
+  --ink:#0F172A;
+  --line:rgba(15,23,42,.08);
+  --verde:#059669;
+  --verde-bg:#D1FAE5;
+  --amarelo:#D97706;
+  --amarelo-bg:#FEF3C7;
+  --laranja:#EA580C;
+  --laranja-bg:#FFF7ED;
+  --vermelho:#DC2626;
+  --vermelho-bg:#FEF2F2;
+  --radius:14px;
+  --shadow-sm:0 1px 3px rgba(15,23,42,.06);
+  --shadow-md:0 4px 14px rgba(15,23,42,.08);
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--cinza-claro);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:80px;}
+a{text-decoration:none;color:inherit;}
+img{max-width:100%;display:block;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+input,select,textarea{font-family:inherit;}
+
+/* ===== HEADER ===== */
+.header{
+  background:linear-gradient(135deg,var(--azul-escuro) 0%,var(--azul-institucional) 100%);
+  color:var(--branco);padding:0;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(26,58,107,.25);
+}
+.header-inner{
+  max-width:960px;margin:0 auto;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.header-logo{width:42px;height:42px;flex-shrink:0;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.header-logo img{width:100%;height:100%;object-fit:contain;}
+.header-logo .placeholder{font-size:22px;line-height:1;}
+.header-text{flex:1;min-width:0;}
+.header-text .title{font-size:16px;font-weight:800;letter-spacing:.3px;line-height:1.2;}
+.header-text .subtitle{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:600;margin-top:2px;}
+.header-municipio{width:36px;height:36px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.header-municipio img{width:100%;height:100%;object-fit:contain;}
+.header-municipio .placeholder{font-size:18px;}
+
+/* ===== STATUS BANNER ===== */
+.status-banner{
+  padding:16px;text-align:center;font-weight:700;font-size:15px;color:var(--branco);
+  position:relative;transition:background .3s;
+}
+.status-banner .ico{font-size:24px;display:block;margin-bottom:4px;}
+.status-banner .sub{font-size:11px;font-weight:500;opacity:.85;margin-top:4px;}
+.status-normal{background:linear-gradient(135deg,#059669,#10B981);}
+.status-atencao{background:linear-gradient(135deg,#D97706,#F59E0B);}
+.status-alerta{background:linear-gradient(135deg,#EA580C,#F97316);}
+.status-emergencia{background:linear-gradient(135deg,#DC2626,#EF4444);}
+.status-muito_alta{background:linear-gradient(135deg,#991B1B,#DC2626);}
+
+/* ===== CONTAINER ===== */
+.container{max-width:960px;margin:0 auto;padding:0 16px;}
+
+/* ===== ALERTA VIGENTE (card destaque) ===== */
+.alerta-vigente{
+  margin:16px;border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 4px 20px rgba(220,38,38,.2);
+}
+.alerta-vigente-header{
+  padding:16px 20px;color:var(--branco);font-weight:800;
+  display:flex;align-items:center;gap:10px;
+}
+.alerta-vigente-header .nivel-tag{
+  font-size:11px;padding:4px 10px;border-radius:20px;
+  background:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.5px;
+}
+.nivel-muito_alta .alerta-vigente-header{background:linear-gradient(135deg,#991B1B,#DC2626);}
+.nivel-alta .alerta-vigente-header{background:linear-gradient(135deg,#C2410C,#EA580C);}
+.nivel-moderada .alerta-vigente-header{background:linear-gradient(135deg,#B45309,#D97706);}
+.alerta-vigente-body{
+  background:var(--branco);padding:16px 20px;
+}
+.alerta-vigente-body h3{font-size:16px;font-weight:800;margin-bottom:8px;}
+.alerta-vigente-body p{font-size:13px;color:var(--cinza-escuro);line-height:1.6;margin-bottom:6px;}
+.alerta-vigente-body .meta{font-size:11px;color:var(--cinza-medio);margin-top:8px;}
+.alerta-vigente-body .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn-alerta{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;
+  transition:transform .15s var(--ease),box-shadow .15s;cursor:pointer;border:none;
+}
+.btn-alerta:hover{transform:translateY(-1px);}
+.btn-alerta-primary{background:var(--azul-medio);color:var(--branco);box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.btn-alerta-outline{background:transparent;color:var(--azul-medio);border:1.5px solid var(--azul-medio);}
+
+/* ===== CARDS GRID ===== */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:20px 0;}
+@media(min-width:640px){.cards{grid-template-columns:repeat(3,1fr);gap:14px;}}
+.card{
+  background:var(--branco);border-radius:var(--radius);padding:20px 16px;
+  box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:transform .15s var(--ease),box-shadow .15s;
+  border:1px solid var(--line);text-align:center;
+}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.card:active{transform:scale(.98);}
+.card .card-ico{font-size:32px;margin-bottom:8px;display:block;}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);line-height:1.3;}
+.card p{font-size:11px;color:var(--cinza-escuro);line-height:1.4;margin-top:4px;}
+
+.card-emergency{
+  background:linear-gradient(135deg,var(--vermelho),#EF4444);color:var(--branco);
+  grid-column:span 2;text-align:center;padding:24px 16px;
+  box-shadow:0 4px 16px rgba(220,38,38,.25);
+}
+@media(min-width:640px){.card-emergency{grid-column:span 3;}}
+.card-emergency h3{font-size:17px;font-weight:800;color:var(--branco);}
+.card-emergency p{color:rgba(255,255,255,.85);font-size:12px;}
+.btn-emergency{
+  display:inline-block;margin-top:12px;
+  background:var(--branco);color:var(--vermelho);
+  font-weight:800;font-size:14px;padding:12px 28px;
+  border-radius:30px;border:none;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.15);
+  transition:transform .15s;
+}
+.btn-emergency:hover{transform:scale(1.03);}
+
+/* ===== SECTIONS ===== */
+.section{padding:20px 0;}
+.section-title{
+  font-size:17px;font-weight:800;margin-bottom:14px;padding:0 4px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-title .badge{
+  font-size:10px;background:var(--azul-medio);color:var(--branco);
+  padding:2px 8px;border-radius:20px;font-weight:700;
+}
+
+/* ===== ALERTAS ===== */
+.alert-card{
+  background:var(--branco);border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  border-left:4px solid var(--amarelo);box-shadow:var(--shadow-sm);
+}
+.alert-card.nivel-moderada{border-left-color:var(--amarelo);}
+.alert-card.nivel-alta{border-left-color:var(--laranja);}
+.alert-card.nivel-muito_alta{border-left-color:var(--vermelho);}
+.alert-card .al-nivel{
+  font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:800;
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;
+}
+.alert-card.nivel-moderada .al-nivel{background:var(--amarelo-bg);color:var(--amarelo);}
+.alert-card.nivel-alta .al-nivel{background:var(--laranja-bg);color:var(--laranja);}
+.alert-card.nivel-muito_alta .al-nivel{background:var(--vermelho-bg);color:var(--vermelho);}
+.alert-card h4{font-size:14px;font-weight:800;margin:6px 0 4px;}
+.alert-card p{font-size:12px;color:var(--cinza-escuro);line-height:1.6;}
+.alert-card .al-meta{font-size:11px;color:var(--cinza-medio);margin-top:8px;}
+.alert-card .al-fonte{font-size:11px;color:var(--azul-medio);margin-top:4px;}
+
+/* ===== TELEFONES ===== */
+.tel-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media(min-width:500px){.tel-grid{grid-template-columns:1fr 1fr;}}
+.tel-card{
+  background:var(--branco);border-radius:var(--radius);padding:14px;
+  display:flex;align-items:center;gap:12px;
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);
+}
+.tel-card .tel-ico{font-size:24px;flex-shrink:0;}
+.tel-card .tel-info{flex:1;min-width:0;}
+.tel-card .tel-nome{font-size:12px;font-weight:700;color:var(--ink);}
+.tel-card .tel-num{font-size:16px;font-weight:800;color:var(--azul-medio);margin-top:2px;}
+.tel-card .btn-ligar{
+  background:var(--verde);color:var(--branco);border:none;
+  padding:8px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+
+/* ===== FORMULÁRIOS ===== */
+.form-panel{
+  background:var(--branco);border-radius:var(--radius);padding:20px;
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);
+}
+.form-panel h3{font-size:16px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--cinza-escuro);margin-bottom:5px;font-weight:700;}
+.field input,.field select,.field textarea{
+  width:100%;padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:10px;font-size:14px;background:var(--branco);color:var(--ink);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--azul-medio);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.btn-submit{
+  background:linear-gradient(135deg,var(--azul-medio),var(--azul-claro));
+  color:var(--branco);border:none;padding:12px 24px;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;width:100%;
+  box-shadow:0 4px 12px rgba(37,99,235,.25);transition:transform .15s;
+}
+.btn-submit:hover{transform:translateY(-1px);}
+.btn-submit:disabled{opacity:.5;pointer-events:none;}
+
+/* ===== PROTOCOLO ===== */
+.protocolo-box{
+  background:var(--azul-bg);border:1px solid rgba(37,99,235,.15);
+  border-radius:var(--radius);padding:20px;text-align:center;margin-top:16px;
+}
+.protocolo-box .prot-num{font-size:22px;font-weight:800;color:var(--azul-medio);margin:6px 0;}
+
+/* ===== CONSULTA ===== */
+.consulta-box{
+  background:var(--branco);border-radius:var(--radius);padding:16px;
+  border:1px solid var(--line);margin-bottom:16px;box-shadow:var(--shadow-sm);
+}
+.status-timeline{margin-top:12px;}
+.status-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--cinza-medio);}
+.status-step.active{color:var(--ink);font-weight:700;}
+.status-step .dot{width:12px;height:12px;border-radius:50%;background:var(--line);flex-shrink:0;}
+.status-step.active .dot{background:var(--verde);}
+.status-step.current .dot{background:var(--amarelo);}
+
+/* ===== COMUNICADOS ===== */
+.comunicado-card{
+  background:var(--branco);border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);
+}
+.comunicado-card .com-tipo{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:var(--azul-medio);}
+.comunicado-card h4{font-size:14px;font-weight:800;margin:4px 0;}
+.comunicado-card p{font-size:12px;color:var(--cinza-escuro);line-height:1.6;}
+.comunicado-card .com-meta{font-size:11px;color:var(--cinza-medio);margin-top:6px;}
+
+/* ===== ABRIGOS ===== */
+.abrigo-card{
+  background:var(--branco);border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);
+}
+.abrigo-card h4{font-size:14px;font-weight:700;}
+.abrigo-card .ab-info{font-size:12px;color:var(--cinza-escuro);margin-top:6px;line-height:1.7;}
+.pill{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.pill-ok{background:var(--verde-bg);color:var(--verde);}
+.pill-warn{background:var(--amarelo-bg);color:var(--amarelo);}
+.pill-danger{background:var(--vermelho-bg);color:var(--vermelho);}
+.pill-muted{background:#F1F5F9;color:var(--cinza-medio);}
+
+/* ===== CLIMA ===== */
+.info-panel{
+  background:var(--branco);border-radius:var(--radius);padding:20px;margin-bottom:12px;
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);
+}
+.info-panel h3{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.info-panel p{font-size:13px;line-height:1.7;color:var(--cinza-escuro);}
+
+/* ===== CADASTRO ALERTAS ===== */
+.cadastro-section{padding:20px 0;}
+.lgpd-notice{
+  background:var(--azul-bg);border:1px solid rgba(37,99,235,.12);
+  border-radius:10px;padding:12px 14px;font-size:11px;line-height:1.6;
+  color:var(--cinza-escuro);margin-top:14px;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;color:var(--cinza-medio);font-size:13px;padding:30px 0;}
+
+/* ===== VIEWS ===== */
+.view{display:none;}.view.active{display:block;}
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--branco);border-radius:20px;padding:24px;
+  max-width:440px;width:100%;max-height:90vh;overflow-y:auto;
+}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:14px;text-align:center;}
+.close-modal{
+  background:none;border:1.5px solid var(--line);color:var(--cinza-escuro);
+  padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;
+  cursor:pointer;width:100%;margin-top:10px;
+}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.help-item{
+  background:var(--cinza-claro);border-radius:12px;padding:12px;
+  text-align:center;cursor:pointer;border:2px solid transparent;
+  transition:border .15s,background .15s;font-size:12px;font-weight:600;
+}
+.help-item:hover,.help-item.selected{border-color:var(--azul-medio);background:var(--azul-bg);}
+.help-item .hi-ico{font-size:22px;display:block;margin-bottom:4px;}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;background:var(--branco);
+  border-top:1px solid var(--line);display:flex;z-index:100;
+  box-shadow:0 -2px 10px rgba(15,23,42,.06);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bottom-nav button{
+  flex:1;background:none;border:none;padding:8px 4px;
+  text-align:center;cursor:pointer;font-size:9px;font-weight:700;
+  color:var(--cinza-medio);font-family:var(--sans);transition:color .15s;
+}
+.bottom-nav button .bn-ico{font-size:20px;display:block;margin-bottom:2px;}
+.bottom-nav button.active{color:var(--azul-medio);}
+
+/* ===== FOOTER ===== */
+.footer{
+  text-align:center;padding:24px 16px;margin-top:20px;
+  border-top:1px solid var(--line);
+}
+.footer .footer-brand{font-size:13px;font-weight:700;color:var(--azul-escuro);margin-bottom:4px;}
+.footer .footer-muni{font-size:11px;color:var(--cinza-escuro);}
+.footer .footer-dev{font-size:10px;color:var(--cinza-medio);margin-top:8px;}
+.footer .footer-disclaimer{font-size:10px;color:var(--cinza-medio);margin-top:6px;line-height:1.5;max-width:500px;margin-left:auto;margin-right:auto;}
+.footer .footer-version{font-size:9px;color:var(--cinza-medio);margin-top:4px;}
+
+/* ===== LOADING ===== */
+.loading{text-align:center;padding:20px;color:var(--cinza-medio);font-size:12px;}
+.loading::after{content:'';display:block;width:24px;height:24px;margin:8px auto 0;border:3px solid var(--line);border-top-color:var(--azul-medio);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:359px){
+  .header-text .title{font-size:14px;}
+  .card h3{font-size:12px;}
+  .cards{gap:8px;}
+}
+@media(min-width:768px){
+  .header-inner{padding:14px 24px;}
+  .header-text .title{font-size:18px;}
+  .container{padding:0 24px;}
+  .cards{padding:24px 0;}
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <img src="/assets/logos/icon-192.png" alt="Defesa Civil Ivatuba" onerror="this.style.display='none';this.parentElement.querySelector('.placeholder').style.display='block';">
+      <span class="placeholder" style="display:none;">🛡️</span>
+    </div>
+    <div class="header-text">
+      <div class="title">DEFESA CIVIL IVATUBA</div>
+      <div class="subtitle">Proteção e Defesa Civil Municipal</div>
+    </div>
+    <div class="header-municipio">
+      <img src="/assets/logos/prefeitura-ivatuba.png" alt="Prefeitura de Ivatuba" onerror="this.style.display='none';this.parentElement.querySelector('.placeholder').style.display='block';">
+      <span class="placeholder" style="display:none;">🏛️</span>
+    </div>
+  </div>
+</header>
+
+<main class="container section" style="padding-bottom:40px;">
+  <div class="section-title">🙋 Voluntário da Defesa Civil</div>
+  <div class="info-panel"><h3>Quer ajudar o município?</h3>
+    <p>Cadastre-se como voluntário da Defesa Civil Municipal de Ivatuba. A equipe entrará em contato para explicar como participar.</p></div>
+
+  <div class="form-panel"><h3>📝 Ficha de inscrição</h3>
+    <div class="field"><label for="vol-nome">Nome completo *</label><input id="vol-nome" maxlength="120" autocomplete="name"></div>
+    <div class="field"><label for="vol-tel">WhatsApp / Telefone com DDD *</label><input id="vol-tel" type="tel" maxlength="20" placeholder="(44) 90000-0000" autocomplete="tel"></div>
+    <div class="field"><label for="vol-bairro">Bairro *</label><input id="vol-bairro" maxlength="80"></div>
+    <div class="field"><label for="vol-disp">Disponibilidade *</label><select id="vol-disp"><option value="">Selecione</option><option>Manhã</option><option>Tarde</option><option>Noite</option><option>Integral</option><option>Fins de semana</option><option>Somente em emergências</option></select></div>
+    <div class="field"><label for="vol-area">Como gostaria de ajudar? *</label><select id="vol-area"><option value="">Selecione</option><option>Apoio logístico</option><option>Primeiros socorros</option><option>Comunicação e divulgação</option><option>Arrecadação de doações</option><option>Atendimento a abrigos</option><option>Outro</option></select></div>
+    <div class="field"><label for="vol-exp">Experiência ou habilidades *</label><textarea id="vol-exp" rows="3" maxlength="500"></textarea></div>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:10px 0;"><input type="checkbox" id="vol-18" style="margin-top:3px;"> <span>Declaro que tenho 18 anos ou mais. *</span></label>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:10px 0;"><input type="checkbox" id="vol-lgpd" style="margin-top:3px;"> <span>Autorizo o uso dos meus dados pela Defesa Civil Municipal de Ivatuba para contato sobre o voluntariado (LGPD). *</span></label>
+    <button class="btn-alerta btn-alerta-primary" id="vol-btn" type="button">🙋 Enviar inscrição</button>
+    <div id="vol-res"></div>
+  </div>
+  <p style="font-size:12px;color:var(--cinza-escuro);margin-top:14px;">Todos os campos marcados com * são obrigatórios. Em caso de emergência, ligue <strong>199</strong> (Defesa Civil) ou <strong>193</strong> (Bombeiros).</p>
+  <p style="margin-top:12px;"><a class="btn-alerta btn-alerta-outline" href="/conecta-gestao-ivatuba-protegida.html">← Voltar ao site da Defesa Civil</a></p>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand">Defesa Civil Ivatuba</div>
+  <div class="footer-muni">Município de Ivatuba – Paraná</div>
+  <div class="footer-dev">Desenvolvido por <strong id="footer-dev-name">Gabriel Oliveira</strong></div>
+  <div class="footer-disclaimer">Esta plataforma é uma ferramenta municipal de informação e gestão e não substitui os canais oficiais de emergência.</div>
+  <div class="footer-version">v2.0.0</div>
+</footer>
+
+
+<script>
+(function(){
+var SB_URL="https://kfvkembarvsbtveksiag.supabase.co";
+var SB_KEY="sb_publishable_r4FgIemkyEcQiWCjj23cew_MdN2GVuL";
+var TID="00000000-0000-0000-0000-000000000001";
+var TEL_CONTATO="(44) 92009-6867";
+function $(i){return document.getElementById(i);}
+function dig(s){return String(s||'').replace(/\D/g,'');}
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+function erro(m){$('vol-res').innerHTML='<p style="color:var(--vermelho);font-size:13px;margin-top:10px;">'+esc(m)+'</p>';}
+$('vol-btn').addEventListener('click',async function(){
+  var nome=$('vol-nome').value.trim(),tel=dig($('vol-tel').value);
+  if(nome.length<3)return erro('Informe seu nome completo.');
+  if(tel.length<10||tel.length>13)return erro('Informe um telefone válido com DDD.');
+  if(!$('vol-bairro').value.trim())return erro('Informe o seu bairro.');
+  if(!$('vol-disp').value)return erro('Escolha a sua disponibilidade.');
+  if(!$('vol-area').value)return erro('Escolha como gostaria de ajudar.');
+  if($('vol-exp').value.trim().length<3)return erro('Conte brevemente a sua experiência ou habilidades.');
+  if(!$('vol-18').checked)return erro('O voluntariado é para maiores de 18 anos.');
+  if(!$('vol-lgpd').checked)return erro('É necessário autorizar o uso dos dados (LGPD).');
+  var b=$('vol-btn');b.disabled=true;b.textContent='Enviando...';
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/dc_voluntarios',{method:'POST',headers:{apikey:SB_KEY,'Content-Profile':'gestao360','Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({tenant_id:TID,nome:nome,telefone:tel,bairro:$('vol-bairro').value.trim(),disponibilidade:$('vol-disp').value,
+        area_interesse:$('vol-area').value,experiencia:$('vol-exp').value.trim(),maior_18:true,consentimento:true,status:'novo'})});
+    if(!r.ok)throw new Error('falha');
+    $('vol-res').innerHTML='<div class="protocolo-box"><p style="font-weight:700;">Inscrição enviada! Obrigado por querer ajudar.</p><p style="font-size:13px;margin-top:6px;">A Defesa Civil entrará em contato pelo telefone informado.</p></div>';
+    ['vol-nome','vol-tel','vol-bairro','vol-exp'].forEach(function(i){$(i).value='';});['vol-disp','vol-area'].forEach(function(i){$(i).value='';});$('vol-18').checked=false;$('vol-lgpd').checked=false;
+  }catch(e){erro('Não foi possível enviar agora. Tente novamente ou ligue para '+TEL_CONTATO+'.');}
+  finally{b.disabled=false;b.textContent='🙋 Enviar inscrição';}
+});
+})();
+</script>
+</body>
+</html>

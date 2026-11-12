@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.8/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defesa Civil Ivatuba — Painel Administrativo</title>
+<link rel="icon" type="image/png" href="/assets/logos/favicon.png">
+<link rel="apple-touch-icon" href="/assets/logos/icon-192.png">
+<meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#123F63"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--royal:#1E4D8C;--neon:#2563EB;--light:#3B82F6;--darkblue:#1A3A6B;--azul-escuro:#1A3A6B;--radius-lg:24px;--shadow-md:0 4px 14px rgba(15,23,42,.07),0 1px 3px rgba(15,23,42,.05);--ease:cubic-bezier(.22,1,.36,1);--bg:#F8FAFC;--surface:#FFFFFF;--ink:#0F172A;--ink-soft:#475569;--line:rgba(15,23,42,.08);--ok:#059669;--danger:#DC2626;--warn:#D97706;--muted:#94A3B8;--radius:18px;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;--shadow-sm:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);}
+*{box-sizing:border-box;}body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);}button{font-family:inherit;cursor:pointer;}select,input,textarea{font-family:inherit;}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--royal),var(--light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;box-shadow:0 4px 12px rgba(30,77,140,.4);}
+#login-screen{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr;}
+@media(max-width:860px){#login-screen{grid-template-columns:1fr;}}
+.login-brand{background:linear-gradient(150deg,var(--darkblue) 0%,#1E3A5F 45%,#1E4D8C 100%);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:56px;position:relative;overflow:hidden;}
+.login-brand::after{content:'';position:absolute;right:-140px;bottom:-140px;width:420px;height:420px;background:radial-gradient(circle,rgba(59,130,246,.25),transparent 70%);}
+.brand-top{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
+.brand-name{font-size:19px;font-weight:800;}.brand-name small{display:block;font-size:11px;letter-spacing:2px;color:#93A5C4;text-transform:uppercase;margin-top:2px;font-weight:600;}
+.brand-quote{position:relative;z-index:1;max-width:420px;}.brand-quote h1{font-weight:800;font-size:32px;line-height:1.28;margin:0 0 14px;}.brand-quote p{color:#B6C4DD;font-size:14.5px;line-height:1.7;margin:0;}
+.brand-foot{position:relative;z-index:1;font-size:12px;color:#7E93B8;}
+.login-form-wrap{display:flex;align-items:center;justify-content:center;padding:40px;}
+.login-form{width:100%;max-width:380px;}.login-form h2{font-size:25px;margin:0 0 6px;font-weight:800;}.login-form .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 28px;}
+.field{margin-bottom:18px;}.field label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);margin-bottom:7px;font-weight:700;}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;background:#fff;color:var(--ink);box-sizing:border-box;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--royal);box-shadow:0 0 0 3px rgba(220,38,38,.12);}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--royal),var(--neon));color:#fff;border:none;padding:13px;border-radius:10px;font-size:14.5px;font-weight:700;box-shadow:0 6px 18px rgba(30,77,140,.35);}
+.btn-primary:hover{transform:translateY(-1px);}.btn-primary:disabled{opacity:.6;pointer-events:none;}
+.login-error{margin-top:14px;padding:12px 14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:10px;font-size:12.5px;color:#991B1B;line-height:1.6;display:none;}.login-error.show{display:block;}
+header{background:linear-gradient(150deg,var(--darkblue),#1E293B);color:#E2E8F0;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;}
+.hd-left{display:flex;align-items:center;gap:12px;}.hd-left .name{font-size:16px;font-weight:800;}.hd-left .name small{display:block;font-size:10px;letter-spacing:1.5px;color:#93A5C4;text-transform:uppercase;font-weight:600;}
+.hd-right{display:flex;align-items:center;gap:12px;font-size:12px;color:#B6C4DD;}
+.btn-ghost{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:7px 14px;border-radius:9px;font-size:12.5px;font-weight:600;}.btn-ghost:hover{border-color:var(--royal);color:var(--royal);}
+.btn-accent{background:linear-gradient(135deg,var(--royal),var(--neon));color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:12.5px;font-weight:700;box-shadow:0 4px 12px rgba(30,77,140,.35);}
+.btn-danger{background:var(--danger);color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.25);color:#B6C4DD;padding:6px 12px;border-radius:8px;font-size:11.5px;}.logout-btn:hover{border-color:var(--light);color:var(--light);}
+.back-btn{background:none;border:1px solid rgba(255,255,255,.25);color:#B6C4DD;padding:6px 12px;border-radius:8px;font-size:11.5px;text-decoration:none;}.back-btn:hover{border-color:var(--light);color:var(--light);}
+.app-body{display:flex;min-height:calc(100vh - 56px);}
+.sidebar{width:240px;background:var(--darkblue);padding:12px 8px;overflow-y:auto;flex-shrink:0;}
+.sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;}
+.nav-group-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#475569;padding:14px 10px 4px;font-weight:700;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;color:#B6C4DD;font-size:12px;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s;}
+.nav-item:hover{background:rgba(220,38,38,.12);}.nav-item.active{background:linear-gradient(90deg,rgba(30,77,140,.4),rgba(239,68,68,.15));color:#fff;font-weight:700;}
+main{flex:1;padding:28px 36px 60px;max-width:1300px;overflow-x:hidden;}
+@media(max-width:860px){.sidebar{position:fixed;top:56px;left:0;bottom:0;width:260px;z-index:100;transform:translateX(-100%);transition:transform .25s ease;}
+.sidebar.open{transform:translateX(0);box-shadow:4px 0 20px rgba(0,0,0,.3);}
+.menu-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(0,0,0,.4);z-index:99;}
+.menu-overlay.open{display:block;}
+main{padding:20px;}
+.hamburger{display:flex!important;}
+}
+.view{display:none;}.view.active{display:block;}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:22px;}
+.topbar h1{font-size:24px;margin:0 0 2px;font-weight:800;}.topbar .sub{font-size:12px;color:var(--muted);}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+@media(max-width:1000px){.kpi-grid{grid-template-columns:1fr 1fr;}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);transition:transform .2s var(--ease),box-shadow .2s var(--ease);}.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.kpi .ico{font-size:10px;color:var(--royal);text-transform:uppercase;letter-spacing:.8px;font-weight:800;margin-bottom:6px;}
+.kpi .num{font-size:22px;color:var(--ink);font-weight:800;}.kpi .lbl{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px;margin-bottom:18px;box-shadow:var(--shadow-sm);}
+.panel h3{font-size:15px;margin:0 0 4px;font-weight:800;}.panel .panel-sub{font-size:12px;color:var(--muted);margin:0 0 14px;}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;}
+@media(max-width:700px){.form-grid{grid-template-columns:1fr;}}
+.field.span-2{grid-column:span 2;}.field.span-3{grid-column:span 3;}
+.form-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:0 8px 8px;border-bottom:1px solid var(--line);font-weight:700;}
+td{padding:9px 8px;border-bottom:1px solid var(--line);}tr:last-child td{border-bottom:none;}
+.status-pill{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.status-ativa,.status-ativo,.status-disponivel,.status-resolvida,.status-encerrada_ok,.status-normal,.status-true{background:#D1FAE5;color:var(--ok);}
+.status-inativa,.status-inativo,.status-indisponivel,.status-falso,.status-false,.status-emergencia,.status-lotado{background:#FEF2F2;color:var(--danger);}
+.status-em_andamento,.status-atencao,.status-pendente,.status-aberta,.status-recebida,.status-em_analise,.status-equipe_acionada,.status-em_atendimento,.status-parcialmente_ocupado,.status-alerta{background:#FEF3C7;color:var(--warn);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+@media(max-width:1000px){.grid-2{grid-template-columns:1fr;}}
+.diag{padding:14px;border-radius:12px;font-size:12.5px;line-height:1.6;margin-bottom:8px;}
+.diag-ok{background:#D1FAE5;border:1px solid rgba(5,150,105,.25);color:#065F46;}
+.diag-warn{background:#FEF3C7;border:1px solid rgba(217,119,6,.25);color:#92400E;}
+.diag-danger{background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;}
+</style>
+<style id="admin-theme">
+/* ===== TEMA ADMIN — Defesa Civil Ivatuba ===== */
+:root{--azul-escuro:#123F63;--azul:#165D99;--laranja:#FF8A00;--bg:#F3F6FA;--surface:#fff;--ink:#0F2236;--ink-soft:#64748B;--muted:#64748B;--line:#E2E8F0;--ok:#15803D;--danger:#DC2626;--warn:#B45309;--royal:#165D99;--neon:#165D99;--light:#3B82F6;--darkblue:#123F63;--radius:14px;--radius-lg:16px;--shadow-sm:0 1px 2px rgba(18,63,99,.06),0 2px 8px rgba(18,63,99,.05);--shadow-md:0 6px 20px rgba(18,63,99,.10);--sans:'Inter',Arial,sans-serif;--hh:64px}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.5}
+:focus-visible{outline:3px solid #FF8A00;outline-offset:2px}
+button,a,select,input,textarea{-webkit-tap-highlight-color:transparent}
+svg.ic{width:1.15em;height:1.15em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- LOGIN ---------- */
+#login-screen{min-height:100svh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--bg)}
+.login-brand{background:linear-gradient(160deg,#0E3250 0%,#123F63 55%,#165D99 100%);padding:clamp(28px,5vw,64px);color:#fff}
+.login-brand::after{background:radial-gradient(circle,rgba(255,138,0,.22),transparent 70%)}
+.login-brand .brand-top{gap:14px}
+.login-logo{height:88px;width:auto;aspect-ratio:981/943;background:#fff;border-radius:18px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.25);flex:0 0 auto}
+.login-brand .brand-name{font-size:20px;font-weight:800;line-height:1.2}
+.login-brand .brand-name small{color:#BBD3EA;letter-spacing:1.6px}
+.brand-quote h1{font-size:clamp(26px,3vw,36px);line-height:1.2}
+.brand-quote p{color:#D3E2F2}
+.brand-quote .bar{width:56px;height:5px;border-radius:5px;background:#FF8A00;margin:0 0 18px}
+.brand-foot{color:#BBD3EA}
+.login-form-wrap{padding:clamp(20px,4vw,48px)}
+.login-card{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:clamp(22px,4vw,36px);box-shadow:var(--shadow-md)}
+.login-card h2{font-size:26px;margin:0 0 4px;font-weight:800;color:var(--azul-escuro)}
+.login-card .sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px}
+.login-card .field{margin-bottom:16px}
+.field label{font-size:12px;letter-spacing:.3px;text-transform:none;color:#334155;font-weight:700;margin-bottom:6px}
+.input-ico{position:relative;display:block}
+.input-ico>svg.ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#64748B;width:18px;height:18px;pointer-events:none}
+.input-ico input{padding-left:42px!important}
+.input-ico .pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;background:none;color:#64748B;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.input-ico .pw-toggle:hover{background:#EEF3F8;color:var(--azul)}
+.input-ico input[type=password],.input-ico input.pw{padding-right:48px!important}
+.field input,.field select,.field textarea{border:1px solid #CBD5E1;border-radius:10px;padding:11px 13px;font-size:14.5px;min-height:44px;transition:border-color .15s,box-shadow .15s}
+.field textarea{min-height:0}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(22,93,153,.18);outline:none}
+.btn-primary{background:linear-gradient(135deg,#165D99,#123F63);border-radius:12px;padding:14px;font-size:15px;min-height:48px;box-shadow:0 6px 16px rgba(18,63,99,.28);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{transform:none;filter:brightness(1.08)}
+.btn-primary:disabled{opacity:.75;cursor:progress}
+.btn-primary.loading::before{content:'';width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-error{background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;border-radius:10px;font-size:13px}
+.login-ok{display:none;margin-top:14px;padding:12px 14px;background:#ECFDF5;border:1px solid #86EFAC;color:#166534;border-radius:10px;font-size:13px;font-weight:600}
+.login-ok.show{display:block}
+.login-public{display:flex!important;align-items:center;gap:12px;margin-top:18px;padding:14px 16px;background:#FFF6E8;border:1px solid #FFD08A;border-radius:12px;color:#7A3E00;font-weight:700;font-size:14px;text-decoration:none}
+.login-public:hover{background:#FFEFD6}
+.login-public small{display:block;font-size:12px;font-weight:500;color:#9A5A12;margin-top:2px}
+.login-public>svg.ic{width:22px;height:22px;color:#FF8A00}
+@media(max-width:860px){#login-screen{grid-template-columns:1fr}.login-brand{padding:22px 20px 26px}.login-brand .brand-quote,.login-brand .brand-foot{display:none}.login-logo{height:64px}.login-form-wrap{padding:16px 14px 32px;margin-top:-14px}}
+
+/* ---------- APP SHELL ---------- */
+#app[style*="block"]{display:flex!important;flex-direction:column;min-height:100svh}
+header{background:var(--azul-escuro);color:#E2ECF6;padding:0 clamp(12px,2vw,24px);height:var(--hh);position:sticky;top:0;z-index:120;gap:12px;box-shadow:0 2px 10px rgba(18,63,99,.25);border-bottom:3px solid #FF8A00}
+.hd-left{gap:10px;min-width:0}
+.hd-logo{height:46px;width:auto;aspect-ratio:981/943;object-fit:contain;flex:0 0 auto;background:#fff;border-radius:10px;padding:2px}
+.hd-left .name{font-size:15px;line-height:1.15;min-width:0;white-space:nowrap}
+.hd-left .name span{color:#fff!important}
+.hd-left .name small{color:#FFB75C;letter-spacing:1.2px;font-size:10px}
+.hd-right{gap:8px;flex-wrap:nowrap;flex:0 0 auto}
+.hd-right #hd-role{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#E2ECF6;text-transform:capitalize}
+.hd-right #hd-role:empty{display:none}
+.hd-right a,.hd-right button{display:inline-flex!important;align-items:center;gap:6px;min-height:38px;padding:0 12px!important;border-radius:10px!important;font-size:12.5px!important;font-weight:700!important;text-decoration:none;white-space:nowrap}
+.hd-right a[target]{background:#FF8A00!important;color:#1B1200!important;border:0!important}
+.hd-right a[target]:hover{filter:brightness(1.06)}
+.hd-right .back-btn{background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important}
+.hd-right .logout-btn{background:transparent!important;color:#fff!important;border:1px solid rgba(255,255,255,.35)!important}
+.hd-right .back-btn:hover,.hd-right .logout-btn:hover{background:rgba(255,255,255,.18)!important}
+.hamburger{width:42px;height:42px;border-radius:10px!important;align-items:center;justify-content:center;padding:0!important;margin-right:2px!important;background:rgba(255,255,255,.1)!important;font-size:0!important}
+.hamburger svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+.app-body{flex:1 0 auto;min-height:0;width:100%}
+.sidebar{width:260px;background:#fff;border-right:1px solid var(--line);padding:10px 10px 24px;position:sticky;top:var(--hh);align-self:flex-start;height:calc(100svh - var(--hh));overflow-y:auto}
+.sidebar::-webkit-scrollbar-thumb{background:#CBD5E1}
+.nav-group-label{font-size:11px;letter-spacing:1.2px;color:#64748B;padding:16px 10px 6px;font-weight:800}
+.nav-item{gap:10px;padding:0 10px;min-height:40px;border-radius:10px;color:#1E3A52;font-size:13.5px;font-weight:600;line-height:1.2}
+.nav-item .ic{width:18px;height:18px;color:#165D99}
+.nav-item:hover{background:#EEF4FA}
+.nav-item.active{background:#123F63;color:#fff;box-shadow:inset 4px 0 0 #FF8A00}
+.nav-item.active .ic{color:#FFB75C}
+main{flex:1 1 auto;min-width:0;max-width:none;width:100%;padding:clamp(16px,2.4vw,32px) clamp(14px,2.6vw,40px) 40px;overflow-x:visible}
+.view{animation:none}
+.topbar{margin-bottom:20px;align-items:flex-end;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.topbar h1{font-size:clamp(20px,2.4vw,26px);color:var(--azul-escuro);font-weight:800;line-height:1.2}
+.topbar .sub{font-size:13px;color:var(--ink-soft)}
+.admin-footer{flex:0 0 auto;background:var(--azul-escuro);color:#C6D8EA;font-size:12.5px;padding:18px clamp(14px,2.6vw,40px);display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:space-between;border-top:3px solid #FF8A00}
+.admin-footer strong{color:#fff}
+.admin-footer a{color:#FFB75C;font-weight:700;text-decoration:none}
+@media(max-width:860px){:root{--hh:60px}.sidebar{position:fixed;top:var(--hh);height:auto;bottom:0;width:min(300px,86vw);z-index:130;border-right:0}.menu-overlay{top:var(--hh);z-index:125;background:rgba(15,34,54,.55)}
+ .hd-logo{height:40px}.hd-left .name{font-size:13.5px}.hd-left .name small{display:none}.hd-right .lbl{display:none}.hd-right a,.hd-right button{width:40px;justify-content:center;padding:0!important}.hd-right #hd-user{display:none}.hd-right a,.hd-right button{padding:0 11px!important}.hd-right #hd-role{display:none}}
+@media(max-width:420px){.hd-left .name{display:none}}
+
+/* ---------- CARDS / KPI / PAINÉIS ---------- */
+.panel{border:1px solid var(--line);border-radius:var(--radius-lg);padding:clamp(14px,2vw,22px);box-shadow:var(--shadow-sm);background:#fff;min-width:0}
+.panel h3{font-size:16px;font-weight:800;color:var(--azul-escuro);margin:0 0 4px}
+.panel .panel-sub{color:var(--ink-soft);font-size:13px}
+.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.kpi{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;min-width:0}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#165D99}
+.kpi:hover{transform:none;box-shadow:var(--shadow-md)}
+.kpi .ico{color:#64748B;font-size:11px;letter-spacing:.8px}
+.kpi .num{font-size:28px;font-weight:800;color:var(--azul-escuro);line-height:1.2}
+.kpi .lbl{font-size:12.5px;color:var(--ink-soft)}
+.kpi-val{font-size:28px;font-weight:800;color:var(--azul-escuro)}.kpi-label{font-size:12.5px;color:var(--ink-soft)}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.field{min-width:0}
+.field.span-2{grid-column:span 2}.field.span-3{grid-column:span 3}
+@media(max-width:1000px){.grid-2{grid-template-columns:minmax(0,1fr)}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.field.span-3{grid-column:span 2}}
+@media(max-width:700px){.form-grid{grid-template-columns:minmax(0,1fr)}.field.span-2,.field.span-3{grid-column:auto}}
+.form-actions{gap:10px}
+.btn-ghost,.btn-accent,.btn-danger{min-height:40px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-ghost{background:#fff;border:1px solid #CBD5E1;color:#123F63;padding:0 14px}
+.btn-ghost:hover{border-color:#165D99;color:#165D99;background:#F3F8FD}
+.btn-accent{background:#165D99;color:#fff;padding:0 18px;box-shadow:0 3px 10px rgba(22,93,153,.3)}
+.btn-accent:hover{background:#123F63}
+.btn-accent:disabled,.btn-ghost:disabled{opacity:.6;cursor:progress}
+.btn-danger{background:#DC2626;padding:0 12px;min-height:34px}
+.btn-danger:hover{background:#B91C1C}
+.panel .btn-accent[onclick*="toggleForm"],.topbar .btn-accent{background:#FF8A00;color:#1B1200;box-shadow:0 3px 10px rgba(255,138,0,.35)}
+.panel .btn-accent[onclick*="toggleForm"]:hover,.topbar .btn-accent:hover{background:#E67A00}
+.diag{border-radius:12px}
+
+/* ---------- TABELAS ---------- */
+.panel>div[style*="overflow-x"]{border:1px solid var(--line);border-radius:12px;background:#fff}
+table{font-size:13.5px;min-width:100%}
+thead th{background:#F3F6FA;color:#475569;font-size:11.5px;letter-spacing:.5px;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;text-transform:uppercase;font-weight:800}
+td{padding:12px;border-bottom:1px solid #EDF1F6;vertical-align:middle;color:#1E293B}
+tbody tr:hover td{background:#F8FBFE}
+td .btn-ghost,td .btn-danger,td button{min-height:34px}
+td:last-child:not(:first-child){white-space:nowrap}
+.status-pill{padding:4px 10px;font-size:11px;border-radius:999px;font-weight:800;white-space:nowrap}
+.status-pill.status-ativa,.status-ativo,.status-disponivel,.status-resolvida,.status-encerrada_ok,.status-normal,.status-true{background:#DCFCE7;color:#166534}
+.status-inativa,.status-inativo,.status-indisponivel,.status-falso,.status-false,.status-emergencia,.status-lotado,.status-critica{background:#FEE2E2;color:#B91C1C}
+.status-em_andamento,.status-atencao,.status-pendente,.status-aberta,.status-recebida,.status-em_analise,.status-equipe_acionada,.status-em_atendimento,.status-parcialmente_ocupado,.status-alerta{background:#FFEFD6;color:#B45309}
+@media(max-width:700px){
+ .panel>div[style*="overflow-x"]{border:0;background:none;overflow:visible!important}
+ table,thead,tbody,tr,td{display:block;width:100%}
+ thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ tbody tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:6px 12px;box-shadow:var(--shadow-sm)}
+ td{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;text-align:right;padding:8px 0;border-bottom:1px dashed #E5EAF1;word-break:break-word}
+ td:last-child{border-bottom:0}
+ td::before{content:attr(data-label);flex:0 0 38%;max-width:42%;text-align:left;font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.4px;padding-top:2px}
+ td[data-label=""]::before,td:not([data-label])::before{display:none}
+ td[data-label=""],td:not([data-label]){justify-content:flex-end;flex-wrap:wrap}
+ tbody tr:hover td{background:none}
+}
+
+/* ---------- MODAIS ---------- */
+#modal-notificar-wa>div,#modal-responder-oc>div,#modal-pessoa-sms>div{border-radius:18px!important;box-shadow:0 24px 70px rgba(15,34,54,.35)!important;padding:0!important;max-height:92vh!important;display:flex;flex-direction:column;overflow:hidden!important}
+#modal-notificar-wa,#modal-responder-oc,#modal-pessoa-sms{background:rgba(15,34,54,.6)!important;backdrop-filter:blur(2px)}
+#modal-notificar-wa>div{max-width:640px!important}#modal-responder-oc>div{max-width:620px!important}#modal-pessoa-sms>div{max-width:640px!important}
+.mdl-head{background:#123F63;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:3px solid #FF8A00;flex:0 0 auto}
+.mdl-head h3{color:#fff!important;font-size:17px!important;margin:0!important}
+.mdl-head button{color:#fff!important;background:rgba(255,255,255,.12)!important;border-radius:10px!important;width:38px;height:38px;font-size:18px!important;line-height:1}
+.mdl-body{padding:20px;overflow-y:auto;flex:1 1 auto;min-height:0}
+.mdl-foot{padding:14px 20px;border-top:1px solid var(--line);background:#F8FAFC;flex:0 0 auto}
+#modal-pessoa-sms>div>h3{background:#123F63;color:#fff;margin:0!important;padding:16px 20px;border-bottom:3px solid #FF8A00}
+#modal-pessoa-sms>div>*:not(h3){margin-left:20px;margin-right:20px}
+#modal-pessoa-sms>div>*:nth-child(2){margin-top:20px}
+#modal-responder-oc label,#modal-notificar-wa label{color:#334155!important;font-size:12.5px!important}
+#modal-responder-oc select,#modal-responder-oc textarea{border:1px solid #CBD5E1!important;border-radius:10px!important;font-family:inherit}
+#resp-oc-info{background:#EEF4FA!important;border:1px solid #D6E3F0;border-left:4px solid #165D99;color:#123F63}
+.wa-preview{background:#ECFDF5;border:1px solid #A7E3BD;border-radius:14px;padding:14px;margin:4px 0 6px!important;position:relative}
+.wa-preview>label{display:flex!important;align-items:center;gap:8px;color:#166534!important;margin-bottom:8px!important}
+.wa-preview>label::before{content:'';width:9px;height:9px;border-radius:50%;background:#25D366;display:inline-block}
+#resp-oc-msg{background:#fff!important;color:#1E293B!important;border:1px solid #BFE6CC!important;border-radius:4px 14px 14px 14px!important;font-size:13px!important;line-height:1.55;max-height:220px;min-height:110px;overflow-y:auto;resize:vertical}
+#resp-oc-btn,#modal-notificar-wa button[onclick*="enviarTodosWA"]{background:#16A34A!important;border-radius:12px!important;min-height:46px;box-shadow:0 4px 12px rgba(22,163,74,.3)}
+#resp-oc-btn:disabled{opacity:.7;cursor:progress}
+#modal-responder-oc button[onclick*="fecharResponder"]:not([style*="22px"]),#modal-notificar-wa button[onclick*="fecharNotificarWA"]:not([style*="22px"]){background:#fff!important;border:1px solid #CBD5E1!important;color:#123F63!important;min-height:46px;border-radius:12px!important}
+#modal-notificar-wa .wa-info{background:#FFF6E8!important;border:1px solid #FFD08A;border-left:4px solid #FF8A00;color:#7A3E00!important;line-height:1.5}
+#wa-lista-pessoas>div:first-child{font-weight:700;color:#123F63!important}
+#wa-lista-pessoas>div:nth-child(2){border:1px solid var(--line);border-radius:12px;max-height:min(340px,45vh)!important}
+#wa-lista-pessoas>div:nth-child(2)>div{gap:10px;align-items:center}
+#wa-lista-pessoas>div:nth-child(2)>div>div{min-width:0;word-break:break-word}
+#wa-lista-pessoas>div:nth-child(2)>div.wa-next{background:#FFF6E8;box-shadow:inset 4px 0 0 #FF8A00}
+#wa-lista-pessoas button{min-height:38px;flex:0 0 auto;border-radius:10px!important}
+#wa-lista-pessoas span[style*="D1FAE5"]{flex:0 0 auto;white-space:nowrap}
+.wa-next-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;color:#B45309;background:#FFEFD6;border-radius:999px;padding:2px 8px;vertical-align:middle}
+.wa-done{margin-top:10px;padding:10px 12px;border-radius:10px;background:#DCFCE7;color:#166534;font-weight:700;font-size:13px}
+@media(max-width:520px){#modal-notificar-wa,#modal-responder-oc,#modal-pessoa-sms{padding:8px!important}.mdl-body{padding:14px}.mdl-foot{padding:12px 14px}.mdl-foot>div{flex-direction:column}}
+
+#hd-user{font-size:12px;color:#BBD3EA;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1100px){#hd-user{display:none}}
+#modal-pessoa-sms>div>*:last-child{margin-bottom:20px}
+#resp-oc-wa-direto{min-height:46px;white-space:nowrap}
+@media(max-width:520px){#resp-oc-wa-direto{width:100%}}
+
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-brand">
+    <div class="brand-top"><img class="login-logo" src="/assets/logos/defesa-civil-ivatuba.png" alt="Defesa Civil Ivatuba" width="981" height="943"><div class="brand-name"><span style="color:#fff;">Defesa Civil</span> <span style="color:#FFB75C;">Ivatuba</span><small>Painel Administrativo</small></div></div>
+    <div class="brand-quote"><div class="bar"></div><h1>Proteção, prevenção e segurança para o nosso município.</h1><p>Alertas, ocorrências, abrigos, equipes, recursos e monitoramento climático — gestão integrada da Defesa Civil de Ivatuba.</p></div>
+    <div class="brand-foot">Defesa Civil Ivatuba · Município de Ivatuba – Paraná<br><span id="login-dev-credit" style="font-size:11px;opacity:.8;">Desenvolvido por Gabriel Oliveira</span></div>
+  </div>
+  <div class="login-form-wrap"><div class="login-form login-card">
+    <h2>Acessar</h2><p class="sub">Entre com sua conta institucional.</p>
+    <div class="field"><label for="login-email">E-mail</label><span class="input-ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zM22 6l-10 7L2 6"/></svg><input type="email" id="login-email" placeholder="nome@prefeitura.gov.br" autocomplete="username"></span></div>
+    <div class="field"><label for="login-senha">Senha</label><span class="input-ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v10H5zM8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pw-toggle" id="pw-toggle" aria-label="Mostrar senha" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12zM12 15a3 3 0 100-6 3 3 0 000 6"/></svg></button></span></div>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error" role="alert"></div>
+    <a class="login-public" href="conecta-gestao-ivatuba-protegida.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><span>Acesso Público — Defesa Civil Ivatuba<small>Alertas, ocorrências e informações para a população</small></span></a>
+  </div></div>
+</div>
+<div id="app" style="display:none;">
+<header>
+  <div class="hd-left"><button class="hamburger" onclick="toggleMenu()" style="display:none;" aria-label="Abrir menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><img class="hd-logo" src="/assets/logos/defesa-civil-ivatuba.png" alt="Defesa Civil Ivatuba" width="981" height="943"><div class="name"><span>Defesa Civil Ivatuba</span><small>Coordenadoria Municipal</small></div></div>
+  <div class="hd-right"><span id="hd-role"></span><span id="hd-user"></span><a href="conecta-gestao-ivatuba-protegida.html" target="_blank" aria-label="Página Pública"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><span class="lbl">Página Pública</span></a><a class="back-btn" href="conecta-gestao-painel-admin.html" aria-label="Painel"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="lbl">Painel</span></a><button class="logout-btn" onclick="doLogout()" aria-label="Sair"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Sair</span></button></div>
+</header>
+<div class="app-body">
+<div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+<aside class="sidebar" id="sidebar-nav"></aside>
+<main id="main-content"></main>
+</div>
+<footer class="admin-footer"><span>Defesa Civil Ivatuba · Coordenadoria Municipal · Ivatuba – PR</span><span>Desenvolvido por <strong>Gabriel Oliveira</strong></span></footer>
+</div>
+<script>
+const SB_URL="https://kfvkembarvsbtveksiag.supabase.co",SB_KEY="sb_publishable_r4FgIemkyEcQiWCjj23cew_MdN2GVuL";
+let session=null;
+function decodeJwt(t){try{const p=t.split('.')[1];return JSON.parse(decodeURIComponent(atob(p.replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('')));}catch(e){return {};}}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim(),senha=document.getElementById('login-senha').value,err=document.getElementById('login-error'),btn=document.getElementById('login-btn');
+  err.classList.remove('show');if(!email||!senha){err.textContent='Preencha e-mail e senha.';err.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='Entrando...';
+  try{const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:senha})});
+    const d=await r.json();if(!r.ok){err.textContent=d.error_description||'E-mail ou senha inválidos.';err.classList.add('show');return;}
+    session={access_token:d.access_token,claims:decodeJwt(d.access_token)};
+    try{localStorage.setItem('cg_session',JSON.stringify(session));}catch(e){}
+    enterApp();
+  }catch(e){err.textContent='Erro de conexão.';err.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='Entrar';}
+}
+function doLogout(){session=null;try{localStorage.removeItem('cg_session');}catch(e){}document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='grid';}
+function tryAutoLogin(){
+  try{const s=JSON.parse(localStorage.getItem('cg_session'));if(!s||!s.access_token)return false;
+    const c=decodeJwt(s.access_token);if(!c.exp||c.exp*1000<Date.now())return false;
+    session={access_token:s.access_token,claims:c};enterApp();return true;
+  }catch(e){return false;}
+}
+function enterApp(){document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('hd-role').textContent=(session.claims.perfil||'').replace('_',' ');buildNav();buildViews();navigateTo('dashboard_dc');initSMSListeners();}
+function initSMSListeners(){
+  const msgEl=document.getElementById('sms-mensagem');
+  const nivelEl=document.getElementById('sms-nivel');
+  if(msgEl)msgEl.addEventListener('input',function(){document.getElementById('sms-preview').textContent=this.value||'Pré-visualização da mensagem...';});
+  if(nivelEl)nivelEl.addEventListener('change',checkEmergenciaConfirm);
+}
+window.addEventListener('DOMContentLoaded',()=>{tryAutoLogin();});
+
+async function sbGet(t,q){const r=await fetch(SB_URL+'/rest/v1/'+t+'?'+(q||''),{headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Accept-Profile':'gestao360'}});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Profile':'gestao360','Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,q,d){const r=await fetch(SB_URL+'/rest/v1/'+t+'?'+q,{method:'PATCH',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Profile':'gestao360','Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbDel(t,q){const r=await fetch(SB_URL+'/rest/v1/'+t+'?'+q,{method:'DELETE',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Profile':'gestao360'}});if(!r.ok)throw new Error(await r.text());}
+function money(v){return v?'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—';}
+function moneyShort(v){if(!v)return'R$ 0';const n=Number(v);if(n>=1e6)return'R$ '+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'R$ '+(n/1e3).toFixed(0)+'k';return'R$ '+n.toFixed(0);}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('pt-BR');}
+function fmtDateTime(d){if(!d)return'—';return new Date(d).toLocaleString('pt-BR');}
+function pill(s,label){return'<span class="status-pill status-'+(s||'')+'">'+(label||s||'—')+'</span>';}
+function parseMoney(v){if(!v)return null;return parseFloat(String(v).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'));}
+function tid(){return session.claims.tenant_id||'00000000-0000-0000-0000-000000000001';}
+function semDados(){return '<p style="color:var(--muted);font-size:12px;">Dados insuficientes.</p>';}
+
+const NAV_GROUPS=[
+  {label:'Geral',items:[['dashboard_dc','Dashboard'],['config_dc','Status do Município']]},
+  {label:'Emergência',items:[['telefones_dc','Telefones de Emergência'],['alertas_dc','Alertas Climáticos'],['ocorrencias_dc','Ocorrências'],['historico_oc','Histórico Ocorrências']]},
+  {label:'Infraestrutura',items:[['abrigos_dc','Abrigos'],['recursos_dc','Recursos e Materiais'],['equipes_dc','Equipes de Campo']]},
+  {label:'Comunicação',items:[['comunicados_dc','Comunicados'],['notificacoes_dc','Notificações'],['sms_dc','📱 Alertas WhatsApp/SMS'],['pessoas_sms','👥 Pessoas Cadastradas']]},
+  {label:'Prevenção',items:[['pontos_risco','Pontos de Risco'],['eventos_hist','Eventos Históricos'],['preparacao_dc','Planos de Preparação'],['notas_tecnicas','📄 Notas Técnicas']]},
+  {label:'Gestão',items:[['danos_dc','Avaliação de Danos'],['relatorios_dc','Relatórios'],['auditoria_dc','Auditoria'],['dev_config','⚙️ Configurações']]},
+];
+let currentView='dashboard_dc';
+function buildNav(){let h='';NAV_GROUPS.forEach(g=>{h+='<div class="nav-group-label">'+g.label+'</div>';g.items.forEach(([k,l])=>{h+='<button class="nav-item'+(k==='dashboard_dc'?' active':'')+'" data-key="'+k+'" onclick="navigateTo(\''+k+'\')">'+l+'</button>';});});document.getElementById('sidebar-nav').innerHTML=h;}
+function toggleMenu(){document.getElementById('sidebar-nav').classList.toggle('open');document.getElementById('menu-overlay').classList.toggle('open');}
+function navigateTo(key){currentView=key;document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.key===key));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+key));if(LOADERS[key])LOADERS[key]();document.getElementById('sidebar-nav').classList.remove('open');document.getElementById('menu-overlay').classList.remove('open');}
+
+let caches={};
+const MODULES={
+  telefones_dc:{table:'dc_telefones',title:'Telefones de Emergência',fields:[
+    {id:'nome',label:'Nome / Serviço',span:2,required:true},{id:'numero',label:'Número',required:true},{id:'icone',label:'Ícone (emoji)'},
+    {id:'categoria',label:'Categoria',type:'select',opts:[['emergencia','Emergência'],['utilidade','Utilidade'],['saude','Saúde'],['seguranca','Segurança'],['defesa_civil','Defesa Civil']]},
+    {id:'descricao',label:'Descrição',span:2},
+    {id:'ordem',label:'Ordem de exibição',type:'number'},
+    {id:'ativo',label:'Ativo',type:'select',opts:[['true','Sim'],['false','Não']]}
+  ],cols:['nome','numero','categoria','ordem','ativo'],colLabels:['Nome','Número','Categoria','Ordem','Ativo'],
+  renderCol:(r,c)=>c==='ativo'?pill(String(r.ativo),r.ativo?'Sim':'Não'):c==='categoria'?pill(r.categoria):(r[c]||'—'),query:'order=ordem.asc.nullslast'},
+
+  alertas_dc:{table:'dc_alertas',title:'Alertas Climáticos',fields:[
+    {id:'titulo',label:'Título',span:2,required:true},{id:'tipo',label:'Tipo'},
+    {id:'nivel',label:'Nível',type:'select',opts:[['atencao','Atenção'],['alerta','Alerta'],['emergencia','Emergência']]},
+    {id:'descricao',label:'Descrição',span:3},{id:'recomendacoes',label:'Recomendações',span:3},
+    {id:'regiao_afetada',label:'Região afetada'},{id:'fonte',label:'Fonte'},
+    {id:'inicio',label:'Início',type:'datetime-local'},{id:'termino',label:'Término',type:'datetime-local'},
+    {id:'ativo',label:'Ativo',type:'select',opts:[['true','Sim'],['false','Não']]}
+  ],cols:['titulo','nivel','regiao_afetada','inicio','ativo'],colLabels:['Título','Nível','Região','Início','Ativo'],
+  renderCol:(r,c)=>c==='nivel'?pill(r.nivel):c==='inicio'?fmtDateTime(r.inicio):c==='ativo'?pill(String(r.ativo),r.ativo?'Sim':'Não'):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  ocorrencias_dc:{table:'dc_ocorrencias',title:'Ocorrências',fields:[
+    {id:'protocolo',label:'Protocolo'},{id:'tipo',label:'Tipo',required:true},
+    {id:'status',label:'Status',type:'select',opts:[['recebida','Recebida'],['em_analise','Em análise'],['equipe_acionada','Equipe acionada'],['em_atendimento','Em atendimento'],['resolvida','Resolvida'],['encerrada','Encerrada']]},
+    {id:'prioridade',label:'Prioridade',type:'select',opts:[['baixa','Baixa'],['media','Média'],['alta','Alta'],['critica','Crítica']]},
+    {id:'descricao',label:'Descrição',span:3},{id:'endereco',label:'Endereço',span:2},{id:'bairro',label:'Bairro'},
+    {id:'solicitante_nome',label:'Solicitante'},{id:'solicitante_telefone',label:'Telefone'},{id:'solicitante_email',label:'E-mail'},
+    {id:'responsavel',label:'Responsável'},{id:'observacoes',label:'Observações',span:3},{id:'conclusao',label:'Conclusão',span:3}
+  ],cols:['protocolo','tipo','status','prioridade','solicitante_nome'],colLabels:['Protocolo','Tipo','Status','Prioridade','Solicitante'],
+  renderCol:(r,c)=>c==='status'?pill(r.status):c==='prioridade'?pill(r.prioridade):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  historico_oc:{table:'dc_ocorrencia_historico',title:'Histórico de Ocorrências',fields:[
+    {id:'ocorrencia_id',label:'Ocorrência',type:'ref',ref:'ocorrencias_dc',required:true},
+    {id:'status_anterior',label:'Status anterior',type:'select',opts:[['recebida','Recebida'],['em_analise','Em análise'],['equipe_acionada','Equipe acionada'],['em_atendimento','Em atendimento'],['resolvida','Resolvida'],['encerrada','Encerrada']]},
+    {id:'status_novo',label:'Novo status',type:'select',opts:[['recebida','Recebida'],['em_analise','Em análise'],['equipe_acionada','Equipe acionada'],['em_atendimento','Em atendimento'],['resolvida','Resolvida'],['encerrada','Encerrada']]},
+    {id:'descricao',label:'Descrição',span:3},{id:'usuario',label:'Responsável'}
+  ],cols:['status_anterior','status_novo','descricao','usuario'],colLabels:['Status Anterior','Novo Status','Descrição','Responsável'],
+  renderCol:(r,c)=>c==='status_anterior'?pill(r.status_anterior):c==='status_novo'?pill(r.status_novo):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  abrigos_dc:{table:'dc_abrigos',title:'Abrigos',fields:[
+    {id:'nome',label:'Nome',span:2,required:true},{id:'endereco',label:'Endereço',span:2},{id:'bairro',label:'Bairro'},
+    {id:'capacidade',label:'Capacidade',type:'number'},{id:'vagas_disponiveis',label:'Vagas disponíveis',type:'number'},
+    {id:'situacao',label:'Situação',type:'select',opts:[['disponivel','Disponível'],['parcialmente_ocupado','Parcialmente ocupado'],['lotado','Lotado'],['indisponivel','Indisponível']]},
+    {id:'responsavel',label:'Responsável'},{id:'telefone',label:'Telefone'},
+    {id:'acessibilidade',label:'Acessibilidade',type:'select',opts:[['true','Sim'],['false','Não']]},
+    {id:'banheiros',label:'Banheiros',type:'select',opts:[['true','Sim'],['false','Não']]},
+    {id:'cozinha',label:'Cozinha',type:'select',opts:[['true','Sim'],['false','Não']]},
+    {id:'gerador',label:'Gerador',type:'select',opts:[['true','Sim'],['false','Não']]},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['nome','capacidade','vagas_disponiveis','situacao','responsavel'],colLabels:['Nome','Capac.','Vagas','Situação','Responsável'],
+  renderCol:(r,c)=>c==='situacao'?pill(r.situacao):(r[c]??'—')},
+
+  recursos_dc:{table:'dc_recursos',title:'Recursos e Materiais',fields:[
+    {id:'nome',label:'Nome',span:2,required:true},
+    {id:'categoria',label:'Categoria',type:'select',opts:[['material','Material'],['equipamento','Equipamento'],['veiculo','Veículo'],['outro','Outro']]},
+    {id:'quantidade',label:'Quantidade',type:'number'},
+    {id:'localizacao',label:'Localização'},{id:'responsavel',label:'Responsável'},
+    {id:'situacao',label:'Situação',type:'select',opts:[['bom','Bom'],['regular','Regular'],['ruim','Ruim']]},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['nome','categoria','quantidade','situacao','localizacao'],colLabels:['Nome','Categoria','Qtd.','Situação','Localização'],
+  renderCol:(r,c)=>c==='categoria'?pill(r.categoria):c==='situacao'?pill(r.situacao):(r[c]??'—')},
+
+  equipes_dc:{table:'dc_equipes',title:'Equipes de Campo',fields:[
+    {id:'nome',label:'Nome da equipe',span:2,required:true},
+    {id:'funcao',label:'Função',type:'select',opts:[['resgate','Resgate'],['avaliacao','Avaliação'],['logistica','Logística'],['apoio','Apoio'],['outro','Outro']]},
+    {id:'secretaria',label:'Secretaria'},{id:'responsavel',label:'Responsável'},{id:'telefone',label:'Telefone'},
+    {id:'integrantes',label:'Integrantes',span:2},
+    {id:'disponibilidade',label:'Disponibilidade',type:'select',opts:[['disponivel','Disponível'],['indisponivel','Indisponível'],['em_campo','Em campo']]},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['nome','funcao','responsavel','telefone','disponibilidade'],colLabels:['Nome','Função','Responsável','Telefone','Disponibilidade'],
+  renderCol:(r,c)=>c==='funcao'?pill(r.funcao):c==='disponibilidade'?pill(r.disponibilidade):(r[c]||'—')},
+
+  comunicados_dc:{table:'dc_comunicados',title:'Comunicados',fields:[
+    {id:'titulo',label:'Título',span:2,required:true},
+    {id:'tipo',label:'Tipo',type:'select',opts:[['comunicado','Comunicado'],['alerta','Alerta'],['orientacao','Orientação'],['prevencao','Prevenção'],['encerramento','Encerramento'],['mudanca_situacao','Mudança de situação']]},
+    {id:'texto',label:'Texto',span:3},
+    {id:'prioridade',label:'Prioridade',type:'select',opts:[['baixa','Baixa'],['media','Média'],['alta','Alta'],['urgente','Urgente']]},
+    {id:'publico_alvo',label:'Público-alvo'},{id:'validade',label:'Validade',type:'datetime-local'},
+    {id:'criado_por',label:'Responsável'},
+    {id:'ativo',label:'Ativo',type:'select',opts:[['true','Sim'],['false','Não']]}
+  ],cols:['titulo','tipo','prioridade','criado_por','ativo'],colLabels:['Título','Tipo','Prioridade','Responsável','Ativo'],
+  renderCol:(r,c)=>c==='tipo'?pill(r.tipo):c==='prioridade'?pill(r.prioridade):c==='ativo'?pill(String(r.ativo),r.ativo?'Sim':'Não'):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  notificacoes_dc:{table:'dc_notificacoes',title:'Notificações',fields:[
+    {id:'titulo',label:'Título',span:2,required:true},{id:'mensagem',label:'Mensagem',span:3},
+    {id:'tipo',label:'Tipo',type:'select',opts:[['alerta','Alerta'],['informacao','Informação'],['urgente','Urgente']]},
+    {id:'lida',label:'Lida',type:'select',opts:[['true','Sim'],['false','Não']]}
+  ],cols:['titulo','tipo','lida'],colLabels:['Título','Tipo','Lida'],
+  renderCol:(r,c)=>c==='tipo'?pill(r.tipo):c==='lida'?pill(String(r.lida),r.lida?'Sim':'Não'):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  pontos_risco:{table:'dc_pontos_risco',title:'Pontos de Risco',fields:[
+    {id:'nome',label:'Nome / Identificação',span:2,required:true},
+    {id:'tipo',label:'Tipo de risco',type:'select',opts:[['alagamento','Alagamento'],['deslizamento','Deslizamento'],['inundacao','Inundação'],['erosao','Erosão'],['incendio','Incêndio'],['outro','Outro']]},
+    {id:'endereco',label:'Endereço',span:2},{id:'bairro',label:'Bairro'},
+    {id:'nivel_risco',label:'Nível de risco',type:'select',opts:[['baixo','Baixo'],['medio','Médio'],['alto','Alto'],['critico','Crítico']]},
+    {id:'descricao',label:'Descrição',span:3},{id:'historico',label:'Histórico',span:3},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['nome','tipo','nivel_risco','bairro'],colLabels:['Nome','Tipo','Nível','Bairro'],
+  renderCol:(r,c)=>c==='tipo'?pill(r.tipo):c==='nivel_risco'?pill(r.nivel_risco):(r[c]||'—')},
+
+  eventos_hist:{table:'dc_eventos_historico',title:'Eventos Históricos',fields:[
+    {id:'data',label:'Data',type:'date',required:true},{id:'tipo',label:'Tipo',required:true},
+    {id:'intensidade',label:'Intensidade',type:'select',opts:[['leve','Leve'],['moderada','Moderada'],['forte','Forte'],['severa','Severa']]},
+    {id:'local',label:'Local',span:2},{id:'descricao',label:'Descrição',span:3},
+    {id:'danos',label:'Danos',span:3},{id:'pessoas_afetadas',label:'Pessoas afetadas',type:'number'},
+    {id:'equipamentos_utilizados',label:'Equipamentos utilizados',span:3},{id:'equipes',label:'Equipes envolvidas',span:3},
+    {id:'relatorio',label:'Relatório',span:3}
+  ],cols:['data','tipo','intensidade','local','pessoas_afetadas'],colLabels:['Data','Tipo','Intensidade','Local','Pessoas'],
+  renderCol:(r,c)=>c==='data'?fmtDate(r.data):c==='intensidade'?pill(r.intensidade):(r[c]??'—'),query:'order=data.desc.nullslast'},
+
+  preparacao_dc:{table:'dc_preparacao',title:'Planos de Preparação',fields:[
+    {id:'item',label:'Item',span:2,required:true},
+    {id:'fase',label:'Fase',type:'select',opts:[['planejamento','Planejamento'],['execucao','Execução'],['verificacao','Verificação'],['finalizacao','Finalização']]},
+    {id:'responsavel',label:'Responsável'},{id:'evento_ref',label:'Evento de referência'},
+    {id:'concluido',label:'Concluído',type:'select',opts:[['true','Sim'],['false','Não']]},
+    {id:'data_conclusao',label:'Data de conclusão',type:'datetime-local'},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['item','fase','responsavel','concluido','data_conclusao'],colLabels:['Item','Fase','Responsável','Concluído','Data Conclusão'],
+  renderCol:(r,c)=>c==='fase'?pill(r.fase):c==='concluido'?pill(String(r.concluido),r.concluido?'Sim':'Não'):c==='data_conclusao'?fmtDateTime(r.data_conclusao):(r[c]||'—'),query:'order=criado_em.desc'},
+
+  danos_dc:{table:'dc_danos',title:'Avaliação de Danos',fields:[
+    {id:'ocorrencia_id',label:'Ocorrência',type:'ref',ref:'ocorrencias_dc'},
+    {id:'evento_id',label:'Evento',type:'ref',ref:'eventos_hist'},
+    {id:'tipo',label:'Tipo de dano',type:'select',opts:[['estrutural','Estrutural'],['ambiental','Ambiental'],['humano','Humano'],['material','Material'],['outro','Outro']]},
+    {id:'descricao',label:'Descrição',span:3},{id:'local',label:'Local',span:2},{id:'bairro',label:'Bairro'},
+    {id:'pessoas_afetadas',label:'Pessoas afetadas',type:'number'},{id:'familias_afetadas',label:'Famílias afetadas',type:'number'},
+    {id:'valor_estimado',label:'Valor estimado (R$)',type:'money'},
+    {id:'observacoes',label:'Observações',span:3}
+  ],cols:['tipo','local','bairro','pessoas_afetadas','valor_estimado'],colLabels:['Tipo','Local','Bairro','Pessoas','Valor (R$)'],
+  renderCol:(r,c)=>c==='tipo'?pill(r.tipo):c==='valor_estimado'?money(r.valor_estimado):(r[c]??'—'),query:'order=criado_em.desc'},
+
+  notas_tecnicas:{table:'dc_notas_tecnicas',title:'Notas Técnicas',fields:[
+    {id:'numero',label:'Número'},{id:'titulo',label:'Título',span:2,required:true},
+    {id:'data_publicacao',label:'Data de publicação',type:'date'},{id:'assunto',label:'Assunto',span:2},
+    {id:'resumo',label:'Resumo',span:3},{id:'situacao_atual',label:'Situação atual',span:3},
+    {id:'riscos',label:'Riscos',span:3},{id:'recomendacoes',label:'Recomendações',span:3},
+    {id:'periodo_analisado',label:'Período analisado'},{id:'fonte',label:'Fonte'},
+    {id:'pdf_url',label:'URL do PDF'},{id:'external_id',label:'ID externo'},
+    {id:'ativo',label:'Ativo',type:'select',opts:[['true','Sim'],['false','Não']]}
+  ],cols:['numero','titulo','data_publicacao','assunto','ativo'],colLabels:['Nº','Título','Data','Assunto','Ativo'],
+  renderCol:(r,c)=>c==='data_publicacao'?fmtDate(r.data_publicacao):c==='ativo'?pill(String(r.ativo),r.ativo?'Sim':'Não'):(r[c]||'—'),query:'order=data_publicacao.desc.nullslast'},
+};
+
+const REF_TABLES={ocorrencias_dc:'dc_ocorrencias',abrigos_dc:'dc_abrigos',equipes_dc:'dc_equipes',eventos_hist:'dc_eventos_historico'};
+const REF_LABEL_FIELD={ocorrencias_dc:'protocolo',abrigos_dc:'nome',equipes_dc:'nome',eventos_hist:'tipo'};
+async function loadRefOptions(k){if(caches[k])return caches[k];try{const d=await sbGet(REF_TABLES[k],'select=id,'+REF_LABEL_FIELD[k]+'&order='+REF_LABEL_FIELD[k]+'.asc');caches[k]=d;return d;}catch(e){return[];}}
+
+function buildViews(){
+  let html='<section class="view active" id="view-dashboard_dc"><div class="topbar"><div><h1>🚨 Dashboard — Defesa Civil Ivatuba</h1><div class="sub">Visão geral da situação do município, ocorrências, alertas e recursos</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" onclick="sincronizarAlertas()" id="btn-sync-alertas">🔄 Sincronizar Alertas</button><button class="btn-ghost" onclick="processarFila()" id="btn-proc-fila">📤 Processar Fila</button><button class="btn-ghost" onclick="gerarRelatorioGeral()">📄 Relatório Geral (PDF)</button></div></div>'+
+    '<div class="kpi-grid" id="dash-kpi"></div>'+
+    '<div class="panel" style="margin-bottom:18px;"><h3>📡 Notificações Automáticas</h3><p class="panel-sub">Quando novos alertas são sincronizados, todos os moradores cadastrados recebem SMS/WhatsApp automaticamente.</p><div id="dash-notif-status" style="font-size:13px;"></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>📊 Status do Município</h3><div id="dash-status"></div></div><div class="panel"><h3>🌤️ Clima Ivatuba</h3><div id="dash-clima"><p style="color:var(--muted);font-size:12px;">Carregando...</p></div></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>🌧️ Alertas Ativos</h3><div id="dash-alertas-panel"></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>📍 Últimas Ocorrências</h3><div id="dash-ocorrencias"></div></div><div class="panel"><h3>🏠 Abrigos</h3><div id="dash-abrigos"></div></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>⚠️ Pontos de Atenção</h3><div id="dash-atencao"></div></div><div class="panel"><h3>👥 Equipes</h3><div id="dash-equipes"></div></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>📊 Ocorrências por Tipo</h3><div style="position:relative;width:100%;height:280px;"><canvas id="chart-oc-tipo"></canvas></div></div><div class="panel"><h3>📈 Ocorrências por Mês</h3><div style="position:relative;width:100%;height:280px;"><canvas id="chart-oc-mes"></canvas></div></div></div>'+
+    '<div class="grid-2"><div class="panel"><h3>🔴 Ocorrências por Status</h3><div style="position:relative;width:100%;height:280px;"><canvas id="chart-oc-status"></canvas></div></div><div class="panel"><h3>⏱️ Tempo Médio de Resposta</h3><div id="dash-tempo-resposta" style="min-height:100px;"></div></div></div></section>';
+
+  html+='<section class="view" id="view-config_dc"><div class="topbar"><div><h1>🔴 Status do Município</h1><div class="sub">Gerencie o nível de alerta exibido para os cidadãos na página Ivatuba Protegida</div></div></div>'+
+    '<div class="panel"><h3>Alterar status geral</h3><p class="panel-sub">O status será exibido no topo da página pública.</p><div class="form-grid">'+
+    '<div class="field"><label>Status</label><select id="cfg-status"><option value="normal">🟢 Normal</option><option value="atencao">🟡 Atenção</option><option value="alerta">🟠 Alerta</option><option value="emergencia">🔴 Emergência</option></select></div>'+
+    '<div class="field span-2"><label>Mensagem personalizada</label><input id="cfg-msg" placeholder="Ex: Chuvas previstas para as próximas 48h"></div></div>'+
+    '<div class="form-actions"><button class="btn-accent" onclick="salvarConfig()" id="cfg-btn">Salvar status</button> <button class="btn-ghost" onclick="atualizarClima()" id="cfg-clima-btn" style="margin-left:8px;">🌤️ Atualizar pelo Clima</button></div>'+
+    '<div id="clima-info" style="margin-top:14px;"></div></div></section>';
+
+  Object.keys(MODULES).forEach(key=>{
+    const m=MODULES[key];
+    html+='<section class="view" id="view-'+key+'"><div class="topbar"><div><h1>'+m.title+'</h1></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" onclick="exportPdf(\''+key+'\')">PDF</button><button class="btn-ghost" onclick="exportXlsx(\''+key+'\')">Excel</button><button class="btn-accent" onclick="toggleForm(\''+key+'\')">+ Novo</button></div></div>';
+    html+='<div class="kpi-grid" id="kpi-'+key+'"></div>';
+    html+='<div class="panel" id="form-'+key+'" style="display:none;"><h3 id="ft-'+key+'">Novo registro</h3><div class="form-grid">';
+    m.fields.forEach(f=>{const sp=f.span?'span-'+f.span:'';
+      if(f.type==='checkbox')html+='<div class="field '+sp+'"><label style="text-transform:none;letter-spacing:0;font-weight:600;padding-top:20px;"><input type="checkbox" id="cf-'+key+'-'+f.id+'" style="width:auto;margin-right:8px;vertical-align:middle;"> '+f.label+'</label></div>';
+      else if(f.type==='select'){html+='<div class="field '+sp+'"><label>'+f.label+'</label><select id="cf-'+key+'-'+f.id+'">';(f.opts||[]).forEach(([v,l])=>{html+='<option value="'+v+'">'+l+'</option>';});html+='</select></div>';}
+      else if(f.type==='ref')html+='<div class="field '+sp+'"><label>'+f.label+'</label><select id="cf-'+key+'-'+f.id+'"><option value="">Selecione...</option></select></div>';
+      else{const t=f.type==='money'?'text':(f.type==='datetime-local'?'datetime-local':f.type||'text');const isTa=f.span>=2&&(f.id==='descricao'||f.id==='texto'||f.id==='observacoes'||f.id==='conclusao'||f.id==='recomendacoes'||f.id==='historico'||f.id==='relatorio'||f.id==='danos'||f.id==='equipamentos_utilizados'||f.id==='equipes'||f.id==='integrantes');html+='<div class="field '+sp+'"><label>'+f.label+'</label>'+(isTa?'<textarea id="cf-'+key+'-'+f.id+'" rows="3"></textarea>':'<input id="cf-'+key+'-'+f.id+'" type="'+t+'"'+(f.type==='money'?' inputmode="decimal"':'')+'>')+'</div>';}
+    });
+    html+='</div><div class="form-actions"><button class="btn-ghost" onclick="toggleForm(\''+key+'\')">Cancelar</button><button class="btn-accent" onclick="submitCrud(\''+key+'\')" id="sb-'+key+'">Salvar</button></div></div>';
+    html+='<div class="panel"><h3>Registros</h3><p class="panel-sub" id="cnt-'+key+'"></p><div style="overflow-x:auto;"><table><thead><tr>';
+    m.colLabels.forEach(l=>{html+='<th>'+l+'</th>';});
+    html+='<th></th></tr></thead><tbody id="tbl-'+key+'"></tbody></table></div></div></section>';
+  });
+
+  html+='<section class="view" id="view-relatorios_dc"><div class="topbar"><div><h1>Relatórios</h1></div></div><div class="panel"><h3>Exportar relatórios</h3><div class="form-grid">';
+  Object.keys(MODULES).forEach(k=>{html+='<div class="field"><button class="btn-ghost" style="width:100%;" onclick="exportPdf(\''+k+'\')">'+MODULES[k].title+' (PDF)</button></div>';});
+  html+='<div class="field"><button class="btn-accent" style="width:100%;" onclick="gerarRelatorioGeral()">Relatório Geral (PDF)</button></div>';
+  html+='</div></div></section>';
+
+  html+='<section class="view" id="view-auditoria_dc"><div class="topbar"><div><h1>Auditoria</h1></div></div><div class="panel"><h3>Registros de auditoria</h3><p class="panel-sub" id="cnt-audit"></p><div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Detalhes</th></tr></thead><tbody id="tbl-audit"></tbody></table></div></div></section>';
+
+  // === CONFIGURAÇÕES DO DESENVOLVEDOR ===
+  html+='<section class="view" id="view-dev_config"><div class="topbar"><div><h1>⚙️ Configurações</h1><div class="sub">Informações do desenvolvedor, plataforma e município</div></div></div>';
+  html+='<div class="panel"><h3>Desenvolvedor</h3><p class="panel-sub">Informações exibidas no rodapé do sistema</p><div class="form-grid">';
+  html+='<div class="field"><label>Nome do desenvolvedor</label><input id="devcfg-name" placeholder="Gabriel Oliveira"></div>';
+  html+='<div class="field"><label>Empresa</label><input id="devcfg-company" placeholder=""></div>';
+  html+='<div class="field"><label>Website</label><input id="devcfg-website" placeholder="https://..."></div>';
+  html+='<div class="field"><label>Contato</label><input id="devcfg-contact" placeholder="email ou telefone"></div>';
+  html+='</div></div>';
+  html+='<div class="panel"><h3>Plataforma</h3><div class="form-grid">';
+  html+='<div class="field"><label>Nome da plataforma</label><input id="devcfg-platform" placeholder="Defesa Civil Ivatuba"></div>';
+  html+='<div class="field"><label>Versão</label><input id="devcfg-version" placeholder="2.0.0"></div>';
+  html+='<div class="field"><label>Município</label><input id="devcfg-municipio" placeholder="Ivatuba"></div>';
+  html+='<div class="field"><label>Estado</label><input id="devcfg-estado" placeholder="Paraná"></div>';
+  html+='</div><div class="form-actions"><button class="btn-accent" onclick="salvarDevConfig()" id="devcfg-btn">Salvar configurações</button></div></div></section>';
+
+  // === SMS AUTOMATICO ===
+  html+='<section class="view" id="view-sms_dc">';
+  html+='<div class="topbar"><div><h1>📱 Alertas WhatsApp/SMS</h1><div class="sub">Envie alertas por WhatsApp e SMS para os moradores cadastrados</div></div></div>';
+  // KPIs
+  html+='<div class="kpi-grid"><div class="kpi"><div class="kpi-val" id="sms-kpi-pessoas">0</div><div class="kpi-label">Pessoas Cadastradas</div></div><div class="kpi"><div class="kpi-val" id="sms-kpi-enviados">0</div><div class="kpi-label">SMS Enviados</div></div><div class="kpi"><div class="kpi-val" id="sms-kpi-falhas">0</div><div class="kpi-label">Falhas</div></div></div>';
+  // Form novo alerta SMS
+  html+='<div class="panel"><h3>🚨 Enviar Alerta com SMS</h3>';
+  html+='<div class="form-grid">';
+  html+='<div class="field span-2"><label>Título do Alerta</label><input id="sms-titulo" placeholder="Ex: Chuva intensa nas próximas horas"></div>';
+  html+='<div class="field"><label>Tipo</label><select id="sms-tipo"><option value="">Selecione...</option><option value="chuva_intensa">Chuva Intensa</option><option value="tempestade">Tempestade</option><option value="vendaval">Vendaval</option><option value="alagamento">Alagamento</option><option value="enchente">Enchente</option><option value="risco_deslizamento">Risco de Deslizamento</option><option value="incendio">Incêndio</option><option value="informacao">Informação</option></select></div>';
+  html+='<div class="field"><label>Nível</label><select id="sms-nivel"><option value="atencao">⚠️ Atenção</option><option value="alerta">🟠 Alerta</option><option value="emergencia">🔴 Emergência</option><option value="informativo">ℹ️ Informativo</option></select></div>';
+  html+='<div class="field span-3"><label>Descrição</label><textarea id="sms-descricao" rows="2" placeholder="Detalhes do alerta..."></textarea></div>';
+  html+='<div class="field span-3"><label>Mensagem SMS (máx 160 caracteres)</label><textarea id="sms-mensagem" rows="3" maxlength="160" oninput="document.getElementById(\'sms-char\').textContent=this.value.length" placeholder="ALERTA DEFESA CIVIL IVATUBA - ..."></textarea><div style="font-size:11px;color:var(--muted);text-align:right;margin-top:2px;"><span id="sms-char">0</span>/160 caracteres</div></div>';
+  html+='<div class="field"><label>Abrangência</label><select id="sms-abrangencia"><option value="todos">Todos cadastrados</option><option value="bairro">Bairro específico</option></select></div>';
+  html+='<div class="field"><label>Bairro alvo (se específico)</label><input id="sms-bairro-alvo" placeholder="Nome do bairro"></div>';
+  html+='<div class="field"><label>Fonte</label><input id="sms-fonte" placeholder="Ex: INMET, Simepar"></div>';
+  html+='</div>';
+  // Templates rápidos
+  html+='<div style="margin:12px 0;"><strong style="font-size:12px;">Modelos rápidos:</strong><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">';
+  html+='<button class="btn-ghost" style="font-size:11px;" onclick="usarModeloSMS(0)">🌧️ Chuva</button>';
+  html+='<button class="btn-ghost" style="font-size:11px;" onclick="usarModeloSMS(1)">🌊 Alagamento</button>';
+  html+='<button class="btn-ghost" style="font-size:11px;" onclick="usarModeloSMS(2)">🌪️ Vendaval</button>';
+  html+='<button class="btn-ghost" style="font-size:11px;" onclick="usarModeloSMS(3)">🔴 Emergência</button>';
+  html+='<button class="btn-ghost" style="font-size:11px;" onclick="usarModeloSMS(4)">ℹ️ Informativo</button>';
+  html+='</div></div>';
+  // Preview
+  html+='<div style="background:#1E293B;color:#10B981;border-radius:10px;padding:12px;font-family:monospace;font-size:12px;margin:10px 0;min-height:40px;" id="sms-preview">Pré-visualização da mensagem...</div>';
+  // Confirmação emergência
+  html+='<div id="sms-confirm-box" style="display:none;background:#FEF2F2;border:2px solid var(--danger);border-radius:10px;padding:14px;text-align:center;margin:10px 0;"><strong style="color:var(--danger);">⚠️ EMERGÊNCIA — Digite CONFIRMAR:</strong><br><input id="sms-confirm-input" style="margin-top:6px;padding:6px;border:2px solid var(--danger);border-radius:6px;text-align:center;font-weight:700;width:200px;" placeholder="CONFIRMAR"></div>';
+  html+='<div style="margin-top:14px;display:flex;gap:8px;">';
+  html+='<button class="btn-accent" style="flex:1;padding:12px;font-size:14px;" id="sms-btn-enviar" onclick="enviarAlertaSMS()">🚨 PUBLICAR ALERTA E NOTIFICAR</button>';
+  html+='</div>';
+  html+='<div id="sms-resultado" style="margin-top:10px;"></div>';
+  html+='</div>';
+  // Histórico SMS
+  html+='<div class="panel"><h3>📋 Últimos Envios de SMS</h3><div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Telefone</th><th>Mensagem</th><th>Status</th><th>Provedor</th></tr></thead><tbody id="sms-logs-tbody"></tbody></table></div></div>';
+  // Info 40199
+  html+='<div class="panel"><h3>📱 Sistema 40199 — Defesa Civil do PR</h3><div style="background:#EFF6FF;border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:14px;font-size:12px;line-height:1.7;color:var(--ink-soft);">O cidadão envia o <strong>CEP</strong> para o número <strong>40199</strong> e recebe alertas de desastres naturais. <a href="https://www.defesacivil.pr.gov.br/servicos/Seguranca/Defesa-Civil/Receber-alertas-da-Defesa-Civil-por-SMS-ERrZ4PN6" target="_blank" style="color:var(--royal);">Saiba mais</a></div></div>';
+  html+='</section>';
+
+  // === PESSOAS NOTIFICAÇÃO ===
+  html+='<section class="view" id="view-pessoas_sms">';
+  html+='<div class="topbar"><div><h1>👥 Pessoas para Notificação</h1><div class="sub">Moradores cadastrados para receber alertas por WhatsApp/SMS</div></div><button class="btn-accent" onclick="abrirFormPessoaSMS()">+ Cadastrar</button></div>';
+  html+='<div class="panel"><div style="overflow-x:auto;"><table><thead><tr><th>Nome</th><th>Telefone</th><th>WhatsApp</th><th>Bairro</th><th>Canal</th><th>Status</th><th>Ações</th></tr></thead><tbody id="pessoas-sms-tbody"></tbody></table></div></div>';
+  // Modal cadastrar pessoa
+  html+='<div id="modal-pessoa-sms" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;">';
+  html+='<div style="background:#fff;border-radius:16px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;">';
+  html+='<h3 style="font-size:18px;font-weight:800;margin-bottom:14px;" id="modal-pessoa-sms-title">Cadastrar Pessoa</h3>';
+  html+='<input type="hidden" id="ps-id">';
+  html+='<div class="form-grid">';
+  html+='<div class="field span-2"><label>Nome Completo</label><input id="ps-nome"></div>';
+  html+='<div class="field"><label>Telefone (SMS)</label><input id="ps-telefone" placeholder="44999990000"></div>';
+  html+='<div class="field"><label>WhatsApp</label><input id="ps-whatsapp" placeholder="44999990000"></div>';
+  html+='<div class="field"><label>Bairro</label><input id="ps-bairro"></div>';
+  html+='<div class="field"><label>CEP</label><input id="ps-cep"></div>';
+  html+='<div class="field span-2"><label>Endereço</label><input id="ps-endereco"></div>';
+  html+='<div class="field"><label>Email</label><input id="ps-email" type="email"></div>';
+  html+='</div>';
+  html+='<div style="display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;">';
+  html+='<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ps-whatsapp-check" checked> Receber WhatsApp</label>';
+  html+='<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ps-sms"> Receber SMS</label>';
+  html+='<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ps-idoso"> Idoso</label>';
+  html+='<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ps-crianca"> Criança</label>';
+  html+='<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ps-deficiente"> PcD</label>';
+  html+='</div>';
+  html+='<div style="display:flex;gap:8px;margin-top:14px;">';
+  html+='<button class="btn-accent" onclick="salvarPessoaSMS()" style="flex:1;">Salvar</button>';
+  html+='<button class="btn-ghost" onclick="fecharModalPessoaSMS()">Cancelar</button>';
+  html+='</div></div></div>';
+  html+='</section>';
+
+  document.getElementById('main-content').innerHTML=html;
+}
+
+let editingId={};
+function toggleForm(k){const p=document.getElementById('form-'+k);const o=p.style.display==='none';p.style.display=o?'block':'none';if(o&&!editingId[k]){clearForm(k);document.getElementById('ft-'+k).textContent='Novo registro';document.getElementById('sb-'+k).textContent='Salvar';loadRefs(k);}if(!o)editingId[k]=null;}
+function clearForm(k){MODULES[k].fields.forEach(f=>{const el=document.getElementById('cf-'+k+'-'+f.id);if(!el)return;if(f.type==='checkbox')el.checked=false;else if(f.type==='select')el.selectedIndex=0;else el.value='';});}
+async function loadRefs(k){for(const f of MODULES[k].fields){if(f.type!=='ref')continue;const sel=document.getElementById('cf-'+k+'-'+f.id);const opts=await loadRefOptions(f.ref);const lbl=REF_LABEL_FIELD[f.ref];sel.innerHTML='<option value="">Selecione...</option>'+opts.map(o=>'<option value="'+o.id+'">'+o[lbl]+'</option>').join('');}}
+async function submitCrud(k){
+  const m=MODULES[k],data={tenant_id:tid()};
+  m.fields.forEach(f=>{const el=document.getElementById('cf-'+k+'-'+f.id);if(!el)return;let v;
+    if(f.type==='checkbox')v=el.checked;
+    else if(f.type==='money')v=parseMoney(el.value);
+    else if(f.type==='number')v=el.value?Number(el.value):null;
+    else if(f.type==='ref')v=el.value||null;
+    else if(f.type==='select'&&(f.id==='ativo'||f.id==='disponivel'||f.id==='monitorado'||f.id==='enviado'))v=el.value==='true';
+    else v=el.tagName==='TEXTAREA'?(el.value.trim()||null):(el.value.trim()||null);
+    data[f.id]=v;});
+  const btn=document.getElementById('sb-'+k);btn.disabled=true;
+  try{
+    if(editingId[k]){await sbPatch(m.table,'id=eq.'+editingId[k],data);
+      if(k==='ocorrencias_dc'&&data.status&&data.solicitante_telefone){ofereceWhatsApp(data);}
+      editingId[k]=null;
+    }else{
+      const res=await sbPost(m.table,data);
+      if(k==='ocorrencias_dc'&&res[0]&&res[0].solicitante_telefone){ofereceWhatsApp(res[0]);}
+    }
+    toggleForm(k);loadData(k);
+  }catch(e){alert('Erro: '+e.message.slice(0,200));}finally{btn.disabled=false;}}
+async function editCrud(k,id){const m=MODULES[k];try{const rows=await sbGet(m.table,'id=eq.'+id);const r=rows[0];if(!r)return;editingId[k]=id;document.getElementById('form-'+k).style.display='block';document.getElementById('ft-'+k).textContent='Editar registro';document.getElementById('sb-'+k).textContent='Salvar alterações';await loadRefs(k);m.fields.forEach(f=>{const el=document.getElementById('cf-'+k+'-'+f.id);if(!el)return;if(f.type==='checkbox')el.checked=!!r[f.id];else if(f.type==='select'&&(f.id==='ativo'||f.id==='disponivel'||f.id==='monitorado'||f.id==='enviado'))el.value=String(r[f.id]);else el.value=r[f.id]??'';});}catch(e){alert('Erro: '+e.message.slice(0,200));}}
+async function deleteCrud(k,id){if(!confirm('Excluir?'))return;try{await sbDel(MODULES[k].table,'id=eq.'+id);loadData(k);}catch(e){alert('Erro: '+e.message.slice(0,200));}}
+
+const STATUS_MSG={
+  recebida:'foi *recebida* pela Defesa Civil e será analisada em breve',
+  em_analise:'está *em análise* pela equipe da Defesa Civil',
+  equipe_acionada:'teve a *equipe acionada* e está a caminho do local',
+  em_atendimento:'está *em atendimento* — nossa equipe está no local',
+  resolvida:'foi *resolvida* com sucesso. Obrigado por comunicar!',
+  encerrada:'foi *encerrada*. Caso persista, registre uma nova ocorrência'
+};
+function formatFone(tel){if(!tel)return'';return tel.replace(/\D/g,'').replace(/^0+/,'').replace(/^(\d{10,11})$/,'55$1');}
+function ofereceWhatsApp(data){
+  const tel=formatFone(data.solicitante_telefone);if(!tel)return;
+  const st=STATUS_MSG[data.status]||'teve o status atualizado para *'+((data.status||'').replace(/_/g,' '))+'*';
+  const msg='🚨 *Defesa Civil — Ivatuba Protegida*\n\nOlá'+(data.solicitante_nome?', '+data.solicitante_nome:'')+',\n\nSua ocorrência'+(data.protocolo?' (protocolo *'+data.protocolo+'*)':'')+' do tipo *'+(data.tipo||'—')+'* '+st+'.\n\n📍 '+(data.endereco||'')+(data.bairro?' — '+data.bairro:'')+'\n\nPrefeitura Municipal de Ivatuba\nDefesa Civil';
+  const url='https://api.whatsapp.com/send?phone='+encodeURIComponent(tel)+'&text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+function enviarWhatsApp(id){
+  const data=(caches['ocorrencias_dc_data']||[]).find(r=>r.id===id);
+  if(!data){alert('Ocorrência não encontrada.');return;}
+  if(!data.solicitante_telefone){alert('Essa ocorrência não possui telefone do solicitante.');return;}
+  ofereceWhatsApp(data);
+}
+async function notificarAlertaWA(id){
+  const data=(caches['alertas_dc_data']||[]).find(r=>r.id===id);
+  if(!data){alert('Alerta não encontrado.');return;}
+  const nivelLabel={emergencia:'EMERGÊNCIA',alerta:'ALERTA',atencao:'ATENÇÃO',informativo:'INFORMATIVO'};
+  const msg='⚠️ '+(nivelLabel[data.nivel]||'ALERTA')+' — DEFESA CIVIL IVATUBA\n\n'+(data.titulo||'')+'\n\n'+(data.descricao||'')+'\n\n'+(data.recomendacoes?'Orientações: '+data.recomendacoes+'\n\n':'')+'📍 '+(data.regiao_afetada||'Ivatuba')+'\nFonte: '+(data.fonte||'Defesa Civil Ivatuba')+'\n\nInfo: conectagestao360.vercel.app';
+  try{
+    const pessoas=await sbGet('dc_pessoas_alerta','select=id,nome,telefone,whatsapp,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo');
+    if(!pessoas||!pessoas.length){alert('Nenhuma pessoa cadastrada.');return;}
+    abrirNotificarWhatsApp(id,msg,pessoas);
+  }catch(e){alert('Erro ao buscar pessoas: '+e.message.slice(0,100));}
+}
+function abrirResponder(id){
+  const data=(caches['ocorrencias_dc_data']||[]).find(r=>r.id===id);
+  if(!data){alert('Ocorrência não encontrada.');return;}
+  document.getElementById('resp-oc-id').value=id;
+  document.getElementById('resp-oc-info').innerHTML='<strong>'+( data.protocolo||'—')+'</strong> — '+(data.tipo||'—')+'<br><span style="font-size:12px;color:var(--ink-soft);">Solicitante: '+(data.solicitante_nome||'Não informado')+' | Tel: '+(data.solicitante_telefone||'Não informado')+'</span>';
+  document.getElementById('resp-oc-status').value=data.status||'recebida';
+  document.getElementById('resp-oc-obs').value='';
+  document.getElementById('resp-oc-msg').value='';
+  atualizarPreviewResp();
+  document.getElementById('modal-responder-oc').style.display='flex';
+}
+function fecharResponder(){document.getElementById('modal-responder-oc').style.display='none';}
+function atualizarPreviewResp(){
+  const id=document.getElementById('resp-oc-id').value;
+  const data=(caches['ocorrencias_dc_data']||[]).find(r=>r.id===id);
+  if(!data)return;
+  const status=document.getElementById('resp-oc-status').value;
+  const obs=document.getElementById('resp-oc-obs').value.trim();
+  const st=STATUS_MSG[status]||'teve o status atualizado para *'+status.replace(/_/g,' ')+'*';
+  let msg='🚨 *Defesa Civil — Ivatuba Protegida*\n\nOlá'+(data.solicitante_nome?', '+data.solicitante_nome:'')+',\n\nSua ocorrência'+(data.protocolo?' (protocolo *'+data.protocolo+'*)':'')+' do tipo *'+(data.tipo||'—')+'* '+st+'.';
+  if(obs)msg+='\n\n📝 Observação: '+obs;
+  msg+='\n\n📍 '+(data.endereco||'')+(data.bairro?' — '+data.bairro:'');
+  msg+='\n\nPrefeitura Municipal de Ivatuba\nDefesa Civil';
+  document.getElementById('resp-oc-msg').value=msg;
+}
+async function confirmarResponder(){
+  const id=document.getElementById('resp-oc-id').value;
+  const data=(caches['ocorrencias_dc_data']||[]).find(r=>r.id===id);
+  if(!data)return;
+  const novoStatus=document.getElementById('resp-oc-status').value;
+  const obs=document.getElementById('resp-oc-obs').value.trim();
+  const msg=document.getElementById('resp-oc-msg').value;
+  const btn=document.getElementById('resp-oc-btn');
+  btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    await sbPatch('dc_ocorrencias','id=eq.'+id,{status:novoStatus,observacoes:obs||data.observacoes||''});
+    try{await sbPost('dc_ocorrencia_historico',{tenant_id:tid(),ocorrencia_id:id,status_anterior:data.status,status_novo:novoStatus,descricao:obs||'Status atualizado via resposta',usuario:'Admin'});}catch(e){}
+    const tel=formatFone(data.solicitante_telefone);
+    if(tel){
+      const url='https://api.whatsapp.com/send?phone='+encodeURIComponent(tel)+'&text='+encodeURIComponent(msg);
+      window.open(url,'_blank');
+    }else{alert('Status atualizado! Sem telefone para enviar WhatsApp.');}
+    fecharResponder();
+    loadData('ocorrencias_dc');
+  }catch(e){alert('Erro: '+e.message.slice(0,200));}finally{btn.disabled=false;btn.textContent='Salvar e Enviar WhatsApp';}
+}
+
+async function loadData(k){const m=MODULES[k];try{const data=await sbGet(m.table,'select=*&'+(m.query||'order=criado_em.desc'));caches[k+'_data']=data;document.getElementById('cnt-'+k).textContent=data.length+' registro(s)';const tb=document.getElementById('tbl-'+k);tb.innerHTML=data.length?data.map(r=>{let row='<tr>';m.cols.forEach(c=>{row+='<td>'+m.renderCol(r,c)+'</td>';});row+='<td style="white-space:nowrap;">';if(k==='alertas_dc')row+='<button style="padding:4px 8px;font-size:11px;margin-right:4px;background:#25D366;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;" onclick="notificarAlertaWA(\''+r.id+'\')">📲 Notificar</button>';
+if(k==='ocorrencias_dc')row+='<button style="padding:4px 8px;font-size:11px;margin-right:4px;background:#1E4D8C;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;" onclick="abrirResponder(\''+r.id+'\')">Responder</button>';row+='<button class="btn-ghost" style="padding:4px 8px;font-size:11px;margin-right:4px;" onclick="editCrud(\''+k+'\',\''+r.id+'\')">Editar</button><button class="btn-danger" onclick="deleteCrud(\''+k+'\',\''+r.id+'\')">Excluir</button></td></tr>';return row;}).join(''):'<tr><td colspan="'+(m.cols.length+1)+'" style="text-align:center;color:var(--muted);padding:24px;">Nenhum registro.</td></tr>';buildKpis(k,data);}catch(e){document.getElementById('tbl-'+k).innerHTML='<tr><td colspan="'+(m.cols.length+1)+'" style="color:var(--danger);">Erro: '+e.message.slice(0,100)+'</td></tr>';}}
+
+function buildKpis(k,data){const el=document.getElementById('kpi-'+k);if(!el)return;const n=data.length;let h='<div class="kpi"><div class="ico">Total</div><div class="num">'+n+'</div><div class="lbl">registros</div></div>';
+  if(k==='ocorrencias_dc'){
+    const ab=data.filter(r=>r.status!=='resolvida'&&r.status!=='encerrada').length;
+    const res=data.filter(r=>r.status==='resolvida'||r.status==='encerrada').length;
+    const crit=data.filter(r=>r.prioridade==='critica'&&r.status!=='resolvida'&&r.status!=='encerrada').length;
+    h+='<div class="kpi"><div class="ico">Abertas</div><div class="num" style="color:var(--warn);">'+ab+'</div><div class="lbl">em andamento</div></div>';
+    h+='<div class="kpi"><div class="ico">Resolvidas</div><div class="num" style="color:var(--ok);">'+res+'</div><div class="lbl">encerradas</div></div>';
+    h+='<div class="kpi"><div class="ico">Críticas</div><div class="num" style="color:var(--danger);">'+crit+'</div><div class="lbl">ativas</div></div>';
+  }
+  else if(k==='alertas_dc'){const at=data.filter(r=>r.ativo).length;h+='<div class="kpi"><div class="ico">Ativos</div><div class="num" style="color:var(--danger);">'+at+'</div><div class="lbl">alertas</div></div>';}
+  else if(k==='abrigos_dc'){const disp=data.filter(r=>r.situacao==='disponivel').length;const vagas=data.reduce((s,r)=>s+(Number(r.vagas_disponiveis)||0),0);h+='<div class="kpi"><div class="ico">Disponíveis</div><div class="num" style="color:var(--ok);">'+disp+'</div><div class="lbl">abrigos</div></div><div class="kpi"><div class="ico">Vagas</div><div class="num">'+vagas+'</div><div class="lbl">disponíveis</div></div>';}
+  else if(k==='recursos_dc'){const total=data.length;const ruim=data.filter(r=>r.situacao==='ruim').length;h+='<div class="kpi"><div class="ico">Total</div><div class="num">'+total+'</div><div class="lbl">recursos</div></div>';if(ruim)h+='<div class="kpi"><div class="ico">Em estado ruim</div><div class="num" style="color:var(--danger);">'+ruim+'</div><div class="lbl">itens</div></div>';}
+  else if(k==='equipes_dc'){const disp=data.filter(r=>r.disponibilidade==='disponivel').length;h+='<div class="kpi"><div class="ico">Disponíveis</div><div class="num" style="color:var(--ok);">'+disp+'</div><div class="lbl">equipes</div></div><div class="kpi"><div class="ico">Total</div><div class="num">'+data.length+'</div><div class="lbl">cadastradas</div></div>';}
+  else if(k==='pontos_risco'){const crit=data.filter(r=>r.nivel_risco==='critico'||r.nivel_risco==='alto').length;h+='<div class="kpi"><div class="ico">Alto/Crítico</div><div class="num" style="color:var(--danger);">'+crit+'</div><div class="lbl">pontos</div></div>';}
+  else if(k==='danos_dc'){const pes=data.reduce((s,r)=>s+(Number(r.pessoas_afetadas)||0),0);const val=data.reduce((s,r)=>s+(Number(r.valor_estimado)||0),0);h+='<div class="kpi"><div class="ico">Pessoas</div><div class="num">'+pes+'</div><div class="lbl">afetadas</div></div><div class="kpi"><div class="ico">Danos</div><div class="num">'+moneyShort(val)+'</div><div class="lbl">estimados</div></div>';}
+  el.innerHTML=h;}
+
+let cfgId=null;
+async function loadConfig(){try{const rows=await sbGet('dc_config','select=*&tenant_id=eq.'+tid()+'&limit=1');if(rows.length){const c=rows[0];cfgId=c.id;document.getElementById('cfg-status').value=c.status_municipio||'normal';document.getElementById('cfg-msg').value=c.status_mensagem||'';}}catch(e){}}
+async function atualizarClima(){
+  const btn=document.getElementById('cfg-clima-btn');
+  btn.disabled=true;btn.textContent='Consultando...';
+  const info=document.getElementById('clima-info');
+  try{
+    // Ivatuba, PR: lat -23.62, lon -52.22
+    const url='https://api.open-meteo.com/v1/forecast?latitude=-23.62&longitude=-52.22&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&hourly=precipitation_probability,weather_code,wind_speed_10m&forecast_days=1&timezone=America/Sao_Paulo';
+    const res=await fetch(url);
+    const d=await res.json();
+    const cur=d.current||{};
+    const hourly=d.hourly||{};
+    const wc=cur.weather_code||0;
+    const wind=cur.wind_speed_10m||0;
+    const precip=cur.precipitation||0;
+    const temp=cur.temperature_2m||0;
+    const humidity=cur.relative_humidity_2m||0;
+    // Verificar próximas horas para chuva forte
+    const probChuva=hourly.precipitation_probability||[];
+    const maxProb=Math.max(...probChuva.slice(0,12));
+    const ventoMax=Math.max(...(hourly.wind_speed_10m||[]).slice(0,12));
+    const wcFuturo=(hourly.weather_code||[]).slice(0,12);
+    const temTempestade=wcFuturo.some(c=>c>=95);
+    const temChuvaForte=wcFuturo.some(c=>c>=63&&c<95);
+    // Determinar status
+    let status='normal',mensagem='';
+    const wcDesc={0:'Céu limpo',1:'Parcialmente nublado',2:'Nublado',3:'Encoberto',45:'Nevoeiro',48:'Nevoeiro com geada',51:'Garoa leve',53:'Garoa',55:'Garoa forte',61:'Chuva leve',63:'Chuva moderada',65:'Chuva forte',71:'Neve leve',73:'Neve',75:'Neve forte',80:'Pancadas leves',81:'Pancadas',82:'Pancadas fortes',85:'Neve em pancadas',95:'Tempestade',96:'Tempestade com granizo',99:'Tempestade forte com granizo'};
+    const climaAtual=wcDesc[wc]||'Indefinido';
+    if(temTempestade||wc>=95||ventoMax>80){
+      status='emergencia';
+      mensagem='Tempestade/vendaval previsto. Ventos de até '+Math.round(ventoMax)+'km/h. Procure abrigo seguro!';
+    }else if(temChuvaForte||wc>=63||maxProb>80||ventoMax>60){
+      status='alerta';
+      mensagem='Chuva forte prevista (prob. '+maxProb+'%). Ventos de até '+Math.round(ventoMax)+'km/h. Evite áreas de risco.';
+    }else if(wc>=51||maxProb>50||ventoMax>40){
+      status='atencao';
+      mensagem='Chuva prevista nas próximas horas (prob. '+maxProb+'%). Fique atento.';
+    }else{
+      status='normal';
+      mensagem='Município sem alertas ativos. '+climaAtual+', '+Math.round(temp)+'°C.';
+    }
+    // Atualizar campos
+    document.getElementById('cfg-status').value=status;
+    document.getElementById('cfg-msg').value=mensagem;
+    // Mostrar info do clima
+    info.innerHTML='<div style="background:#EFF6FF;border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:14px;font-size:12px;line-height:1.8;">'+
+      '<strong>🌤️ Clima atual em Ivatuba:</strong><br>'+
+      '🌡️ Temperatura: <strong>'+Math.round(temp)+'°C</strong><br>'+
+      '💧 Umidade: <strong>'+Math.round(humidity)+'%</strong><br>'+
+      '💨 Vento: <strong>'+Math.round(wind)+' km/h</strong> (máx próx. 12h: '+Math.round(ventoMax)+' km/h)<br>'+
+      '🌧️ Precipitação: <strong>'+precip+' mm</strong><br>'+
+      '☁️ Condição: <strong>'+climaAtual+'</strong><br>'+
+      '📊 Prob. chuva (próx. 12h): <strong>'+maxProb+'%</strong><br>'+
+      '<hr style="border:0;border-top:1px solid rgba(37,99,235,.15);margin:8px 0;">'+
+      '➡️ Status sugerido: <strong style="color:'+(status==='emergencia'?'var(--danger)':status==='alerta'?'var(--warn)':status==='atencao'?'#D97706':'var(--ok)')+';">'+status.toUpperCase()+'</strong><br>'+
+      '<small style="color:var(--muted);">Clique "Salvar status" para aplicar na página pública.</small></div>';
+  }catch(e){
+    info.innerHTML='<div style="color:var(--danger);font-size:12px;">Erro ao consultar clima: '+e.message+'</div>';
+  }finally{btn.disabled=false;btn.textContent='🌤️ Atualizar pelo Clima';}
+}
+async function salvarConfig(){const btn=document.getElementById('cfg-btn');btn.disabled=true;const data={tenant_id:tid(),status_municipio:document.getElementById('cfg-status').value,status_mensagem:document.getElementById('cfg-msg').value.trim()||null,status_atualizado_em:new Date().toISOString()};try{if(cfgId)await sbPatch('dc_config','id=eq.'+cfgId,data);else{const r=await sbPost('dc_config',data);cfgId=r[0].id;}alert('Status atualizado!');}catch(e){alert('Erro: '+e.message.slice(0,200));}finally{btn.disabled=false;}}
+
+async function loadDashboard(){try{
+  const [cfg,al,oc,ab,eq,rec,pr,dan]=await Promise.all([
+    sbGet('dc_config','select=*&tenant_id=eq.'+tid()+'&limit=1').catch(()=>[]),
+    sbGet('dc_alertas','select=*&ativo=eq.true&order=criado_em.desc').catch(()=>[]),
+    sbGet('dc_ocorrencias','select=*&order=criado_em.desc').catch(()=>[]),
+    sbGet('dc_abrigos','select=*').catch(()=>[]),
+    sbGet('dc_equipes','select=*').catch(()=>[]),
+    sbGet('dc_recursos','select=*').catch(()=>[]),
+    sbGet('dc_pontos_risco','select=*').catch(()=>[]),
+    sbGet('dc_danos','select=*').catch(()=>[]),
+  ]);
+  const ocAbertas=oc.filter(o=>o.status!=='resolvida'&&o.status!=='encerrada').length;
+  const ocTotal=oc.length;
+  const abDisp=ab.filter(a=>a.situacao==='disponivel').length;
+  const vagasTotal=ab.reduce((s,a)=>s+(Number(a.vagas_disponiveis)||0),0);
+  const eqDisp=eq.filter(e=>e.disponibilidade==='disponivel').length;
+  const recRuim=rec.filter(r=>r.situacao==='ruim').length;
+  const prCrit=pr.filter(p=>p.nivel_risco==='critico'||p.nivel_risco==='alto').length;
+  const pesAf=dan.reduce((s,d)=>s+(Number(d.pessoas_afetadas)||0),0);
+
+  document.getElementById('dash-kpi').innerHTML=[
+    ['🚨 Alertas ativos',al.length,'alertas'],['📍 Ocorrências abertas',ocAbertas,'pendentes'],
+    ['🏠 Abrigos disponíveis',abDisp+'/'+ab.length,'abrigos'],['👥 Equipes disponíveis',eqDisp+'/'+eq.length,'equipes'],
+    ['📦 Recursos em estado ruim',recRuim,'itens'],['⚠️ Pontos de risco alto/crítico',prCrit,'pontos'],
+    ['👤 Pessoas afetadas',pesAf,'no total'],['🛏️ Vagas em abrigos',vagasTotal,'disponíveis'],
+  ].map(([i,n,l])=>'<div class="kpi"><div class="ico">'+i+'</div><div class="num">'+n+'</div><div class="lbl">'+l+'</div></div>').join('');
+
+  const status=cfg[0]||{status_municipio:'normal'};
+  const statusIcos={normal:'🟢',atencao:'🟡',alerta:'🟠',emergencia:'🔴'};
+  const statusLabels={normal:'Normal — sem alertas',atencao:'Atenção — alerta ativo',alerta:'Alerta — condições adversas',emergencia:'Emergência — situação crítica'};
+  const statusCls={normal:'ok',atencao:'warn',alerta:'warn',emergencia:'danger'};
+  document.getElementById('dash-status').innerHTML='<div class="diag diag-'+statusCls[status.status_municipio]+'">'+(statusIcos[status.status_municipio]||'🟢')+' <strong>'+statusLabels[status.status_municipio]+'</strong>'+(status.status_mensagem?' — '+status.status_mensagem:'')+'</div>'+(status.status_atualizado_em?'<p style="font-size:11px;color:var(--muted);margin-top:6px;">Atualizado em '+fmtDateTime(status.status_atualizado_em)+'</p>':'');
+
+  document.getElementById('dash-alertas-panel').innerHTML=al.length?al.slice(0,5).map(a=>{const ico={atencao:'🟡',alerta:'🟠',emergencia:'🔴'};const cls={atencao:'warn',alerta:'warn',emergencia:'danger'};return'<div class="diag diag-'+(cls[a.nivel]||'warn')+'">'+(ico[a.nivel]||'🟡')+' <strong>'+a.titulo+'</strong>'+(a.regiao_afetada?' — '+a.regiao_afetada:'')+'</div>';}).join(''):'<p style="color:var(--muted);font-size:12px;">Nenhum alerta ativo.</p>';
+
+  document.getElementById('dash-ocorrencias').innerHTML=oc.length?'<div style="overflow-x:auto;"><table><thead><tr><th>Protocolo</th><th>Tipo</th><th>Status</th><th>Prioridade</th></tr></thead><tbody>'+oc.slice(0,8).map(o=>'<tr><td>'+(o.protocolo||'—')+'</td><td>'+(o.tipo||'—')+'</td><td>'+pill(o.status)+'</td><td>'+pill(o.prioridade)+'</td></tr>').join('')+'</tbody></table></div>':'<p style="color:var(--muted);font-size:12px;">Nenhuma ocorrência registrada.</p>';
+
+  document.getElementById('dash-abrigos').innerHTML=ab.length?ab.map(a=>{const cls={disponivel:'ok',parcialmente_ocupado:'warn',lotado:'danger',indisponivel:'danger'};return'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;"><span>'+a.nome+'</span><span>'+pill(a.situacao)+'</span></div>';}).join(''):'<p style="color:var(--muted);font-size:12px;">Nenhum abrigo cadastrado.</p>';
+
+  const atencaoItems=[];
+  if(ocAbertas)atencaoItems.push({cls:'warn',msg:ocAbertas+' ocorrência(s) ainda em aberto'});
+  if(recRuim)atencaoItems.push({cls:'danger',msg:recRuim+' recurso(s) em estado ruim'});
+  if(prCrit)atencaoItems.push({cls:'danger',msg:prCrit+' ponto(s) de risco em nível alto ou crítico'});
+  const abLotado=ab.filter(a=>a.situacao==='lotado').length;
+  if(abLotado)atencaoItems.push({cls:'danger',msg:abLotado+' abrigo(s) lotado(s)'});
+  document.getElementById('dash-atencao').innerHTML=atencaoItems.length?atencaoItems.map(a=>'<div class="diag diag-'+a.cls+'">'+({ok:'🟢',warn:'🟡',danger:'🔴'}[a.cls])+' '+a.msg+'</div>').join(''):'<div class="diag diag-ok">🟢 Tudo dentro do esperado.</div>';
+
+  document.getElementById('dash-equipes').innerHTML=eq.length?eq.map(e=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;"><span><strong>'+e.nome+'</strong>'+(e.responsavel?' — '+e.responsavel:'')+'</span><span>'+pill(e.disponibilidade||'—')+'</span></div>').join(''):'<p style="color:var(--muted);font-size:12px;">Nenhuma equipe cadastrada.</p>';
+  // Notificações automáticas
+  const notifEl=document.getElementById('dash-notif-status');
+  try{
+    const[pessoas,fila]=await Promise.all([
+      sbGet('dc_pessoas_alerta','select=id&status=eq.ativo').catch(()=>[]),
+      sbGet('dc_notification_queue','select=id,status&order=criado_em.desc&limit=100').catch(()=>[]),
+    ]);
+    const pendentes=fila.filter(n=>n.status==='pendente'||n.status==='sandbox').length;
+    const enviadas=fila.filter(n=>n.status==='enviada').length;
+    const erros=fila.filter(n=>n.status==='erro').length;
+    notifEl.innerHTML='<div style="display:flex;gap:16px;flex-wrap:wrap;">'+
+      '<span>👥 <strong>'+pessoas.length+'</strong> pessoas cadastradas</span>'+
+      '<span>📤 <strong>'+pendentes+'</strong> pendentes na fila</span>'+
+      '<span>✅ <strong>'+enviadas+'</strong> enviadas</span>'+
+      (erros?'<span style="color:var(--danger);">❌ <strong>'+erros+'</strong> com erro</span>':'')+
+      '</div><div style="margin-top:8px;font-size:11px;color:var(--muted);">Cron diário: 06h (sincroniza alertas). Botões acima permitem sincronização manual a qualquer momento.</div>';
+  }catch(e){notifEl.innerHTML='<span style="color:var(--muted);font-size:12px;">Não foi possível carregar status.</span>';}
+  // Carregar clima automaticamente
+  carregarClimaDash();
+  // Carregar gráficos
+  renderChartsOc(oc);
+}catch(e){document.getElementById('dash-kpi').innerHTML='<div class="diag diag-danger">Erro: '+e.message.slice(0,200)+'</div>';}}
+async function carregarClimaDash(){
+  const el=document.getElementById('dash-clima');if(!el)return;
+  try{
+    const url='https://api.open-meteo.com/v1/forecast?latitude=-23.62&longitude=-52.22&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&hourly=precipitation_probability,weather_code,wind_speed_10m&forecast_days=1&timezone=America/Sao_Paulo';
+    const res=await fetch(url);const d=await res.json();
+    const cur=d.current||{};const hourly=d.hourly||{};
+    const wc=cur.weather_code||0;
+    const temp=Math.round(cur.temperature_2m||0);
+    const humidity=Math.round(cur.relative_humidity_2m||0);
+    const wind=Math.round(cur.wind_speed_10m||0);
+    const precip=cur.precipitation||0;
+    const probChuva=hourly.precipitation_probability||[];
+    const maxProb=Math.max(...probChuva.slice(0,12));
+    const ventoMax=Math.round(Math.max(...(hourly.wind_speed_10m||[]).slice(0,12)));
+    const wcDesc={0:'☀️ Céu limpo',1:'⛅ Parc. nublado',2:'☁️ Nublado',3:'☁️ Encoberto',45:'🌫️ Nevoeiro',51:'🌦️ Garoa',53:'🌦️ Garoa',55:'🌧️ Garoa forte',61:'🌧️ Chuva leve',63:'🌧️ Chuva moderada',65:'🌧️ Chuva forte',80:'🌦️ Pancadas',81:'🌧️ Pancadas',82:'⛈️ Pancadas fortes',95:'⛈️ Tempestade',96:'⛈️ Tempestade+granizo',99:'⛈️ Tempestade severa'};
+    const climaAtual=wcDesc[wc]||'🌤️ Indefinido';
+    let alerta='';
+    if(wc>=95||ventoMax>80)alerta='<div style="background:#FEF2F2;color:var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-weight:700;">⚠️ RISCO ALTO — Atualize o status do município!</div>';
+    else if(wc>=63||maxProb>80||ventoMax>60)alerta='<div style="background:#FEF3C7;color:var(--warn);padding:6px 10px;border-radius:6px;margin-top:6px;font-weight:700;">⚠️ ATENÇÃO — Condições adversas previstas</div>';
+    el.innerHTML='<div style="font-size:13px;line-height:2;">'+
+      '<div style="font-size:22px;font-weight:800;">'+temp+'°C</div>'+
+      climaAtual+'<br>'+
+      '💧 Umidade: '+humidity+'%<br>'+
+      '💨 Vento: '+wind+' km/h (máx '+ventoMax+')<br>'+
+      '🌧️ Prob. chuva: '+maxProb+'%<br>'+
+      (precip>0?'☔ Precipitação: '+precip+' mm<br>':'')+
+      '</div>'+alerta;
+    // Atualizar status automaticamente no banco
+    let status='normal',mensagem='';
+    if(wc>=95||ventoMax>80){status='emergencia';mensagem='Tempestade/vendaval previsto. Ventos de até '+ventoMax+'km/h. Procure abrigo seguro!';}
+    else if(wc>=63||maxProb>80||ventoMax>60){status='alerta';mensagem='Chuva forte prevista (prob. '+maxProb+'%). Ventos de até '+ventoMax+'km/h. Evite áreas de risco.';}
+    else if(wc>=51||maxProb>50||ventoMax>40){status='atencao';mensagem='Chuva prevista nas próximas horas (prob. '+maxProb+'%). Fique atento.';}
+    else{status='normal';mensagem='Município sem alertas ativos. '+(wcDesc[wc]||'').replace(/^[^\s]+\s/,'')+', '+temp+'°C.';}
+    try{
+      const cfgRows=await sbGet('dc_config','select=id,status_municipio&tenant_id=eq.'+tid()+'&limit=1');
+      const cfgData={tenant_id:tid(),status_municipio:status,status_mensagem:mensagem,status_atualizado_em:new Date().toISOString()};
+      if(cfgRows.length){await sbPatch('dc_config','id=eq.'+cfgRows[0].id,cfgData);}
+      else{await sbPost('dc_config',cfgData);}
+    }catch(e){}
+  }catch(e){el.innerHTML='<span style="color:var(--muted);font-size:12px;">Erro ao carregar clima.</span>';}
+}
+
+function renderChartsOc(oc){
+  // Chart: Ocorrências por Tipo (horizontal bar)
+  const tipoCounts={};
+  oc.forEach(o=>{const t=o.tipo||'Outros';tipoCounts[t]=(tipoCounts[t]||0)+1;});
+  const tipoEntries=Object.entries(tipoCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  drawBarChart('chart-oc-tipo',tipoEntries,['#1E4D8C','#2563EB','#3B82F6','#60A5FA','#93C5FD','#D97706','#059669','#DC2626']);
+
+  // Chart: Ocorrências por Mês (vertical bar)
+  const mesCounts={};
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  oc.forEach(o=>{if(!o.criado_em)return;const d=new Date(o.criado_em);const k=meses[d.getMonth()]+'/'+String(d.getFullYear()).slice(2);mesCounts[k]=(mesCounts[k]||0)+1;});
+  const mesKeys=Object.keys(mesCounts).slice(-12);
+  const mesEntries=mesKeys.map(k=>[k,mesCounts[k]]);
+  drawVertBarChart('chart-oc-mes',mesEntries,'#2563EB');
+
+  // Chart: Ocorrências por Status (donut)
+  const statusCounts={};
+  const statusLabels={recebida:'Recebida',em_analise:'Em análise',equipe_acionada:'Equipe acionada',em_atendimento:'Em atendimento',resolvida:'Resolvida',encerrada:'Encerrada'};
+  oc.forEach(o=>{const s=statusLabels[o.status]||o.status||'Outro';statusCounts[s]=(statusCounts[s]||0)+1;});
+  drawDonutChart('chart-oc-status',Object.entries(statusCounts),['#059669','#D97706','#2563EB','#3B82F6','#60A5FA','#DC2626','#94A3B8']);
+
+  // Tempo médio de resposta
+  const tempoEl=document.getElementById('dash-tempo-resposta');
+  const resolvidas=oc.filter(o=>(o.status==='resolvida'||o.status==='encerrada')&&o.criado_em&&o.atualizado_em);
+  if(resolvidas.length){
+    const tempos=resolvidas.map(o=>(new Date(o.atualizado_em)-new Date(o.criado_em))/3600000);
+    const media=tempos.reduce((s,t)=>s+t,0)/tempos.length;
+    const min=Math.min(...tempos);const max=Math.max(...tempos);
+    tempoEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">'+
+      '<div><div style="font-size:22px;font-weight:800;color:var(--ok);">'+media.toFixed(1)+'h</div><div style="font-size:11px;color:var(--muted);">Média</div></div>'+
+      '<div><div style="font-size:22px;font-weight:800;color:var(--neon);">'+min.toFixed(1)+'h</div><div style="font-size:11px;color:var(--muted);">Mais rápido</div></div>'+
+      '<div><div style="font-size:22px;font-weight:800;color:var(--warn);">'+max.toFixed(1)+'h</div><div style="font-size:11px;color:var(--muted);">Mais lento</div></div></div>'+
+      '<div style="margin-top:12px;font-size:12px;color:var(--muted);">Baseado em '+resolvidas.length+' ocorrência(s) resolvida(s)/encerrada(s).</div>';
+  }else{tempoEl.innerHTML='<p style="color:var(--muted);font-size:12px;">Nenhuma ocorrência resolvida para calcular.</p>';}
+}
+
+function drawBarChart(canvasId,entries,colors){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height;
+  if(!entries.length){ctx.fillStyle='#94A3B8';ctx.font='12px Inter,sans-serif';ctx.fillText('Sem dados',W/2-25,H/2);return;}
+  const maxVal=Math.max(...entries.map(e=>e[1]));
+  const barH=Math.min(28,Math.floor((H-20)/entries.length)-6);
+  const labelW=Math.min(120,W*0.3);
+  entries.forEach(([label,val],i)=>{
+    const y=10+i*(barH+6);
+    const barW=(W-labelW-60)*(val/maxVal);
+    ctx.fillStyle='#475569';ctx.font='11px Inter,sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(label.length>16?label.slice(0,14)+'…':label,labelW-8,y+barH/2);
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();ctx.roundRect(labelW,y,barW,barH,4);ctx.fill();
+    ctx.fillStyle='#0F172A';ctx.textAlign='left';ctx.font='bold 11px Inter,sans-serif';
+    ctx.fillText(String(val),labelW+barW+6,y+barH/2);
+  });
+}
+
+function drawVertBarChart(canvasId,entries,color){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height;
+  if(!entries.length){ctx.fillStyle='#94A3B8';ctx.font='12px Inter,sans-serif';ctx.fillText('Sem dados',W/2-25,H/2);return;}
+  const maxVal=Math.max(...entries.map(e=>e[1]),1);
+  const pad={l:40,r:10,t:10,b:40};
+  const chartW=W-pad.l-pad.r;const chartH=H-pad.t-pad.b;
+  const barW=Math.min(40,Math.floor(chartW/entries.length)-8);
+  const gap=(chartW-barW*entries.length)/(entries.length+1);
+  // Grid lines
+  ctx.strokeStyle='rgba(15,23,42,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+chartH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#94A3B8';ctx.font='10px Inter,sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(String(Math.round(maxVal*i/4)),pad.l-6,y);}
+  entries.forEach(([label,val],i)=>{
+    const x=pad.l+gap+(barW+gap)*i;
+    const h=chartH*(val/maxVal);const y=pad.t+chartH-h;
+    ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,barW,h,3);ctx.fill();
+    ctx.fillStyle='#475569';ctx.font='10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText(label,x+barW/2,pad.t+chartH+6);
+    if(val>0){ctx.fillStyle='#0F172A';ctx.font='bold 10px Inter,sans-serif';ctx.textBaseline='bottom';ctx.fillText(String(val),x+barW/2,y-2);}
+  });
+}
+
+function drawDonutChart(canvasId,entries,colors){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height;
+  if(!entries.length){ctx.fillStyle='#94A3B8';ctx.font='12px Inter,sans-serif';ctx.fillText('Sem dados',W/2-25,H/2);return;}
+  const total=entries.reduce((s,e)=>s+e[1],0);
+  const cx=W*0.35,cy=H/2,r=Math.min(cx-20,cy-20,90),ir=r*0.55;
+  let angle=-Math.PI/2;
+  entries.forEach(([label,val],i)=>{
+    const slice=(val/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx+ir*Math.cos(angle),cy+ir*Math.sin(angle));
+    ctx.arc(cx,cy,r,angle,angle+slice);ctx.arc(cx,cy,ir,angle+slice,angle,true);ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    angle+=slice;
+  });
+  ctx.fillStyle='#0F172A';ctx.font='bold 20px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(String(total),cx,cy-6);
+  ctx.fillStyle='#94A3B8';ctx.font='11px Inter,sans-serif';ctx.fillText('total',cx,cy+12);
+  // Legend
+  const lx=W*0.65;let ly=20;
+  entries.forEach(([label,val],i)=>{
+    ctx.fillStyle=colors[i%colors.length];ctx.fillRect(lx,ly,10,10);
+    ctx.fillStyle='#475569';ctx.font='11px Inter,sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText(label+' ('+val+')',lx+16,ly);
+    ly+=18;
+  });
+}
+
+async function loadAuditoria(){try{const rows=await sbGet('dc_auditoria','select=*&order=data.desc&limit=100');document.getElementById('cnt-audit').textContent=rows.length+' registro(s)';document.getElementById('tbl-audit').innerHTML=rows.length?rows.map(r=>'<tr><td>'+fmtDateTime(r.data)+'</td><td>'+(r.usuario||'—')+'</td><td>'+(r.acao||'—')+'</td><td>'+(r.modulo||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(r.detalhes||'—')+'</td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Sem registros.</td></tr>';}catch(e){}}
+
+function exportPdf(k){const m=MODULES[k];if(!m)return;const data=caches[k+'_data']||[];const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');doc.setFontSize(16);doc.text(m.title+' — Defesa Civil Ivatuba',14,18);doc.setFontSize(10);doc.text('Gerado em '+new Date().toLocaleDateString('pt-BR'),14,26);const rows=data.map(r=>m.cols.map(c=>{const v=m.renderCol(r,c);return String(v).replace(/<[^>]+>/g,'');}));doc.autoTable({head:[m.colLabels],body:rows,startY:32,styles:{fontSize:9},headStyles:{fillColor:[30,77,140]}});doc.save(k+'_defesa_civil.pdf');}
+function exportXlsx(k){const m=MODULES[k];if(!m)return;const data=caches[k+'_data']||[];const rows=data.map(r=>{const o={};m.cols.forEach((c,i)=>{o[m.colLabels[i]]=String(m.renderCol(r,c)).replace(/<[^>]+>/g,'');});return o;});const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,m.title.slice(0,31));XLSX.writeFile(wb,k+'_defesa_civil.xlsx');}
+
+async function gerarRelatorioGeral(){
+  const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');let y=20;
+  doc.setFontSize(18);doc.text('Relatório Geral — Defesa Civil Ivatuba',14,y);y+=8;
+  doc.setFontSize(12);doc.text('Município de Ivatuba – Paraná',14,y);y+=6;
+  doc.setFontSize(9);doc.setTextColor(120);doc.text('Gerado em '+new Date().toLocaleDateString('pt-BR'),14,y);doc.setTextColor(0);y+=10;
+  try{
+    const [al,oc,ab,eq,rec,pr,dan]=await Promise.all([
+      sbGet('dc_alertas','select=id,ativo').catch(()=>[]),
+      sbGet('dc_ocorrencias','select=id,status,prioridade').catch(()=>[]),
+      sbGet('dc_abrigos','select=id,situacao,vagas_disponiveis').catch(()=>[]),
+      sbGet('dc_equipes','select=id,disponibilidade').catch(()=>[]),
+      sbGet('dc_recursos','select=id,quantidade,situacao').catch(()=>[]),
+      sbGet('dc_pontos_risco','select=id,nivel_risco').catch(()=>[]),
+      sbGet('dc_danos','select=id,pessoas_afetadas,valor_estimado').catch(()=>[]),
+    ]);
+    const items=[
+      ['Alertas ativos',al.filter(a=>a.ativo).length],
+      ['Ocorrências total',oc.length],
+      ['Ocorrências abertas',oc.filter(o=>o.status!=='resolvida'&&o.status!=='encerrada').length],
+      ['Ocorrências críticas abertas',oc.filter(o=>o.prioridade==='critica'&&o.status!=='resolvida'&&o.status!=='encerrada').length],
+      ['Abrigos cadastrados',ab.length],
+      ['Abrigos disponíveis',ab.filter(a=>a.situacao==='disponivel').length],
+      ['Vagas em abrigos',ab.reduce((s,a)=>s+(Number(a.vagas_disponiveis)||0),0)],
+      ['Equipes cadastradas',eq.length],
+      ['Equipes disponíveis',eq.filter(e=>e.disponibilidade==='disponivel').length],
+      ['Recursos em estado ruim',rec.filter(r=>r.situacao==='ruim').length],
+      ['Pontos de risco alto/crítico',pr.filter(p=>p.nivel_risco==='critico'||p.nivel_risco==='alto').length],
+      ['Pessoas afetadas (danos)',dan.reduce((s,d)=>s+(Number(d.pessoas_afetadas)||0),0)],
+      ['Danos estimados (R$)',money(dan.reduce((s,d)=>s+(Number(d.valor_estimado)||0),0))],
+    ];
+    doc.autoTable({head:[['Indicador','Valor']],body:items,startY:y,styles:{fontSize:10},headStyles:{fillColor:[30,77,140]}});
+    doc.save('relatorio_geral_defesa_civil.pdf');
+  }catch(e){alert('Erro: '+e.message.slice(0,200));}
+}
+
+/* ===== SYNC & QUEUE ===== */
+async function sincronizarAlertas(){
+  const btn=document.getElementById('btn-sync-alertas');btn.disabled=true;btn.textContent='⏳ Sincronizando...';
+  try{
+    const r=await fetch('/api/sync-alertas',{method:'GET'});
+    const d=await r.json();
+    if(d.ok){
+      alert('Sincronização concluída!\n\nAlertas encontrados: '+(d.alertas_encontrados||0)+'\nNovos: '+(d.novos||0)+'\nAtualizados: '+(d.atualizados||0)+'\nEncerrados: '+(d.encerrados||0));
+      loadDashboard();
+    }else{alert('Erro: '+(d.error||'desconhecido'));}
+  }catch(e){alert('Erro de conexão: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='🔄 Sincronizar Alertas';}
+}
+async function processarFila(){
+  const btn=document.getElementById('btn-proc-fila');btn.disabled=true;btn.textContent='⏳ Processando...';
+  try{
+    const r=await fetch('/api/process-queue',{method:'GET'});
+    const d=await r.json();
+    if(d.ok){
+      const msg='Fila processada!\n\nTotal: '+(d.total||0)+'\nEnviados: '+(d.enviados||0)+'\nFalhas: '+(d.falhas||0)+(d.sandbox?'\n\n⚠️ Modo SANDBOX — mensagens não enviadas de verdade.':'');
+      alert(msg);loadDashboard();
+    }else{alert('Erro: '+(d.error||'desconhecido'));}
+  }catch(e){alert('Erro de conexão: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='📤 Processar Fila';}
+}
+
+/* ===== SMS FUNCTIONS ===== */
+const SMS_MODELS=[
+  {titulo:'Chuva intensa',tipo:'chuva_intensa',nivel:'atencao',msg:'🚨 *DEFESA CIVIL IVATUBA — ALERTA*\n\n🌧️ *CHUVA INTENSA*\n\nPrevisão de chuva intensa nas próximas horas na região de Ivatuba.\n\n⚠️ *Orientações:*\n• Evite áreas de alagamento\n• Não atravesse ruas alagadas\n• Fique em local seguro e elevado\n• Desligue aparelhos da tomada\n\n📞 *199 — Defesa Civil*\n🚒 *193 — Corpo de Bombeiros*\n\n⚠️ *Compartilhe este alerta e ajude a proteger nossa comunidade.*\n\n*Defesa Civil Ivatuba*\n_Prevenir é proteger._'},
+  {titulo:'Risco de alagamento',tipo:'alagamento',nivel:'alerta',msg:'🚨 *DEFESA CIVIL IVATUBA — ALERTA*\n\n🌊 *RISCO DE ALAGAMENTO*\n\nAlerta de alagamento para a região de Ivatuba.\n\n⚠️ *Orientações:*\n• Evite áreas baixas e margens de rios\n• Não atravesse ruas alagadas a pé ou de carro\n• Procure abrigo em local elevado\n• Se necessário, dirija-se ao abrigo mais próximo\n\n📞 *199 — Defesa Civil*\n🚒 *193 — Corpo de Bombeiros*\n\n⚠️ *Compartilhe este alerta e ajude a proteger nossa comunidade.*\n\n*Defesa Civil Ivatuba*\n_Prevenir é proteger._'},
+  {titulo:'Vendaval',tipo:'vendaval',nivel:'alerta',msg:'🚨 *DEFESA CIVIL IVATUBA — ALERTA*\n\n🌪️ *VENDAVAL / TEMPESTADE*\n\nPrevisão de ventos fortes na região de Ivatuba.\n\n⚠️ *Orientações:*\n• Feche portas e janelas\n• Afaste-se de árvores, postes e outdoors\n• Recolha objetos soltos em quintais\n• Não se abrigue debaixo de árvores\n• Em caso de queda de energia, desligue a chave geral\n\n📞 *199 — Defesa Civil*\n🚒 *193 — Corpo de Bombeiros*\n\n⚠️ *Compartilhe este alerta e ajude a proteger nossa comunidade.*\n\n*Defesa Civil Ivatuba*\n_Prevenir é proteger._'},
+  {titulo:'Emergência',tipo:'emergencia',nivel:'emergencia',msg:'🚨 *DEFESA CIVIL IVATUBA — EMERGÊNCIA*\n\n⚠️ *SITUAÇÃO DE EMERGÊNCIA*\n\nA população deve ficar atenta e *seguir as orientações oficiais da Defesa Civil*.\n\nEm caso de emergência, procure um local seguro e acione:\n\n📞 *199 — Defesa Civil*\n🚒 *193 — Corpo de Bombeiros*\n\n⚠️ *Compartilhe este alerta e ajude a proteger nossa comunidade.*\n\n*Defesa Civil Ivatuba*\n_Prevenir é proteger._'},
+  {titulo:'Informativo',tipo:'informacao',nivel:'informativo',msg:'📢 *DEFESA CIVIL IVATUBA — INFORMATIVO*\n\nℹ️ *COMUNICADO À POPULAÇÃO*\n\nA Defesa Civil de Ivatuba informa que a situação está sendo monitorada.\n\n*Orientações:*\n• Acompanhe as informações oficiais\n• Em caso de emergência, ligue 199\n• Mantenha-se informado pelos canais oficiais\n\n📞 *199 — Defesa Civil*\n🚒 *193 — Corpo de Bombeiros*\n\n*Defesa Civil Ivatuba*\n_Prevenir é proteger._'}
+];
+
+function usarModeloSMS(i){
+  const m=SMS_MODELS[i];if(!m)return;
+  document.getElementById('sms-titulo').value=m.titulo;
+  document.getElementById('sms-tipo').value=m.tipo;
+  document.getElementById('sms-nivel').value=m.nivel;
+  document.getElementById('sms-mensagem').value=m.msg;
+  document.getElementById('sms-char').textContent=m.msg.length;
+  document.getElementById('sms-preview').textContent=m.msg;
+  checkEmergenciaConfirm();
+}
+
+function checkEmergenciaConfirm(){
+  const nivel=document.getElementById('sms-nivel').value;
+  document.getElementById('sms-confirm-box').style.display=nivel==='emergencia'?'block':'none';
+}
+
+async function loadSMSDashboard(){
+  try{
+    const[pessoas,logs]=await Promise.all([
+      sbGet('dc_pessoas_alerta','select=id&tenant_id=eq.'+tid()+'&status=eq.ativo').catch(()=>[]),
+      sbGet('dc_sms_logs','select=id,status&tenant_id=eq.'+tid()).catch(()=>[])
+    ]);
+    document.getElementById('sms-kpi-pessoas').textContent=pessoas.length;
+    document.getElementById('sms-kpi-enviados').textContent=logs.filter(l=>l.status==='enviado').length;
+    document.getElementById('sms-kpi-falhas').textContent=logs.filter(l=>l.status==='falhou').length;
+  }catch(e){}
+  loadSMSLogs();
+}
+
+async function loadSMSLogs(){
+  try{
+    const logs=await sbGet('dc_sms_logs','select=*&tenant_id=eq.'+tid()+'&order=criado_em.desc&limit=20');
+    const tb=document.getElementById('sms-logs-tbody');
+    tb.innerHTML=logs.length?logs.map(l=>
+      '<tr><td>'+fmtDateTime(l.criado_em)+'</td><td>'+(l.telefone||'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(l.mensagem||'—').slice(0,60)+'</td><td>'+pill(l.status)+'</td><td>'+(l.provider||'—')+'</td></tr>'
+    ).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhum envio registrado.</td></tr>';
+  }catch(e){}
+}
+
+async function enviarAlertaSMS(){
+  const titulo=document.getElementById('sms-titulo').value.trim();
+  const mensagem=document.getElementById('sms-mensagem').value.trim();
+  const nivel=document.getElementById('sms-nivel').value;
+  if(!titulo){alert('Preencha o título do alerta.');return;}
+  if(!mensagem){alert('Preencha a mensagem SMS.');return;}
+  if(nivel==='emergencia'){
+    const conf=document.getElementById('sms-confirm-input').value.trim();
+    if(conf!=='CONFIRMAR'){alert('Para nível EMERGÊNCIA, digite CONFIRMAR.');return;}
+  }
+  if(!confirm('Confirma a publicação do alerta e envio de SMS para todos os cadastrados?'))return;
+  const btn=document.getElementById('sms-btn-enviar');
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    const alertaData={
+      tenant_id:tid(),titulo,
+      tipo:document.getElementById('sms-tipo').value||'informacao',
+      nivel:nivel==='informativo'?'atencao':nivel,
+      descricao:document.getElementById('sms-descricao').value.trim()||null,
+      regiao_afetada:document.getElementById('sms-bairro-alvo').value.trim()||'Ivatuba',
+      fonte:document.getElementById('sms-fonte').value.trim()||'Defesa Civil Ivatuba',
+      inicio:new Date().toISOString(),ativo:true
+    };
+    const alertaRes=await sbPost('dc_alertas',alertaData);
+    const alertaId=alertaRes[0]?.id;
+    if(alertaId){
+      try{
+        // Buscar pessoas cadastradas e adicionar à fila de notificações
+        const pessoas=await sbGet('dc_pessoas_alerta','select=id,nome,telefone,whatsapp,receber_sms,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo');
+        let filaOk=0,filaErro=0;
+        for(const p of pessoas){
+          const phone=(p.whatsapp||p.telefone||'').replace(/\D/g,'');
+          if(!phone||phone.length<10)continue;
+          try{
+            await sbPost('dc_notification_queue',{
+              tenant_id:tid(),pessoa_id:p.id,alerta_id:alertaId,
+              canal:(p.receber_whatsapp!==false)?'whatsapp':'sms',
+              telefone:phone,mensagem,
+              status:'pendente',provider:'sandbox',tentativas:0
+            });
+            filaOk++;
+          }catch(qe){filaErro++;}
+        }
+        // Também chamar API de SMS legada
+        try{
+          const apiUrl=window.location.origin+'/api/send-alert-sms';
+          await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({alerta_id:alertaId,mensagem,nivel,bairro:document.getElementById('sms-bairro-alvo').value.trim()||null,modo:document.getElementById('sms-abrangencia').value})});
+        }catch(e){}
+        document.getElementById('sms-resultado').innerHTML='<div style="background:#D1FAE5;border:1px solid rgba(5,150,105,.25);border-radius:10px;padding:14px;margin-top:8px;font-size:13px;"><strong>Alerta publicado!</strong><br>'+pessoas.length+' pessoa(s) cadastrada(s).</div>';
+        abrirNotificarWhatsApp(alertaId,mensagem,pessoas);
+      }catch(smsErr){
+        document.getElementById('sms-resultado').innerHTML='<div style="background:#FEF3C7;border:1px solid rgba(217,119,6,.25);border-radius:10px;padding:14px;margin-top:8px;font-size:13px;"><strong>Alerta publicado!</strong> Porém houve erro ao buscar pessoas: '+smsErr.message.slice(0,100)+'</div>';
+      }
+    }else{
+      document.getElementById('sms-resultado').innerHTML='<div style="background:#D1FAE5;border-radius:10px;padding:14px;margin-top:8px;font-size:13px;"><strong>Alerta publicado com sucesso!</strong></div>';
+    }
+    document.getElementById('sms-titulo').value='';
+    document.getElementById('sms-mensagem').value='';
+    document.getElementById('sms-descricao').value='';
+    document.getElementById('sms-char').textContent='0';
+    document.getElementById('sms-preview').textContent='Pré-visualização da mensagem...';
+    document.getElementById('sms-confirm-input').value='';
+    loadSMSDashboard();
+  }catch(e){
+    document.getElementById('sms-resultado').innerHTML='<div style="color:var(--danger);margin-top:8px;font-size:13px;">Erro: '+e.message.slice(0,200)+'</div>';
+  }finally{btn.disabled=false;btn.textContent='🚨 PUBLICAR ALERTA E NOTIFICAR';}
+}
+
+/* ===== PESSOAS SMS FUNCTIONS ===== */
+async function loadPessoasSMS(){
+  try{
+    const data=await sbGet('dc_pessoas_alerta','select=*&tenant_id=eq.'+tid()+'&order=criado_em.desc');
+    const tb=document.getElementById('pessoas-sms-tbody');
+    tb.innerHTML=data.length?data.map(p=>
+      '<tr><td>'+(p.nome||'—')+'</td><td>'+(p.telefone||'—')+'</td><td>'+(p.whatsapp||p.telefone||'—')+'</td><td>'+(p.bairro||'—')+'</td><td>'+(p.receber_whatsapp?'<span class="status-pill status-ativo">WhatsApp</span>':p.receber_sms?'<span class="status-pill status-atencao">SMS</span>':'<span class="status-pill status-inativo">Nenhum</span>')+'</td><td>'+pill(p.status)+'</td><td style="white-space:nowrap;"><button class="btn-ghost" style="padding:4px 8px;font-size:11px;margin-right:4px;" onclick="editarPessoaSMS(\''+p.id+'\')">Editar</button><button class="btn-danger" onclick="excluirPessoaSMS(\''+p.id+'\')">Excluir</button></td></tr>'
+    ).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma pessoa cadastrada.</td></tr>';
+  }catch(e){}
+}
+
+function abrirFormPessoaSMS(){
+  document.getElementById('modal-pessoa-sms').style.display='flex';
+  document.getElementById('modal-pessoa-sms-title').textContent='Cadastrar Pessoa';
+  document.getElementById('ps-id').value='';
+  ['ps-nome','ps-telefone','ps-whatsapp','ps-bairro','ps-cep','ps-endereco','ps-email'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('ps-sms').checked=true;
+  document.getElementById('ps-idoso').checked=false;
+  document.getElementById('ps-crianca').checked=false;
+  document.getElementById('ps-deficiente').checked=false;
+}
+function fecharModalPessoaSMS(){document.getElementById('modal-pessoa-sms').style.display='none';}
+
+async function salvarPessoaSMS(){
+  const nome=document.getElementById('ps-nome').value.trim();
+  const telefone=document.getElementById('ps-telefone').value.trim();
+  if(!nome||!telefone){alert('Nome e telefone são obrigatórios.');return;}
+  const data={
+    tenant_id:tid(),nome,telefone,
+    whatsapp:document.getElementById('ps-whatsapp').value.trim()||null,
+    bairro:document.getElementById('ps-bairro').value.trim()||null,
+    cep:document.getElementById('ps-cep').value.trim()||null,
+    endereco:document.getElementById('ps-endereco').value.trim()||null,
+    email:document.getElementById('ps-email').value.trim()||null,
+    receber_sms:document.getElementById('ps-sms').checked,
+    receber_whatsapp:document.getElementById('ps-whatsapp-check').checked,
+    possui_idoso:document.getElementById('ps-idoso').checked,
+    possui_crianca:document.getElementById('ps-crianca').checked,
+    possui_deficiente:document.getElementById('ps-deficiente').checked
+  };
+  const editId=document.getElementById('ps-id').value;
+  try{
+    if(editId){await sbPatch('dc_pessoas_alerta','id=eq.'+editId,data);}
+    else{data.status='ativo';data.consentimento=true;data.data_consentimento=new Date().toISOString();await sbPost('dc_pessoas_alerta',data);}
+    fecharModalPessoaSMS();loadPessoasSMS();
+  }catch(e){alert('Erro: '+e.message.slice(0,200));}
+}
+
+async function editarPessoaSMS(id){
+  try{
+    const rows=await sbGet('dc_pessoas_alerta','id=eq.'+id);
+    const p=rows[0];if(!p)return;
+    document.getElementById('modal-pessoa-sms').style.display='flex';
+    document.getElementById('modal-pessoa-sms-title').textContent='Editar Pessoa';
+    document.getElementById('ps-id').value=p.id;
+    document.getElementById('ps-nome').value=p.nome||'';
+    document.getElementById('ps-telefone').value=p.telefone||'';
+    document.getElementById('ps-whatsapp').value=p.whatsapp||'';
+    document.getElementById('ps-bairro').value=p.bairro||'';
+    document.getElementById('ps-cep').value=p.cep||'';
+    document.getElementById('ps-endereco').value=p.endereco||'';
+    document.getElementById('ps-email').value=p.email||'';
+    document.getElementById('ps-sms').checked=!!p.receber_sms;
+    document.getElementById('ps-whatsapp-check').checked=p.receber_whatsapp!==false;
+    document.getElementById('ps-idoso').checked=!!p.possui_idoso;
+    document.getElementById('ps-crianca').checked=!!p.possui_crianca;
+    document.getElementById('ps-deficiente').checked=!!p.possui_deficiente;
+  }catch(e){alert('Erro: '+e.message.slice(0,200));}
+}
+
+async function excluirPessoaSMS(id){
+  if(!confirm('Excluir esta pessoa?'))return;
+  try{await sbDel('dc_pessoas_alerta','id=eq.'+id);loadPessoasSMS();}catch(e){alert('Erro: '+e.message.slice(0,200));}
+}
+
+/* ===== LOADERS ===== */
+let devCfgId=null;
+async function loadDevConfig(){
+  try{
+    const rows=await sbGet('dc_developer_config','select=*&tenant_id=eq.'+tid()+'&limit=1');
+    if(rows.length){
+      const c=rows[0];devCfgId=c.id;
+      document.getElementById('devcfg-name').value=c.developer_name||'';
+      document.getElementById('devcfg-company').value=c.developer_company||'';
+      document.getElementById('devcfg-website').value=c.developer_website||'';
+      document.getElementById('devcfg-contact').value=c.developer_contact||'';
+      document.getElementById('devcfg-platform').value=c.platform_name||'';
+      document.getElementById('devcfg-version').value=c.platform_version||'';
+      document.getElementById('devcfg-municipio').value=c.municipio||'';
+      document.getElementById('devcfg-estado').value=c.estado||'';
+    }
+  }catch(e){}
+}
+async function salvarDevConfig(){
+  const btn=document.getElementById('devcfg-btn');btn.disabled=true;btn.textContent='Salvando...';
+  const data={
+    tenant_id:tid(),
+    developer_name:document.getElementById('devcfg-name').value.trim(),
+    developer_company:document.getElementById('devcfg-company').value.trim()||null,
+    developer_website:document.getElementById('devcfg-website').value.trim()||null,
+    developer_contact:document.getElementById('devcfg-contact').value.trim()||null,
+    platform_name:document.getElementById('devcfg-platform').value.trim(),
+    platform_version:document.getElementById('devcfg-version').value.trim(),
+    municipio:document.getElementById('devcfg-municipio').value.trim(),
+    estado:document.getElementById('devcfg-estado').value.trim(),
+    atualizado_em:new Date().toISOString()
+  };
+  try{
+    if(devCfgId){await sbPatch('dc_developer_config','id=eq.'+devCfgId,data);}
+    else{const r=await sbPost('dc_developer_config',data);if(r&&r[0])devCfgId=r[0].id;}
+    alert('Configurações salvas com sucesso!');
+  }catch(e){alert('Erro: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Salvar configurações';}
+}
+
+const LOADERS={dashboard_dc:loadDashboard,config_dc:loadConfig,auditoria_dc:loadAuditoria,relatorios_dc:()=>{},sms_dc:loadSMSDashboard,pessoas_sms:loadPessoasSMS,dev_config:loadDevConfig};
+Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
+</script>
+
+<div id="modal-notificar-wa" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;align-items:center;justify-content:center;padding:16px;">
+<div style="background:#fff;border-radius:18px;max-width:600px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto;">
+<div class="mdl-head"><h3 style="font-size:18px;font-weight:800;margin:0;">📲 Enviar WhatsApp para Cadastrados</h3><button onclick="fecharNotificarWA()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94A3B8;">✕</button></div>
+<div class="mdl-body"><div class="wa-info" style="background:#F1F5F9;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#475569;">Clique em <strong>"Enviar"</strong> ao lado de cada pessoa para abrir o WhatsApp com a mensagem do alerta. Após enviar, o botão fica verde.</div>
+<div id="wa-lista-pessoas"></div></div>
+<div class="mdl-foot"><div style="display:flex;gap:10px;"><button onclick="enviarTodosWA()" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">Enviar Próximo</button><button onclick="fecharNotificarWA()" style="padding:12px 20px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">Fechar</button></div>
+</div></div></div>
+<script>
+let waListaPendente=[];let waMsgAlerta='';let waIdxAtual=0;
+function abrirNotificarWhatsApp(alertaId,msg,pessoas){
+  waMsgAlerta=msg;waIdxAtual=0;
+  waListaPendente=pessoas.filter(p=>{const ph=(p.whatsapp||p.telefone||'').replace(/\D/g,'');return ph&&ph.length>=10;}).map(p=>({...p,enviado:false,phone:formatFone(p.whatsapp||p.telefone)}));
+  renderListaWA();
+  document.getElementById('modal-notificar-wa').style.display='flex';
+}
+function fecharNotificarWA(){document.getElementById('modal-notificar-wa').style.display='none';}
+function renderListaWA(){
+  const el=document.getElementById('wa-lista-pessoas');
+  if(!waListaPendente.length){el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;">Nenhuma pessoa com telefone válido.</p>';return;}
+  let h='<div style="font-size:12px;margin-bottom:8px;color:var(--muted);">'+waListaPendente.filter(p=>p.enviado).length+' de '+waListaPendente.length+' enviado(s)</div>';
+  h+='<div style="max-height:300px;overflow-y:auto;">';
+  waListaPendente.forEach((p,i)=>{
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #F1F5F9;">';
+    h+='<div><strong style="font-size:13px;">'+(p.nome||'Sem nome')+'</strong><br><span style="font-size:11px;color:#64748B;">'+(p.whatsapp||p.telefone||'')+'</span></div>';
+    if(p.enviado){
+      h+='<span style="font-size:11px;color:#059669;font-weight:700;padding:4px 10px;background:#D1FAE5;border-radius:6px;">Enviado ✓</span>';
+    }else{
+      h+='<button onclick="enviarWAIndividual('+i+')" style="padding:6px 14px;font-size:12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Enviar</button>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+function enviarWAIndividual(idx){
+  const p=waListaPendente[idx];if(!p||p.enviado)return;
+  const url='https://api.whatsapp.com/send?phone='+encodeURIComponent(p.phone)+'&text='+encodeURIComponent(waMsgAlerta);
+  window.open(url,'_blank');
+  waListaPendente[idx].enviado=true;
+  renderListaWA();
+}
+function enviarTodosWA(){
+  const next=waListaPendente.findIndex(p=>!p.enviado);
+  if(next===-1){alert('Todos já foram enviados!');return;}
+  enviarWAIndividual(next);
+}
+</script>
+<div id="modal-responder-oc" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;align-items:center;justify-content:center;padding:16px;">
+<div style="background:#fff;border-radius:18px;max-width:520px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto;">
+<div class="mdl-head"><h3 style="font-size:18px;font-weight:800;margin:0;">📋 Responder Ocorrência</h3><button onclick="fecharResponder()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94A3B8;">✕</button></div>
+<div class="mdl-body"><input type="hidden" id="resp-oc-id">
+<div id="resp-oc-info" style="background:#F1F5F9;border-radius:10px;padding:12px;margin-bottom:16px;font-size:14px;"></div>
+<div style="margin-bottom:14px;"><label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px;">Novo Status</label><select id="resp-oc-status" onchange="atualizarPreviewResp()" style="width:100%;padding:10px 12px;border:1px solid #E2E8F0;border-radius:10px;font-size:14px;"><option value="recebida">Recebida</option><option value="em_analise">Em análise</option><option value="equipe_acionada">Equipe acionada</option><option value="em_atendimento">Em atendimento</option><option value="resolvida">Resolvida</option><option value="encerrada">Encerrada</option></select></div>
+<div style="margin-bottom:14px;"><label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px;">Observação (opcional)</label><textarea id="resp-oc-obs" rows="2" oninput="atualizarPreviewResp()" placeholder="Ex: Equipe enviada ao local, previsão 30min..." style="width:100%;padding:10px 12px;border:1px solid #E2E8F0;border-radius:10px;font-size:14px;resize:vertical;"></textarea></div>
+<div class="wa-preview" style="margin-bottom:6px;"><label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px;">Preview da mensagem WhatsApp</label><textarea id="resp-oc-msg" rows="6" style="width:100%;padding:10px 12px;border:1px solid #E2E8F0;border-radius:10px;font-size:12px;background:#F8FAFC;color:#475569;resize:vertical;"></textarea></div></div>
+<div class="mdl-foot"><div style="display:flex;gap:10px;"><button id="resp-oc-btn" onclick="confirmarResponder()" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">Salvar e Enviar WhatsApp</button><button type="button" id="resp-oc-wa-direto" onclick="abrirWhatsAppDireto()" title="Abrir o WhatsApp com esta mensagem, sem alterar o status" style="padding:12px 16px;background:#fff;color:#166534;border:1px solid #86EFAC;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">Só abrir WhatsApp</button><button onclick="fecharResponder()" style="padding:12px 20px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button></div>
+</div></div></div>
+<script src="/dc-admin-extras.js"></script>
+<script>
+(function(){
+var P={dashboard_dc:'M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10',config_dc:'M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6z',telefones_dc:'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2',alertas_dc:'M12 3l10 18H2zM12 10v5M12 18h.01',ocorrencias_dc:'M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11zM12 12a2 2 0 100-4 2 2 0 000 4',historico_oc:'M3 12a9 9 0 109-9 9 9 0 00-7 3.5M3 4v4h4M12 7v5l3 2',abrigos_dc:'M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6',recursos_dc:'M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8',equipes_dc:'M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 10a4 4 0 100-8 4 4 0 000 8M21 20v-2a4 4 0 00-3-3.9M16 2.1a4 4 0 010 7.8',comunicados_dc:'M3 11v2a1 1 0 001 1h3l6 4V6L7 10H4a1 1 0 00-1 1zM17 8a5 5 0 010 8',notificacoes_dc:'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0',sms_dc:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',pessoas_sms:'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M22 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8',pontos_risco:'M12 2l2.4 6.9H22l-6 4.4 2.3 7L12 16l-6.3 4.3 2.3-7-6-4.4h7.6z',eventos_hist:'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2',preparacao_dc:'M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9',notas_tecnicas:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h8',danos_dc:'M3 3v18h18M7 14l4-4 3 3 5-6',relatorios_dc:'M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3',auditoria_dc:'M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6zM9 12l2 2 4-4',dev_config:'M12 15a3 3 0 100-6 3 3 0 000 6M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z'};
+function svg(d){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg>';}
+var DEF='M12 12m-9 0a9 9 0 1018 0 9 9 0 10-18 0M12 8v4l2 2';
+function navIcons(){document.querySelectorAll('#sidebar-nav .nav-item:not([data-ic])').forEach(function(b){b.setAttribute('data-ic','1');var t=b.textContent.replace(/^[^\p{L}\p{N}]+/u,'').trim();b.innerHTML=svg(P[b.dataset.key]||DEF)+'<span>'+t+'</span>';});}
+function labels(){document.querySelectorAll('#main-content table').forEach(function(t){var h=[].map.call(t.querySelectorAll('thead th'),function(x){return x.textContent.trim();});t.querySelectorAll('tbody tr').forEach(function(r){[].forEach.call(r.children,function(td,i){if(td.tagName==='TD'&&!td.hasAttribute('data-label'))td.setAttribute('data-label',h[i]||'');});});});}
+var raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;labels();navIcons();});}
+var mc=document.getElementById('main-content');if(mc)new MutationObserver(schedule).observe(mc,{childList:true,subtree:true});
+var sn=document.getElementById('sidebar-nav');if(sn)new MutationObserver(schedule).observe(sn,{childList:true});
+// login
+var pw=document.getElementById('login-senha'),tg=document.getElementById('pw-toggle');
+if(tg&&pw)tg.addEventListener('click',function(){var s=pw.type==='password';pw.type=s?'text':'password';tg.setAttribute('aria-label',s?'Ocultar senha':'Mostrar senha');tg.setAttribute('aria-pressed',String(s));});
+['login-email','login-senha'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();var b=document.getElementById('login-btn');if(b&&!b.disabled)b.click();}});});
+var lb=document.getElementById('login-btn');if(lb)new MutationObserver(function(){lb.classList.toggle('loading',lb.disabled);}).observe(lb,{attributes:true,attributeFilter:['disabled']});
+// usuário no cabeçalho
+var app=document.getElementById('app');
+function user(){try{var c=(window.session||session||{}).claims||{};var u=document.getElementById('hd-user');if(u){u.textContent=c.email||'';if(c.email)u.title=c.email;}}catch(e){}}
+if(app)new MutationObserver(function(){if(app.style.display!=='none'){user();schedule();}}).observe(app,{attributes:true,attributeFilter:['style']});
+// modal WhatsApp: estados
+var wl=document.getElementById('wa-lista-pessoas'),busy=false;
+function decorate(){if(busy)return;busy=true;try{var list=wl.children[1];if(list){var rows=[].slice.call(list.children);var pend=rows.filter(function(r){return !/Enviado/.test(r.textContent);});rows.forEach(function(r){r.classList.remove('wa-next');var t=r.querySelector('.wa-next-tag');if(t)t.remove();});if(pend[0]){pend[0].classList.add('wa-next');var s=pend[0].querySelector('strong');if(s)s.insertAdjacentHTML('afterend','<span class="wa-next-tag">Próximo</span>');}
+var old=wl.querySelector('.wa-done');if(old)old.remove();if(rows.length&&!pend.length)wl.insertAdjacentHTML('beforeend','<div class="wa-done">✓ Processo concluído — todos os destinatários foram atendidos.</div>');}}finally{setTimeout(function(){busy=false;},0);}}
+if(wl)new MutationObserver(function(){if(!busy)decorate();}).observe(wl,{childList:true});
+window.abrirWhatsAppDireto=function(){try{var id=document.getElementById('resp-oc-id').value;var d=(caches['ocorrencias_dc_data']||[]).find(function(r){return r.id===id;});var msg=document.getElementById('resp-oc-msg').value;var tel=d?formatFone(d.solicitante_telefone):'';var u='https://api.whatsapp.com/send?'+(tel?'phone='+encodeURIComponent(tel)+'&':'')+'text='+encodeURIComponent(msg);window.open(u,'_blank');}catch(e){alert('Não foi possível abrir o WhatsApp.');}};
+schedule();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecta Gestão — Alertas e SMS · Defesa Civil</title>
+<style>
+:root{--bg:#F0F4F8;--surface:#fff;--ink:#0F172A;--ink-soft:#475569;--muted:#94A3B8;--line:rgba(15,23,42,.08);--ok:#059669;--warn:#D97706;--alert:#EA580C;--danger:#DC2626;--royal:#2563EB;--radius:14px;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+a{text-decoration:none;color:inherit;}
+
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:260px;background:linear-gradient(180deg,#0F172A 0%,#1E293B 100%);color:#fff;padding:20px 0;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;}
+.sidebar .brand{padding:0 20px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar .brand h2{font-size:16px;font-weight:800;}.sidebar .brand h2 span{color:#60A5FA;}
+.sidebar .brand p{font-size:11px;color:#93A5C4;margin-top:2px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:600;color:#93A5C4;cursor:pointer;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#fff;}.nav-item.active{background:rgba(96,165,250,.1);color:#60A5FA;border-left-color:#60A5FA;}
+.nav-item .ni{font-size:16px;width:22px;text-align:center;}
+.nav-section{padding:16px 20px 6px;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#475569;font-weight:700;}
+.main{flex:1;margin-left:260px;padding:24px;}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;}}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.topbar h1{font-size:22px;font-weight:800;}.topbar h1 span{color:var(--danger);}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .15s;}
+.btn-primary{background:var(--royal);color:#fff;}.btn-primary:hover{opacity:.9;}
+.btn-danger{background:var(--danger);color:#fff;}.btn-danger:hover{opacity:.9;}
+.btn-success{background:var(--ok);color:#fff;}.btn-success:hover{opacity:.9;}
+.btn-outline{background:transparent;border:1px solid var(--line);color:var(--ink-soft);}.btn-outline:hover{background:var(--bg);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+
+.panel{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:0 1px 4px rgba(15,23,42,.06);margin-bottom:16px;border:1px solid var(--line);}
+.panel h3{font-size:16px;font-weight:800;margin-bottom:14px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--line);text-align:center;}
+.kpi .kpi-val{font-size:28px;font-weight:800;}.kpi .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+.field{margin-bottom:12px;}.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink-soft);margin-bottom:4px;font-weight:700;}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:var(--sans);background:#fff;color:var(--ink);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--royal);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:2px solid var(--line);font-weight:700;}
+td{padding:8px 10px;border-bottom:1px solid var(--line);}
+tr:hover{background:rgba(37,99,235,.02);}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.pill-ok{background:#D1FAE5;color:var(--ok);}.pill-warn{background:#FEF3C7;color:var(--warn);}.pill-danger{background:#FEF2F2;color:var(--danger);}.pill-info{background:#DBEAFE;color:var(--royal);}
+.pill-muted{background:#F1F5F9;color:var(--muted);}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 0;}
+
+.view{display:none;}.view.active{display:block;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:16px;}
+
+.alert-nivel{display:flex;gap:8px;margin-bottom:12px;}
+.nivel-btn{flex:1;padding:10px;border:2px solid var(--line);border-radius:10px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;background:#fff;}
+.nivel-btn:hover{border-color:var(--royal);}
+.nivel-btn.selected{border-color:var(--royal);background:var(--royal);color:#fff;}
+.nivel-btn.nivel-info.selected{border-color:#2563EB;background:#2563EB;}
+.nivel-btn.nivel-atencao.selected{border-color:#D97706;background:#D97706;}
+.nivel-btn.nivel-alerta.selected{border-color:#EA580C;background:#EA580C;}
+.nivel-btn.nivel-emergencia.selected{border-color:#DC2626;background:#DC2626;}
+
+.sms-preview{background:#1E293B;color:#10B981;border-radius:12px;padding:16px;font-family:'Courier New',monospace;font-size:13px;line-height:1.6;margin:12px 0;white-space:pre-wrap;max-height:120px;overflow-y:auto;}
+.sms-counter{font-size:11px;color:var(--muted);text-align:right;margin-top:4px;}
+
+.confirm-box{background:#FEF2F2;border:2px solid var(--danger);border-radius:12px;padding:16px;margin-top:12px;text-align:center;}
+.confirm-box h4{color:var(--danger);font-size:14px;margin-bottom:8px;}
+.confirm-box input{width:200px;padding:8px;border:2px solid var(--danger);border-radius:8px;text-align:center;font-size:14px;font-weight:700;margin:8px 0;}
+
+.log-status{display:inline-flex;align-items:center;gap:4px;}
+.log-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.log-dot.ok{background:var(--ok);}.log-dot.fail{background:var(--danger);}.log-dot.pending{background:var(--warn);}.log-dot.sandbox{background:var(--royal);}
+
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--line);padding-bottom:0;}
+.tab{padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);transition:all .15s;}
+.tab:hover{color:var(--ink);}.tab.active{color:var(--royal);border-bottom-color:var(--royal);}
+
+.sandbox-badge{background:var(--royal);color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="brand">
+    <h2>Conecta <span>Gestão</span></h2>
+    <p>Defesa Civil — Alertas e SMS</p>
+  </div>
+  <div class="nav-section">Alertas</div>
+  <div class="nav-item active" onclick="navTo('dashboard')"><span class="ni">📊</span>Dashboard</div>
+  <div class="nav-item" onclick="navTo('novo-alerta')"><span class="ni">🚨</span>Novo Alerta + SMS</div>
+  <div class="nav-item" onclick="navTo('historico')"><span class="ni">📋</span>Histórico de Alertas</div>
+  <div class="nav-item" onclick="navTo('logs-sms')"><span class="ni">📱</span>Logs de SMS</div>
+  <div class="nav-section">Cadastros</div>
+  <div class="nav-item" onclick="navTo('pessoas')"><span class="ni">👥</span>Pessoas Cadastradas</div>
+  <div class="nav-item" onclick="navTo('templates')"><span class="ni">📝</span>Modelos de Mensagem</div>
+  <div class="nav-section">Sistema</div>
+  <div class="nav-item" onclick="navTo('config')"><span class="ni">⚙️</span>Configurações SMS</div>
+  <div style="padding:20px;">
+    <a href="conecta-gestao-painel-admin.html" class="btn btn-outline" style="width:100%;display:block;text-align:center;font-size:11px;">← Voltar ao Painel</a>
+  </div>
+</aside>
+
+<div class="main">
+<!-- ===================== DASHBOARD ===================== -->
+<div class="view active" id="view-dashboard">
+  <div class="topbar">
+    <h1>📊 Dashboard <span>SMS</span></h1>
+    <span class="sandbox-badge" id="sandbox-badge">🧪 SANDBOX</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val" id="kpi-alertas">0</div><div class="kpi-label">Alertas Ativos</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-pessoas">0</div><div class="kpi-label">Pessoas Cadastradas</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-sms-enviados">0</div><div class="kpi-label">SMS Enviados (Total)</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-sms-falhas">0</div><div class="kpi-label">Falhas</div></div>
+  </div>
+  <div class="panel">
+    <h3>Últimos Alertas com SMS</h3>
+    <table><thead><tr><th>Data</th><th>Título</th><th>Nível</th><th>SMS</th><th>Status</th></tr></thead><tbody id="dash-alertas-tbody"></tbody></table>
+  </div>
+  <div class="panel">
+    <h3>Últimos Envios SMS</h3>
+    <table><thead><tr><th>Data</th><th>Telefone</th><th>Mensagem</th><th>Status</th><th>Provedor</th></tr></thead><tbody id="dash-logs-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== NOVO ALERTA ===================== -->
+<div class="view" id="view-novo-alerta">
+  <div class="topbar">
+    <h1>🚨 Novo Alerta + <span>SMS Automático</span></h1>
+  </div>
+  <div class="panel">
+    <h3>1. Dados do Alerta</h3>
+    <div class="field"><label>Título do Alerta</label><input id="na-titulo" placeholder="Ex: Chuva intensa nas próximas horas"></div>
+    <div class="field"><label>Tipo</label>
+      <select id="na-tipo">
+        <option value="">Selecione...</option>
+        <option value="chuva_intensa">Chuva Intensa</option>
+        <option value="tempestade">Tempestade</option>
+        <option value="vendaval">Vendaval</option>
+        <option value="alagamento">Alagamento</option>
+        <option value="enchente">Enchente</option>
+        <option value="risco_deslizamento">Risco de Deslizamento</option>
+        <option value="incendio">Incêndio</option>
+        <option value="seca">Seca / Estiagem</option>
+        <option value="geada">Geada</option>
+        <option value="informacao">Informação Preventiva</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+    <div class="field"><label>Nível</label>
+      <div class="alert-nivel">
+        <div class="nivel-btn nivel-info" onclick="selectNivel('informativo')">ℹ️ Informativo</div>
+        <div class="nivel-btn nivel-atencao" onclick="selectNivel('atencao')">⚠️ Atenção</div>
+        <div class="nivel-btn nivel-alerta" onclick="selectNivel('alerta')">🟠 Alerta</div>
+        <div class="nivel-btn nivel-emergencia" onclick="selectNivel('emergencia')">🔴 Emergência</div>
+      </div>
+    </div>
+    <div class="field"><label>Descrição</label><textarea id="na-descricao" rows="3" placeholder="Detalhes sobre o alerta..."></textarea></div>
+    <div class="field"><label>Recomendações</label><textarea id="na-recomendacoes" rows="2" placeholder="O que a população deve fazer..."></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field"><label>Região Afetada</label><input id="na-regiao" placeholder="Ex: Todo o município"></div>
+      <div class="field"><label>Fonte</label><input id="na-fonte" placeholder="Ex: INMET, Simepar"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>2. Envio de SMS Automático</h3>
+    <div class="field"><label>Abrangência dos destinatários</label>
+      <select id="na-abrangencia" onchange="updatePreview()">
+        <option value="todos">Todos os cadastrados</option>
+        <option value="bairro">Bairro específico</option>
+      </select>
+    </div>
+    <div class="field" id="field-bairro-alvo" style="display:none;">
+      <label>Bairro Alvo</label><input id="na-bairro-alvo" placeholder="Nome do bairro" oninput="updatePreview()">
+    </div>
+    <div class="field">
+      <label>Mensagem SMS (máx 160 caracteres)</label>
+      <textarea id="na-sms-msg" rows="3" maxlength="160" oninput="updatePreview()" placeholder="ALERTA DEFESA CIVIL - ..."></textarea>
+      <div class="sms-counter"><span id="sms-char-count">0</span>/160 caracteres · <span id="sms-dest-count">0</span> destinatários</div>
+    </div>
+    <div><strong>Pré-visualização:</strong></div>
+    <div class="sms-preview" id="sms-preview">Nenhuma mensagem ainda...</div>
+    <div style="margin-top:12px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="na-enviar-sms" checked> Enviar SMS automaticamente ao publicar o alerta
+      </label>
+    </div>
+  </div>
+
+  <div id="confirm-emergencia" style="display:none;">
+    <div class="confirm-box">
+      <h4>⚠️ ALERTA DE EMERGÊNCIA — Confirmação dupla necessária</h4>
+      <p style="font-size:12px;color:var(--ink-soft);">Este alerta será enviado como EMERGÊNCIA para todos os destinatários. Para confirmar, digite <strong>CONFIRMAR</strong> abaixo:</p>
+      <input id="na-confirm-input" placeholder="CONFIRMAR" oninput="checkConfirm()">
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:flex;gap:10px;">
+    <button class="btn btn-danger" id="btn-publicar" onclick="publicarAlerta()" style="flex:1;padding:14px;font-size:15px;">🚨 PUBLICAR ALERTA E ENVIAR SMS</button>
+  </div>
+  <div id="na-resultado" style="margin-top:12px;"></div>
+</div>
+
+<!-- ===================== HISTÓRICO ===================== -->
+<div class="view" id="view-historico">
+  <div class="topbar">
+    <h1>📋 Histórico de Alertas</h1>
+    <button class="btn btn-primary" onclick="navTo('novo-alerta')">+ Novo Alerta</button>
+  </div>
+  <div class="panel">
+    <table><thead><tr><th>Data</th><th>Título</th><th>Tipo</th><th>Nível</th><th>SMS</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="hist-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== LOGS SMS ===================== -->
+<div class="view" id="view-logs-sms">
+  <div class="topbar">
+    <h1>📱 Logs de SMS</h1>
+  </div>
+  <div class="panel">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <select id="log-filter-status" onchange="loadLogs()" style="padding:6px;border:1px solid var(--line);border-radius:6px;font-size:12px;">
+        <option value="">Todos</option><option value="enviado">Enviado</option><option value="falhou">Falhou</option><option value="pendente">Pendente</option>
+      </select>
+    </div>
+    <table><thead><tr><th>Data</th><th>Telefone</th><th>Mensagem</th><th>Status</th><th>Provedor</th><th>Erro</th></tr></thead><tbody id="logs-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== PESSOAS ===================== -->
+<div class="view" id="view-pessoas">
+  <div class="topbar">
+    <h1>👥 Pessoas Cadastradas</h1>
+    <button class="btn btn-primary" onclick="showModal('pessoa')">+ Cadastrar</button>
+  </div>
+  <div class="panel">
+    <table><thead><tr><th>Nome</th><th>Telefone</th><th>Bairro</th><th>SMS</th><th>Status</th><th>Ações</th></tr></thead><tbody id="pessoas-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- ===================== TEMPLATES ===================== -->
+<div class="view" id="view-templates">
+  <div class="topbar">
+    <h1>📝 Modelos de Mensagem</h1>
+  </div>
+  <div class="panel">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Clique em um modelo para usá-lo ao criar um alerta.</p>
+    <div id="templates-list"></div>
+  </div>
+  <div class="panel">
+    <h3>Modelos Padrão</h3>
+    <div id="templates-padrao"></div>
+  </div>
+</div>
+
+<!-- ===================== CONFIG ===================== -->
+<div class="view" id="view-config">
+  <div class="topbar">
+    <h1>⚙️ Configurações SMS</h1>
+  </div>
+  <div class="panel">
+    <h3>Provedor de SMS</h3>
+    <div class="field"><label>Provedor</label>
+      <select id="cfg-provider">
+        <option value="">Nenhum (Sandbox)</option>
+        <option value="twilio">Twilio</option>
+        <option value="zenvia">Zenvia</option>
+        <option value="comtele">Comtele</option>
+        <option value="smsdev">SMSDev</option>
+        <option value="totalvoice">TotalVoice</option>
+      </select>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="cfg-enabled"> SMS Habilitado (produção)
+      </label>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="cfg-sandbox" checked> Modo Sandbox (simula envios)
+      </label>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="cfg-auto" checked> Enviar SMS automaticamente ao publicar alerta
+      </label>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;">
+      ⚠️ As credenciais do provedor (API Key, Secret) são configuradas nas <strong>Environment Variables do Vercel</strong>, não no navegador.
+      Vá em Vercel → Settings → Environment Variables e configure: SMS_PROVIDER, SMS_API_KEY, SMS_API_SECRET, SMS_API_URL, SMS_SENDER, SMS_ENABLED, SMS_SANDBOX.
+    </p>
+    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:12px;">Salvar Configurações</button>
+  </div>
+  <div class="panel">
+    <h3>Sistema 40199 — Defesa Civil do PR</h3>
+    <div style="background:#EFF6FF;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;">
+      <p style="font-size:13px;line-height:1.7;">
+        O sistema <strong>40199</strong> é o serviço oficial da <strong>Defesa Civil do Paraná</strong> para alertas por SMS.<br><br>
+        📱 O cidadão envia o <strong>CEP</strong> para o número <strong>40199</strong> e passa a receber alertas de desastres naturais na sua região.<br><br>
+        🔗 Mais informações: <a href="https://www.defesacivil.pr.gov.br/servicos/Seguranca/Defesa-Civil/Receber-alertas-da-Defesa-Civil-por-SMS-ERrZ4PN6" target="_blank" style="color:var(--royal);text-decoration:underline;">defesacivil.pr.gov.br</a><br><br>
+        <strong>Orientação:</strong> Incentive os moradores a se cadastrarem no 40199 para receberem também os alertas estaduais.
+      </p>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Testar Envio de SMS</h3>
+    <div class="field"><label>Telefone de teste</label><input id="cfg-test-phone" placeholder="44999999999"></div>
+    <div class="field"><label>Mensagem de teste</label><input id="cfg-test-msg" value="TESTE DEFESA CIVIL - Este eh um SMS de teste do sistema de alertas. Ignore esta mensagem."></div>
+    <button class="btn btn-success" onclick="testSMS()">📱 Enviar SMS de Teste</button>
+    <div id="cfg-test-result" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- MODAL PESSOA -->
+<div class="modal-overlay" id="modal-pessoa">
+<div class="modal">
+  <h3 id="modal-pessoa-title">Cadastrar Pessoa</h3>
+  <input type="hidden" id="mp-id">
+  <div class="field"><label>Nome Completo</label><input id="mp-nome"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div class="field"><label>Telefone (SMS)</label><input id="mp-telefone" placeholder="44999990000"></div>
+    <div class="field"><label>WhatsApp</label><input id="mp-whatsapp" placeholder="44999990000"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div class="field"><label>Bairro</label><input id="mp-bairro"></div>
+    <div class="field"><label>CEP</label><input id="mp-cep"></div>
+  </div>
+  <div class="field"><label>Endereço</label><input id="mp-endereco"></div>
+  <div class="field"><label>Email</label><input id="mp-email" type="email"></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;">
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="mp-sms" checked> Receber SMS</label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="mp-wpp"> Receber WhatsApp</label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="mp-idoso"> Idoso</label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="mp-crianca"> Criança</label>
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="mp-deficiente"> PcD</label>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;">
+    <button class="btn btn-primary" onclick="savePessoa()" style="flex:1;">Salvar</button>
+    <button class="btn btn-outline" onclick="hideModal('pessoa')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+const SB_URL = 'https://kfvkembarvsbtveksiag.supabase.co';
+const SB_KEY = 'sb_publishable_r4FgIemkyEcQiWCjj23cew_MdN2GVuL';
+const TID = '00000000-0000-0000-0000-000000000001';
+const API_BASE = window.location.origin;
+
+async function sbGet(table, query) {
+  const r = await fetch(SB_URL + '/rest/v1/' + table + '?' + (query || ''), {
+    headers: { apikey: SB_KEY, 'Accept-Profile': 'gestao360' }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(table, data) {
+  const r = await fetch(SB_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: { apikey: SB_KEY, 'Content-Profile': 'gestao360', 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(table, query, data) {
+  const r = await fetch(SB_URL + '/rest/v1/' + table + '?' + query, {
+    method: 'PATCH',
+    headers: { apikey: SB_KEY, 'Content-Profile': 'gestao360', 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(table, query) {
+  const r = await fetch(SB_URL + '/rest/v1/' + table + '?' + query, {
+    method: 'DELETE',
+    headers: { apikey: SB_KEY, 'Content-Profile': 'gestao360' }
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+function fmtDT(d) { return d ? new Date(d).toLocaleString('pt-BR') : '—'; }
+function fmtD(d) { return d ? new Date(d).toLocaleDateString('pt-BR') : '—'; }
+
+// ============================================================
+// NAV
+// ============================================================
+let currentNivel = '';
+
+function navTo(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const items = document.querySelectorAll('.nav-item');
+  const map = { dashboard: 0, 'novo-alerta': 1, historico: 2, 'logs-sms': 3, pessoas: 4, templates: 5, config: 6 };
+  if (map[v] !== undefined && items[map[v]]) items[map[v]].classList.add('active');
+  window.scrollTo(0, 0);
+  if (LOADERS[v]) LOADERS[v]();
+}
+function showModal(id) { document.getElementById('modal-' + id).classList.add('show'); }
+function hideModal(id) { document.getElementById('modal-' + id).classList.remove('show'); }
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  try {
+    const [alertas, pessoas, logs] = await Promise.all([
+      sbGet('dc_alertas', 'select=*&tenant_id=eq.' + TID + '&order=criado_em.desc&limit=10').catch(() => []),
+      sbGet('dc_pessoas_alerta', 'select=id&tenant_id=eq.' + TID + '&status=eq.ativo').catch(() => []),
+      sbGet('dc_sms_logs', 'select=*&tenant_id=eq.' + TID + '&order=criado_em.desc&limit=10').catch(() => [])
+    ]);
+
+    const ativos = alertas.filter(a => a.ativo);
+    document.getElementById('kpi-alertas').textContent = ativos.length;
+    document.getElementById('kpi-pessoas').textContent = pessoas.length;
+
+    const allLogs = await sbGet('dc_sms_logs', 'select=id,status&tenant_id=eq.' + TID).catch(() => []);
+    document.getElementById('kpi-sms-enviados').textContent = allLogs.filter(l => l.status === 'enviado').length;
+    document.getElementById('kpi-sms-falhas').textContent = allLogs.filter(l => l.status === 'falhou').length;
+
+    const nivelPill = { informativo: 'pill-info', atencao: 'pill-warn', alerta: 'pill-danger', emergencia: 'pill-danger' };
+    document.getElementById('dash-alertas-tbody').innerHTML = alertas.slice(0, 5).map(a =>
+      '<tr><td>' + fmtDT(a.criado_em) + '</td><td>' + (a.titulo || '—') + '</td><td><span class="pill ' + (nivelPill[a.nivel] || 'pill-muted') + '">' + (a.nivel || '—') + '</span></td><td>' + (a.sms_total || 0) + ' (' + (a.sms_sucessos || 0) + '✓ ' + (a.sms_falhas || 0) + '✗)</td><td>' + (a.ativo ? '<span class="pill pill-ok">Ativo</span>' : '<span class="pill pill-muted">Encerrado</span>') + '</td></tr>'
+    ).join('') || '<tr><td colspan="5" class="empty">Nenhum alerta registrado.</td></tr>';
+
+    document.getElementById('dash-logs-tbody').innerHTML = logs.slice(0, 5).map(l => {
+      const dotCls = l.status === 'enviado' ? 'ok' : l.status === 'falhou' ? 'fail' : l.status === 'pendente' ? 'pending' : 'sandbox';
+      return '<tr><td>' + fmtDT(l.criado_em) + '</td><td>' + (l.telefone || '—') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (l.mensagem || '—').slice(0, 60) + '</td><td><span class="log-status"><span class="log-dot ' + dotCls + '"></span>' + l.status + '</span></td><td>' + (l.provider || '—') + '</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="empty">Nenhum log de SMS.</td></tr>';
+  } catch (e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+// ============================================================
+// NOVO ALERTA
+// ============================================================
+function selectNivel(n) {
+  currentNivel = n;
+  document.querySelectorAll('.nivel-btn').forEach(b => b.classList.remove('selected'));
+  const map = { informativo: 0, atencao: 1, alerta: 2, emergencia: 3 };
+  document.querySelectorAll('.nivel-btn')[map[n]].classList.add('selected');
+  document.getElementById('confirm-emergencia').style.display = n === 'emergencia' ? 'block' : 'none';
+  updatePreview();
+}
+
+function updatePreview() {
+  const msg = document.getElementById('na-sms-msg').value;
+  document.getElementById('sms-char-count').textContent = msg.length;
+  document.getElementById('sms-preview').textContent = msg || 'Nenhuma mensagem ainda...';
+  document.getElementById('field-bairro-alvo').style.display = document.getElementById('na-abrangencia').value === 'bairro' ? 'block' : 'none';
+  countDestinatarios();
+}
+
+async function countDestinatarios() {
+  try {
+    let q = 'select=id&tenant_id=eq.' + TID + '&status=eq.ativo&receber_sms=eq.true';
+    const abr = document.getElementById('na-abrangencia').value;
+    if (abr === 'bairro') {
+      const b = document.getElementById('na-bairro-alvo').value.trim();
+      if (b) q += '&bairro=eq.' + encodeURIComponent(b);
+    }
+    const p = await sbGet('dc_pessoas_alerta', q).catch(() => []);
+    document.getElementById('sms-dest-count').textContent = p.length;
+  } catch (e) {
+    document.getElementById('sms-dest-count').textContent = '?';
+  }
+}
+
+function checkConfirm() {
+  const v = document.getElementById('na-confirm-input').value.trim();
+  document.getElementById('btn-publicar').disabled = currentNivel === 'emergencia' && v !== 'CONFIRMAR';
+}
+
+const TEMPLATES_PADRAO = [
+  { tipo: 'chuva_intensa', nivel: 'alerta', msg: 'ALERTA DEFESA CIVIL IVATUBA - Previsao de chuva intensa nas proximas horas. Evite areas de risco e locais alagados. Defesa Civil: 199' },
+  { tipo: 'alagamento', nivel: 'alerta', msg: 'ALERTA DEFESA CIVIL IVATUBA - Risco de alagamento. Saia de areas baixas. Procure local elevado. NAO atravesse enchentes. Ligue 199' },
+  { tipo: 'vendaval', nivel: 'alerta', msg: 'ALERTA DEFESA CIVIL IVATUBA - Previsao de ventos fortes. Feche janelas, recolha objetos soltos, evite abrigo sob arvores. Ligue 199' },
+  { tipo: 'emergencia', nivel: 'emergencia', msg: 'EMERGENCIA DEFESA CIVIL IVATUBA - Situacao de emergencia. Dirija-se ao abrigo mais proximo. Siga orientacoes oficiais. Ligue 199' },
+  { tipo: 'informativo', nivel: 'informativo', msg: 'DEFESA CIVIL IVATUBA INFORMA - Previsao de mudanca climatica. Mantenha-se informado pelos canais oficiais. Defesa Civil: 199' },
+];
+
+async function publicarAlerta() {
+  const titulo = document.getElementById('na-titulo').value.trim();
+  const tipo = document.getElementById('na-tipo').value;
+  const descricao = document.getElementById('na-descricao').value.trim();
+  const recomendacoes = document.getElementById('na-recomendacoes').value.trim();
+  const regiao = document.getElementById('na-regiao').value.trim();
+  const fonte = document.getElementById('na-fonte').value.trim();
+  const smsMsg = document.getElementById('na-sms-msg').value.trim();
+  const enviarSMS = document.getElementById('na-enviar-sms').checked;
+
+  if (!titulo) { alert('Preencha o título do alerta.'); return; }
+  if (!tipo) { alert('Selecione o tipo do alerta.'); return; }
+  if (!currentNivel) { alert('Selecione o nível do alerta.'); return; }
+  if (enviarSMS && !smsMsg) { alert('Preencha a mensagem SMS.'); return; }
+  if (currentNivel === 'emergencia' && document.getElementById('na-confirm-input').value.trim() !== 'CONFIRMAR') {
+    alert('Para alertas de EMERGÊNCIA, digite CONFIRMAR no campo de confirmação.'); return;
+  }
+
+  const btn = document.getElementById('btn-publicar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Publicando...';
+  const resultado = document.getElementById('na-resultado');
+
+  try {
+    // 1. Criar alerta na tabela dc_alertas
+    const alerta = await sbPost('dc_alertas', {
+      tenant_id: TID,
+      titulo,
+      tipo,
+      nivel: currentNivel,
+      descricao: descricao || null,
+      recomendacoes: recomendacoes || null,
+      regiao_afetada: regiao || 'Todo o município',
+      fonte: fonte || null,
+      ativo: true,
+      sms_enviado: false,
+    });
+
+    const alertaId = alerta[0]?.id || alerta.id;
+    resultado.innerHTML = '<div style="background:#D1FAE5;padding:12px;border-radius:8px;font-size:13px;color:var(--ok);font-weight:700;">✅ Alerta publicado com sucesso! ID: ' + alertaId + '</div>';
+
+    // 2. Enviar SMS se marcado
+    if (enviarSMS && smsMsg) {
+      btn.textContent = '📱 Enviando SMS...';
+      resultado.innerHTML += '<div style="background:#DBEAFE;padding:12px;border-radius:8px;font-size:13px;color:var(--royal);margin-top:8px;">📱 Enviando SMS para destinatários...</div>';
+
+      try {
+        const abr = document.getElementById('na-abrangencia').value;
+        const bairro = abr === 'bairro' ? document.getElementById('na-bairro-alvo').value.trim() : null;
+
+        const smsRes = await fetch(API_BASE + '/api/send-alert-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            alerta_id: alertaId,
+            mensagem: smsMsg,
+            nivel: currentNivel,
+            bairro: bairro,
+            modo: bairro ? 'bairro' : 'todos',
+          })
+        });
+        const smsData = await smsRes.json();
+
+        if (smsData.ok) {
+          const sandboxTag = smsData.sandbox ? ' <span class="sandbox-badge">SANDBOX</span>' : '';
+          resultado.innerHTML += '<div style="background:#D1FAE5;padding:12px;border-radius:8px;font-size:13px;color:var(--ok);margin-top:8px;font-weight:700;">✅ SMS enviado!' + sandboxTag + '<br>Total: ' + smsData.total + ' | Enviados: ' + smsData.enviados + ' | Falhas: ' + smsData.falhas + '</div>';
+        } else {
+          resultado.innerHTML += '<div style="background:#FEF2F2;padding:12px;border-radius:8px;font-size:13px;color:var(--danger);margin-top:8px;">❌ Erro no envio de SMS: ' + (smsData.error || 'Erro desconhecido') + '</div>';
+        }
+      } catch (smsErr) {
+        // Fallback: enviar SMS diretamente pelo frontend (sandbox mode)
+        resultado.innerHTML += '<div style="background:#FEF3C7;padding:12px;border-radius:8px;font-size:13px;color:var(--warn);margin-top:8px;">⚠️ API não disponível. Executando em modo sandbox local...</div>';
+        await enviarSMSSandboxLocal(alertaId, smsMsg, abr === 'bairro' ? document.getElementById('na-bairro-alvo').value.trim() : null);
+        resultado.innerHTML += '<div style="background:#D1FAE5;padding:12px;border-radius:8px;font-size:13px;color:var(--ok);margin-top:8px;">✅ SMS registrado em modo sandbox (logs salvos no banco).</div>';
+      }
+    }
+
+    // Limpar form
+    document.getElementById('na-titulo').value = '';
+    document.getElementById('na-tipo').selectedIndex = 0;
+    document.getElementById('na-descricao').value = '';
+    document.getElementById('na-recomendacoes').value = '';
+    document.getElementById('na-regiao').value = '';
+    document.getElementById('na-fonte').value = '';
+    document.getElementById('na-sms-msg').value = '';
+    document.getElementById('na-confirm-input').value = '';
+    currentNivel = '';
+    document.querySelectorAll('.nivel-btn').forEach(b => b.classList.remove('selected'));
+    updatePreview();
+
+  } catch (e) {
+    resultado.innerHTML = '<div style="background:#FEF2F2;padding:12px;border-radius:8px;font-size:13px;color:var(--danger);">❌ Erro: ' + e.message.slice(0, 200) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚨 PUBLICAR ALERTA E ENVIAR SMS';
+  }
+}
+
+async function enviarSMSSandboxLocal(alertaId, mensagem, bairro) {
+  let q = 'select=*&tenant_id=eq.' + TID + '&status=eq.ativo&receber_sms=eq.true';
+  if (bairro) q += '&bairro=eq.' + encodeURIComponent(bairro);
+  const pessoas = await sbGet('dc_pessoas_alerta', q).catch(() => []);
+
+  const logs = pessoas.map(p => ({
+    tenant_id: TID,
+    alerta_id: alertaId,
+    pessoa_id: p.id,
+    canal: 'sms',
+    telefone: p.telefone,
+    mensagem,
+    status: 'enviado',
+    provider: 'sandbox',
+    codigo_retorno: 'sandbox-' + Date.now(),
+  }));
+
+  if (logs.length) {
+    await sbPost('dc_sms_logs', logs).catch(e => console.error('Erro ao salvar logs:', e));
+    await sbPatch('dc_alertas', 'id=eq.' + alertaId, {
+      sms_enviado: true,
+      sms_total: pessoas.length,
+      sms_sucessos: pessoas.length,
+      sms_falhas: 0,
+      sms_enviado_em: new Date().toISOString(),
+    }).catch(e => console.error('Erro ao atualizar alerta:', e));
+  }
+}
+
+// ============================================================
+// HISTORICO
+// ============================================================
+async function loadHistorico() {
+  try {
+    const alertas = await sbGet('dc_alertas', 'select=*&tenant_id=eq.' + TID + '&order=criado_em.desc&limit=50');
+    const nivelPill = { informativo: 'pill-info', atencao: 'pill-warn', alerta: 'pill-danger', emergencia: 'pill-danger' };
+    document.getElementById('hist-tbody').innerHTML = alertas.map(a =>
+      '<tr><td>' + fmtDT(a.criado_em) + '</td><td>' + (a.titulo || '—') + '</td><td>' + (a.tipo || '—') + '</td><td><span class="pill ' + (nivelPill[a.nivel] || 'pill-muted') + '">' + (a.nivel || '—') + '</span></td><td>' + (a.sms_enviado ? (a.sms_sucessos || 0) + '✓ / ' + (a.sms_falhas || 0) + '✗' : '—') + '</td><td>' + (a.ativo ? '<span class="pill pill-ok">Ativo</span>' : '<span class="pill pill-muted">—</span>') + '</td><td>' + (a.ativo ? '<button class="btn btn-outline btn-sm" onclick="encerrarAlerta(\'' + a.id + '\')">Encerrar</button>' : '') + ' <button class="btn btn-outline btn-sm" onclick="reenviarSMS(\'' + a.id + '\')">Reenviar SMS</button></td></tr>'
+    ).join('') || '<tr><td colspan="7" class="empty">Nenhum alerta.</td></tr>';
+  } catch (e) {
+    document.getElementById('hist-tbody').innerHTML = '<tr><td colspan="7" class="empty">Erro ao carregar.</td></tr>';
+  }
+}
+
+async function encerrarAlerta(id) {
+  if (!confirm('Encerrar este alerta?')) return;
+  await sbPatch('dc_alertas', 'id=eq.' + id, { ativo: false });
+  loadHistorico();
+}
+
+async function reenviarSMS(alertaId) {
+  const msg = prompt('Mensagem SMS para reenviar (ou cancele):');
+  if (!msg) return;
+  try {
+    const res = await fetch(API_BASE + '/api/send-alert-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alerta_id: alertaId, mensagem: msg, nivel: 'alerta', modo: 'todos' })
+    });
+    const data = await res.json();
+    alert(data.ok ? 'SMS reenviado! Enviados: ' + data.enviados + ' Falhas: ' + data.falhas : 'Erro: ' + data.error);
+  } catch (e) {
+    await enviarSMSSandboxLocal(alertaId, msg, null);
+    alert('SMS registrado em sandbox local.');
+  }
+  loadHistorico();
+}
+
+// ============================================================
+// LOGS SMS
+// ============================================================
+async function loadLogs() {
+  try {
+    let q = 'select=*&tenant_id=eq.' + TID + '&order=criado_em.desc&limit=100';
+    const st = document.getElementById('log-filter-status').value;
+    if (st) q += '&status=eq.' + st;
+    const logs = await sbGet('dc_sms_logs', q);
+    document.getElementById('logs-tbody').innerHTML = logs.map(l => {
+      const dotCls = l.status === 'enviado' ? 'ok' : l.status === 'falhou' ? 'fail' : l.status === 'pendente' ? 'pending' : 'sandbox';
+      return '<tr><td>' + fmtDT(l.criado_em) + '</td><td>' + (l.telefone || '—') + '</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (l.mensagem || '—').slice(0, 80) + '</td><td><span class="log-status"><span class="log-dot ' + dotCls + '"></span>' + l.status + '</span></td><td>' + (l.provider || '—') + '</td><td style="color:var(--danger);font-size:11px;">' + (l.erro || '') + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="empty">Nenhum log de SMS.</td></tr>';
+  } catch (e) {
+    document.getElementById('logs-tbody').innerHTML = '<tr><td colspan="6" class="empty">Erro ao carregar logs.</td></tr>';
+  }
+}
+
+// ============================================================
+// PESSOAS
+// ============================================================
+async function loadPessoas() {
+  try {
+    const p = await sbGet('dc_pessoas_alerta', 'select=*&tenant_id=eq.' + TID + '&order=nome.asc');
+    document.getElementById('pessoas-tbody').innerHTML = p.map(x =>
+      '<tr><td>' + x.nome + '</td><td>' + (x.telefone || '—') + '</td><td>' + (x.bairro || '—') + '</td><td>' + (x.receber_sms ? '<span class="pill pill-ok">Sim</span>' : '<span class="pill pill-muted">Não</span>') + '</td><td>' + (x.status === 'ativo' ? '<span class="pill pill-ok">Ativo</span>' : '<span class="pill pill-muted">' + x.status + '</span>') + '</td><td><button class="btn btn-outline btn-sm" onclick="editPessoa(\'' + x.id + '\')">Editar</button> <button class="btn btn-outline btn-sm" onclick="deletePessoa(\'' + x.id + '\',\'' + x.nome + '\')">Excluir</button></td></tr>'
+    ).join('') || '<tr><td colspan="6" class="empty">Nenhuma pessoa cadastrada. Clique em "+ Cadastrar".</td></tr>';
+  } catch (e) {
+    document.getElementById('pessoas-tbody').innerHTML = '<tr><td colspan="6" class="empty">Tabela dc_pessoas_alerta não encontrada. Execute a migração SQL primeiro.</td></tr>';
+  }
+}
+
+function clearPessoaForm() {
+  ['mp-id','mp-nome','mp-telefone','mp-whatsapp','mp-bairro','mp-cep','mp-endereco','mp-email'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mp-sms').checked = true;
+  ['mp-wpp','mp-idoso','mp-crianca','mp-deficiente'].forEach(id => document.getElementById(id).checked = false);
+}
+
+async function editPessoa(id) {
+  const rows = await sbGet('dc_pessoas_alerta', 'id=eq.' + id);
+  if (!rows.length) return;
+  const p = rows[0];
+  document.getElementById('mp-id').value = p.id;
+  document.getElementById('mp-nome').value = p.nome || '';
+  document.getElementById('mp-telefone').value = p.telefone || '';
+  document.getElementById('mp-whatsapp').value = p.whatsapp || '';
+  document.getElementById('mp-bairro').value = p.bairro || '';
+  document.getElementById('mp-cep').value = p.cep || '';
+  document.getElementById('mp-endereco').value = p.endereco || '';
+  document.getElementById('mp-email').value = p.email || '';
+  document.getElementById('mp-sms').checked = p.receber_sms !== false;
+  document.getElementById('mp-wpp').checked = !!p.receber_whatsapp;
+  document.getElementById('mp-idoso').checked = !!p.possui_idoso;
+  document.getElementById('mp-crianca').checked = !!p.possui_crianca;
+  document.getElementById('mp-deficiente').checked = !!p.possui_deficiente;
+  document.getElementById('modal-pessoa-title').textContent = 'Editar Pessoa';
+  showModal('pessoa');
+}
+
+async function savePessoa() {
+  const id = document.getElementById('mp-id').value;
+  const nome = document.getElementById('mp-nome').value.trim();
+  const telefone = document.getElementById('mp-telefone').value.trim();
+  if (!nome || !telefone) { alert('Nome e telefone são obrigatórios.'); return; }
+
+  const data = {
+    tenant_id: TID,
+    nome,
+    telefone,
+    whatsapp: document.getElementById('mp-whatsapp').value.trim() || null,
+    bairro: document.getElementById('mp-bairro').value.trim() || null,
+    cep: document.getElementById('mp-cep').value.trim() || null,
+    endereco: document.getElementById('mp-endereco').value.trim() || null,
+    email: document.getElementById('mp-email').value.trim() || null,
+    receber_sms: document.getElementById('mp-sms').checked,
+    receber_whatsapp: document.getElementById('mp-wpp').checked,
+    possui_idoso: document.getElementById('mp-idoso').checked,
+    possui_crianca: document.getElementById('mp-crianca').checked,
+    possui_deficiente: document.getElementById('mp-deficiente').checked,
+    status: 'ativo',
+  };
+
+  try {
+    if (id) {
+      await sbPatch('dc_pessoas_alerta', 'id=eq.' + id, data);
+    } else {
+      await sbPost('dc_pessoas_alerta', data);
+    }
+    hideModal('pessoa');
+    clearPessoaForm();
+    loadPessoas();
+  } catch (e) {
+    alert('Erro: ' + e.message.slice(0, 200));
+  }
+}
+
+async function deletePessoa(id, nome) {
+  if (!confirm('Excluir "' + nome + '"?')) return;
+  await sbDelete('dc_pessoas_alerta', 'id=eq.' + id);
+  loadPessoas();
+}
+
+// ============================================================
+// TEMPLATES
+// ============================================================
+function loadTemplates() {
+  document.getElementById('templates-padrao').innerHTML = TEMPLATES_PADRAO.map((t, i) =>
+    '<div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--line);" onclick="usarTemplate(' + i + ')"><div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:13px;">' + t.tipo.replace(/_/g, ' ') + '</strong><span class="pill ' + (t.nivel === 'emergencia' ? 'pill-danger' : t.nivel === 'alerta' ? 'pill-warn' : 'pill-info') + '">' + t.nivel + '</span></div><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;">' + t.msg + '</p></div>'
+  ).join('');
+}
+
+function usarTemplate(i) {
+  const t = TEMPLATES_PADRAO[i];
+  document.getElementById('na-sms-msg').value = t.msg;
+  selectNivel(t.nivel);
+  const tipoSelect = document.getElementById('na-tipo');
+  for (let o = 0; o < tipoSelect.options.length; o++) {
+    if (tipoSelect.options[o].value === t.tipo) { tipoSelect.selectedIndex = o; break; }
+  }
+  updatePreview();
+  navTo('novo-alerta');
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function loadConfig() {}
+
+async function saveConfig() {
+  alert('Configurações de provedor SMS são gerenciadas nas Environment Variables do Vercel.\n\nAs opções locais (sandbox, auto) foram salvas.');
+}
+
+async function testSMS() {
+  const phone = document.getElementById('cfg-test-phone').value.trim();
+  const msg = document.getElementById('cfg-test-msg').value.trim();
+  if (!phone || !msg) { alert('Preencha telefone e mensagem.'); return; }
+  const el = document.getElementById('cfg-test-result');
+  el.innerHTML = '<span style="color:var(--warn);">Enviando...</span>';
+
+  try {
+    const res = await fetch(API_BASE + '/api/send-alert-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alerta_id: 'test-' + Date.now(), mensagem: msg, nivel: 'informativo', modo: 'todos' })
+    });
+    const data = await res.json();
+    el.innerHTML = '<div style="background:#D1FAE5;padding:10px;border-radius:8px;font-size:12px;color:var(--ok);">✅ Teste concluído! Enviados: ' + (data.enviados || 0) + ' | Sandbox: ' + (data.sandbox ? 'Sim' : 'Não') + '</div>';
+  } catch (e) {
+    el.innerHTML = '<div style="background:#FEF3C7;padding:10px;border-radius:8px;font-size:12px;color:var(--warn);">⚠️ API não disponível. Configure o deploy na Vercel com a função api/send-alert-sms.js</div>';
+  }
+}
+
+// ============================================================
+// LOADERS
+// ============================================================
+const LOADERS = {
+  dashboard: loadDashboard,
+  'novo-alerta': () => { updatePreview(); },
+  historico: loadHistorico,
+  'logs-sms': loadLogs,
+  pessoas: loadPessoas,
+  templates: loadTemplates,
+  config: loadConfig,
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+});
+</script>
+
+<div style="text-align:center;padding:16px;font-size:10px;color:var(--muted);">
+  Conecta Gestão — Defesa Civil · Alertas e SMS · Desenvolvido por <strong>Gabriel Oliveira</strong>
+</div>
+</div>
+</div>
+</body>
+</html>

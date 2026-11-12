@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conecta Gestão — Dashboard do Prefeito · Gabriel Oliveira</title>
+<meta name="description" content="Dashboard executivo do Prefeito — indicadores em tempo real de toda a administração municipal.">
+<link rel="canonical" href="https://conectagestao360.vercel.app/conecta-gestao-dashboard-prefeito.html">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B3B70">
+<link rel="manifest" href="/manifest-dashboard.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CG Dashboard">
+<script src="/pwa-register.js" defer></script>
+<style>
+:root{
+  --azul:#0B3B70;--azul-dark:#082B52;--azul-dest:#0057A8;--cyan:#00AEEF;
+  --bg:#F4F6F8;--surface:#FFFFFF;--gray:#E8EBEF;--line:rgba(11,59,112,.07);
+  --ink:#183B5D;--ink-soft:#64748B;--muted:#94A3B8;
+  --ok:#059669;--warn:#D97706;--danger:#DC2626;--info:#0057A8;
+  --radius:16px;--radius-sm:10px;--radius-lg:24px;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'SF Mono','Consolas',monospace;
+  --shadow-xs:0 1px 2px rgba(8,43,82,.04);
+  --shadow-sm:0 1px 3px rgba(8,43,82,.06),0 1px 2px rgba(8,43,82,.04);
+  --shadow-md:0 4px 16px rgba(8,43,82,.08),0 1px 3px rgba(8,43,82,.04);
+  --shadow-lg:0 10px 40px rgba(8,43,82,.1),0 2px 6px rgba(8,43,82,.04);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+select,input,textarea{font-family:inherit;}
+img{max-width:100%;display:block;}
+a{color:var(--azul-dest);text-decoration:none;}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+
+/* ===== LOGIN ===== */
+#login-screen{min-height:100vh;display:grid;grid-template-columns:1.15fr 1fr;background:var(--surface);}
+@media(max-width:860px){#login-screen{grid-template-columns:1fr;}}
+.login-brand{background:linear-gradient(160deg,var(--azul-dark) 0%,var(--azul) 50%,var(--azul-dest) 100%);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:60px;position:relative;overflow:hidden;}
+.login-brand::before{content:'';position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(0,174,239,.08);}
+.login-brand::after{content:'';position:absolute;bottom:-120px;left:-60px;width:400px;height:400px;border-radius:50%;background:rgba(0,87,168,.1);}
+.brand-top{display:flex;align-items:center;gap:16px;position:relative;z-index:1;}
+.brand-logo{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;letter-spacing:-.5px;border:1px solid rgba(255,255,255,.15);}
+.brand-title{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.brand-title small{display:block;font-size:10.5px;letter-spacing:2.5px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:3px;font-weight:600;}
+.brand-hero{position:relative;z-index:1;max-width:440px;}
+.brand-hero h1{font-weight:800;font-size:34px;line-height:1.22;letter-spacing:-.03em;margin-bottom:16px;}
+.brand-hero h1 span{color:var(--cyan);}
+.brand-hero p{color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.7;}
+.brand-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,.08);border-radius:30px;font-size:11.5px;color:rgba(255,255,255,.7);margin-top:20px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.08);}
+.brand-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulse-dot 2s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.3;}}
+.brand-foot{position:relative;z-index:1;font-size:11px;color:rgba(255,255,255,.3);}
+.login-form-wrap{display:flex;align-items:center;justify-content:center;padding:48px 40px;}
+.login-form{width:100%;max-width:380px;}
+.login-form h2{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--azul);margin-bottom:6px;}
+.login-form .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:32px;}
+.field{margin-bottom:20px;}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-soft);margin-bottom:7px;font-weight:700;}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--gray);border-radius:var(--radius-sm);font-size:14.5px;background:var(--surface);color:var(--ink);transition:border-color .2s,box-shadow .2s;}
+.field input:focus{outline:none;border-color:var(--azul-dest);box-shadow:0 0 0 3px rgba(0,87,168,.1);}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--azul),var(--azul-dest));color:#fff;padding:13px;border-radius:var(--radius-sm);font-size:14.5px;font-weight:700;box-shadow:0 6px 20px rgba(11,59,112,.3);transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(11,59,112,.25);}
+.btn-primary:disabled{opacity:.6;pointer-events:none;}
+.login-error{margin-top:14px;padding:12px 14px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:var(--radius-sm);font-size:12.5px;color:#991B1B;line-height:1.6;display:none;}
+.login-error.show{display:block;}
+
+/* ===== HEADER ===== */
+.app-header{background:var(--azul-dark);color:#fff;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06);}
+.hd-inner{max-width:1440px;margin:0 auto;padding:0 40px;display:flex;align-items:center;height:64px;gap:20px;}
+@media(max-width:768px){.hd-inner{padding:0 16px;gap:12px;}}
+.hd-brand{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.hd-logo{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;border:1px solid rgba(255,255,255,.12);}
+.hd-name{font-size:15px;font-weight:800;letter-spacing:-.02em;}
+.hd-name small{display:block;font-size:9.5px;letter-spacing:2px;color:rgba(255,255,255,.4);text-transform:uppercase;font-weight:600;margin-top:1px;}
+.hd-nav{display:flex;gap:2px;margin-left:24px;overflow-x:auto;scrollbar-width:none;}
+.hd-nav::-webkit-scrollbar{display:none;}
+.hd-nav button{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;color:rgba(255,255,255,.55);white-space:nowrap;transition:all .2s;}
+.hd-nav button:hover,.hd-nav button.active{color:#fff;background:rgba(255,255,255,.08);}
+.hd-nav button.active{background:rgba(0,174,239,.15);color:var(--cyan);}
+@media(max-width:1100px){.hd-nav{display:none;}}
+.hd-actions{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.hd-search{position:relative;}
+.hd-search input{width:220px;padding:8px 12px 8px 34px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:12.5px;transition:all .2s;}
+.hd-search input::placeholder{color:rgba(255,255,255,.35);}
+.hd-search input:focus{outline:none;border-color:rgba(0,174,239,.4);background:rgba(255,255,255,.1);width:280px;}
+.hd-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:rgba(255,255,255,.35);}
+@media(max-width:768px){.hd-search{display:none;}}
+.hd-icon-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .15s;position:relative;}
+.hd-icon-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
+.hd-icon-btn svg{width:18px;height:18px;}
+.hd-badge{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--azul-dark);}
+.hd-user{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:8px;transition:background .15s;cursor:pointer;}
+.hd-user:hover{background:rgba(255,255,255,.06);}
+.hd-avatar{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--azul-dest),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;}
+.hd-user-info{line-height:1.3;}
+.hd-user-info .name{font-size:12.5px;font-weight:700;color:#fff;}
+.hd-user-info .role{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;}
+.logout-btn{font-size:11px;color:rgba(255,255,255,.4);padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);transition:all .15s;}
+.logout-btn:hover{color:#fff;border-color:rgba(255,255,255,.25);}
+
+/* ===== MAIN LAYOUT ===== */
+.app-main{max-width:1440px;margin:0 auto;padding:0 40px 60px;}
+@media(max-width:768px){.app-main{padding:0 16px 40px;}}
+.section{margin-bottom:48px;}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.section-title{font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--azul);}
+.section-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.section-link{font-size:12.5px;font-weight:600;color:var(--azul-dest);display:inline-flex;align-items:center;gap:4px;transition:gap .2s;}
+.section-link:hover{gap:8px;}
+.section-divider{height:1px;background:linear-gradient(90deg,var(--gray),transparent);margin:48px 0;}
+
+/* ===== HERO ===== */
+.hero{padding:40px 0 0;margin-bottom:48px;}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;min-height:280px;}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;gap:24px;}}
+.hero-text h1{font-size:32px;font-weight:800;line-height:1.2;letter-spacing:-.03em;margin-bottom:12px;}
+.hero-text h1 .greeting{display:block;font-size:16px;font-weight:600;color:var(--azul-dest);letter-spacing:0;margin-bottom:4px;}
+.hero-text .desc{font-size:14.5px;color:var(--ink-soft);line-height:1.7;max-width:480px;margin-bottom:20px;}
+.hero-meta{display:flex;gap:20px;flex-wrap:wrap;}
+.hero-meta-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600;}
+.hero-meta-item svg{width:14px;height:14px;color:var(--azul-dest);}
+.hero-visual{background:linear-gradient(135deg,var(--azul) 0%,var(--azul-dest) 100%);border-radius:var(--radius-lg);padding:32px;position:relative;overflow:hidden;min-height:260px;display:flex;align-items:flex-end;box-shadow:var(--shadow-lg);}
+.hero-visual::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23082B52'/%3E%3Cstop offset='1' stop-color='%230B3B70'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23sky)' width='600' height='300'/%3E%3Cpath d='M0 220 Q80 180 160 200 T320 190 T480 205 T600 195 V300 H0Z' fill='%23065F46' opacity='.3'/%3E%3Cpath d='M0 240 Q100 210 200 230 T400 220 T600 235 V300 H0Z' fill='%23059669' opacity='.25'/%3E%3Cpath d='M0 260 Q150 240 300 255 T600 250 V300 H0Z' fill='%2310B981' opacity='.2'/%3E%3Crect x='220' y='160' width='40' height='80' rx='2' fill='rgba(255,255,255,.08)'/%3E%3Crect x='225' y='165' width='12' height='10' rx='1' fill='rgba(255,255,255,.05)'/%3E%3Crect x='243' y='165' width='12' height='10' rx='1' fill='rgba(255,255,255,.05)'/%3E%3Crect x='225' y='182' width='12' height='10' rx='1' fill='rgba(255,255,255,.05)'/%3E%3Crect x='243' y='182' width='12' height='10' rx='1' fill='rgba(255,255,255,.05)'/%3E%3Crect x='270' y='180' width='35' height='60' rx='2' fill='rgba(255,255,255,.06)'/%3E%3Cpath d='M287 155 L270 180 H305 Z' fill='rgba(255,255,255,.07)'/%3E%3Crect x='180' y='190' width='30' height='50' rx='2' fill='rgba(255,255,255,.06)'/%3E%3Cellipse cx='140' cy='200' rx='25' ry='30' fill='rgba(16,185,129,.2)'/%3E%3Cellipse cx='370' cy='195' rx='20' ry='25' fill='rgba(16,185,129,.15)'/%3E%3Cellipse cx='400' cy='200' rx='18' ry='22' fill='rgba(16,185,129,.12)'/%3E%3Cellipse cx='100' cy='210' rx='15' ry='18' fill='rgba(16,185,129,.15)'/%3E%3Ccircle cx='500' cy='60' r='30' fill='rgba(255,255,255,.04)'/%3E%3C/svg%3E") center/cover no-repeat;opacity:.7;}
+.hero-visual-text{position:relative;z-index:1;color:#fff;}
+.hero-visual-text .city{font-size:28px;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;}
+.hero-visual-text .city .heart{color:#EF4444;font-style:normal;}
+.hero-visual-text .tagline{font-size:12.5px;color:rgba(255,255,255,.6);margin-top:4px;font-weight:500;}
+.hero-float{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);z-index:1;}
+.hero-float .fl-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.5);font-weight:700;}
+.hero-float .fl-value{font-size:15px;font-weight:800;color:#fff;margin-top:2px;}
+
+/* ===== KPI CARDS ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr;}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-xs);transition:all .25s var(--ease);position:relative;overflow:hidden;}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(0,87,168,.12);}
+.kpi::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--azul-dest);opacity:0;transition:opacity .2s;}
+.kpi:hover::after{opacity:1;}
+.kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:16px;}
+.kpi-icon.blue{background:rgba(0,87,168,.08);color:var(--azul-dest);}
+.kpi-icon.green{background:rgba(5,150,105,.08);color:var(--ok);}
+.kpi-icon.amber{background:rgba(217,119,6,.08);color:var(--warn);}
+.kpi-icon.cyan{background:rgba(0,174,239,.08);color:var(--cyan);}
+.kpi .num{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--azul);}
+.kpi .label{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:500;}
+.kpi .trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;margin-top:8px;padding:3px 8px;border-radius:20px;}
+.kpi .trend.up{color:var(--ok);background:rgba(5,150,105,.08);}
+.kpi .trend.down{color:var(--danger);background:rgba(220,38,38,.08);}
+.kpi .spark{display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:12px;}
+.kpi .spark b{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(180deg,rgba(0,87,168,.4),rgba(0,87,168,.15));transition:height .4s var(--ease);}
+
+/* ===== PANELS ===== */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-xs);transition:box-shadow .2s;}
+.panel:hover{box-shadow:var(--shadow-sm);}
+.panel-title{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.panel-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-equal{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:1000px){.grid-2,.grid-3,.grid-equal{grid-template-columns:1fr;}}
+
+/* ===== CHARTS ===== */
+.bar-chart{display:flex;flex-direction:column;gap:14px;}
+.bar-row{display:grid;grid-template-columns:140px 1fr 50px;align-items:center;gap:12px;font-size:12.5px;}
+.bar-row .name{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{background:var(--gray);border-radius:6px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--azul-dest),var(--cyan));transition:width .6s var(--ease);}
+.bar-row .val{text-align:right;color:var(--ink-soft);font-family:var(--mono);font-size:11.5px;font-weight:600;}
+.month-chart{display:flex;align-items:flex-end;gap:6px;height:160px;padding-top:8px;}
+.month-chart .mcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.month-chart .mbar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--azul-dest),var(--cyan));transition:height .5s var(--ease);min-height:2px;}
+.month-chart .mlbl{font-size:9.5px;color:var(--muted);font-weight:600;}
+.donut-wrap{display:flex;align-items:center;gap:24px;}
+.donut-legend{display:flex;flex-direction:column;gap:10px;font-size:12px;}
+.donut-legend .li{display:flex;align-items:center;gap:8px;color:var(--ink-soft);font-weight:500;}
+.donut-legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ===== SECRETARIAS ===== */
+.sec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:1100px){.sec-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.sec-grid{grid-template-columns:1fr;}}
+.sec-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;transition:all .25s var(--ease);cursor:pointer;position:relative;overflow:hidden;}
+.sec-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(0,87,168,.15);}
+.sec-card .sec-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;}
+.sec-card .sec-name{font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:10px;}
+.sec-card .sec-stats{display:flex;gap:16px;font-size:11px;color:var(--ink-soft);}
+.sec-card .sec-stats strong{display:block;font-size:16px;color:var(--azul);font-weight:800;}
+.sec-card .sec-bar{height:4px;background:var(--gray);border-radius:4px;margin-top:14px;overflow:hidden;}
+.sec-card .sec-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--azul-dest),var(--cyan));}
+
+/* ===== TIMELINE / FEED ===== */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);transition:background .15s;}
+.tl-item:last-child{border-bottom:none;}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;border:2px solid var(--surface);box-shadow:0 0 0 2px var(--azul-dest);}
+.tl-dot.green{box-shadow:0 0 0 2px var(--ok);}
+.tl-dot.amber{box-shadow:0 0 0 2px var(--warn);}
+.tl-dot.red{box-shadow:0 0 0 2px var(--danger);}
+.tl-dot.cyan{box-shadow:0 0 0 2px var(--cyan);}
+.tl-content{flex:1;min-width:0;}
+.tl-title{font-size:13px;font-weight:700;color:var(--ink);}
+.tl-desc{font-size:12px;color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+.tl-meta{font-size:10.5px;color:var(--muted);margin-top:4px;font-weight:600;}
+
+/* ===== ALERTS ===== */
+.alert-card{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--radius-sm);border:1px solid;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.alert-card:last-child{margin-bottom:0;}
+.alert-card:hover{transform:translateX(4px);}
+.alert-card.danger{border-color:rgba(220,38,38,.15);background:rgba(220,38,38,.03);}
+.alert-card.warn{border-color:rgba(217,119,6,.15);background:rgba(217,119,6,.03);}
+.alert-card.info{border-color:rgba(0,87,168,.15);background:rgba(0,87,168,.03);}
+.alert-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.alert-card.danger .alert-icon{background:rgba(220,38,38,.08);color:var(--danger);}
+.alert-card.warn .alert-icon{background:rgba(217,119,6,.08);color:var(--warn);}
+.alert-card.info .alert-icon{background:rgba(0,87,168,.08);color:var(--azul-dest);}
+.alert-text{flex:1;font-size:13px;font-weight:600;color:var(--ink);}
+.alert-count{font-size:14px;font-weight:800;flex-shrink:0;}
+
+/* ===== OBRAS ===== */
+.obra-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;transition:all .25s var(--ease);}
+.obra-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.obra-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.obra-name{font-size:14px;font-weight:700;color:var(--ink);}
+.obra-sec{font-size:11px;color:var(--muted);margin-top:2px;}
+.obra-status{padding:4px 10px;border-radius:20px;font-size:10.5px;font-weight:700;flex-shrink:0;}
+.obra-status.andamento{background:rgba(0,87,168,.08);color:var(--azul-dest);}
+.obra-status.concluido{background:rgba(5,150,105,.08);color:var(--ok);}
+.obra-status.planejado{background:rgba(148,163,184,.1);color:var(--muted);}
+.obra-progress{margin-top:4px;}
+.obra-progress .bar-outer{height:8px;background:var(--gray);border-radius:8px;overflow:hidden;margin-bottom:6px;}
+.obra-progress .bar-inner{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--azul-dest),var(--cyan));transition:width .6s var(--ease);}
+.obra-progress .pct{font-size:12px;font-weight:700;color:var(--azul-dest);}
+.obra-details{display:flex;gap:20px;margin-top:12px;font-size:11.5px;color:var(--ink-soft);}
+.obra-details span{display:flex;align-items:center;gap:4px;}
+
+/* ===== PLANO GOVERNO ===== */
+.gov-ring{display:flex;align-items:center;gap:32px;margin-bottom:24px;}
+.gov-ring-stats{display:flex;flex-direction:column;gap:8px;}
+.gov-ring-stats .stat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
+.gov-ring-stats .stat .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ===== QUICK ACCESS ===== */
+.qa-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;}
+@media(max-width:1000px){.qa-grid{grid-template-columns:repeat(4,1fr);}}
+@media(max-width:600px){.qa-grid{grid-template-columns:repeat(3,1fr);}}
+.qa-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);cursor:pointer;transition:all .2s var(--ease);text-align:center;}
+.qa-item:hover{border-color:rgba(0,87,168,.2);box-shadow:var(--shadow-sm);transform:translateY(-2px);}
+.qa-icon{width:40px;height:40px;border-radius:12px;background:rgba(0,87,168,.06);display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .2s;}
+.qa-item:hover .qa-icon{background:rgba(0,87,168,.1);}
+.qa-label{font-size:11px;font-weight:700;color:var(--ink-soft);line-height:1.3;}
+
+/* ===== TABLES ===== */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:0 12px 12px;border-bottom:1px solid var(--line);font-weight:700;}
+td{padding:12px;border-bottom:1px solid var(--line);color:var(--ink);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,87,168,.015);}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;}
+.status-em_andamento,.status-andamento{background:rgba(0,87,168,.08);color:var(--azul-dest);}
+.status-concluido{background:rgba(5,150,105,.08);color:var(--ok);}
+.status-planejado{background:rgba(148,163,184,.1);color:var(--muted);}
+.status-cancelado{background:rgba(220,38,38,.08);color:var(--danger);}
+
+/* ===== FOOTER ===== */
+.app-footer{background:var(--azul-dark);color:rgba(255,255,255,.5);padding:48px 40px 32px;margin-top:40px;}
+.footer-inner{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;}
+@media(max-width:900px){.footer-inner{grid-template-columns:1fr 1fr;}}
+@media(max-width:500px){.footer-inner{grid-template-columns:1fr;}}
+.footer-brand{font-size:17px;font-weight:800;color:#fff;margin-bottom:12px;}
+.footer-brand small{display:block;font-size:11px;color:rgba(255,255,255,.3);font-weight:500;margin-top:4px;letter-spacing:0;}
+.footer-desc{font-size:12.5px;line-height:1.7;max-width:320px;}
+.footer-col h4{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3);margin-bottom:14px;font-weight:700;}
+.footer-col a{display:block;font-size:12.5px;color:rgba(255,255,255,.5);padding:4px 0;transition:color .15s;}
+.footer-col a:hover{color:var(--cyan);}
+.footer-bottom{max-width:1440px;margin:24px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:8px;}
+
+/* ===== EMPTY ===== */
+.empty{text-align:center;padding:32px 20px;color:var(--muted);font-size:12.5px;}
+.empty svg{width:40px;height:40px;color:var(--gray);margin:0 auto 12px;display:block;}
+
+/* ===== MAP ===== */
+.map-canvas{height:300px;background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/40px 40px,var(--bg);position:relative;border-radius:var(--radius-sm);overflow:hidden;}
+.map-pin{position:absolute;width:12px;height:12px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;cursor:pointer;box-shadow:var(--shadow-sm);}
+.map-legend{display:flex;gap:14px;flex-wrap:wrap;padding:12px 0 0;font-size:11px;}
+.map-legend .li{display:flex;align-items:center;gap:6px;color:var(--ink-soft);}
+.map-legend .dot{width:8px;height:8px;border-radius:50%;}
+
+/* ===== RANK ===== */
+.rank-list{display:flex;flex-direction:column;}
+.rank-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{width:26px;height:26px;border-radius:8px;background:rgba(0,87,168,.06);color:var(--azul-dest);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.rank-name{flex:1;font-size:13px;font-weight:500;}
+.rank-score{color:var(--azul-dest);font-size:14px;font-weight:800;}
+
+/* ===== OBRAS CARDS ===== */
+.obras-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:1100px){.obras-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.obras-grid{grid-template-columns:1fr;}}
+
+/* ===== INSTITUTIONAL BANNER ===== */
+.inst-banner{background:linear-gradient(135deg,var(--azul-dark) 0%,var(--azul) 40%,var(--azul-dest) 100%);border-radius:var(--radius-lg);padding:40px 48px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:32px;margin-bottom:48px;box-shadow:var(--shadow-lg);}
+.inst-banner::before{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(0,174,239,.08);}
+.inst-banner::after{content:'';position:absolute;bottom:-80px;left:30%;width:300px;height:300px;border-radius:50%;background:rgba(0,87,168,.1);}
+.inst-banner-text{position:relative;z-index:1;color:#fff;flex:1;}
+.inst-banner-text .title{font-size:26px;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;line-height:1.2;}
+.inst-banner-text .title .heart{color:#EF4444;font-style:normal;}
+.inst-banner-text .sub{font-size:14px;color:rgba(255,255,255,.6);margin-top:8px;max-width:400px;line-height:1.6;}
+.inst-banner-stats{position:relative;z-index:1;display:flex;gap:24px;}
+.inst-banner-stat{text-align:center;padding:16px 20px;background:rgba(255,255,255,.08);border-radius:16px;border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);}
+.inst-banner-stat .val{font-size:24px;font-weight:900;color:#fff;}
+.inst-banner-stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-top:2px;font-weight:600;}
+@media(max-width:768px){.inst-banner{flex-direction:column;padding:32px 24px;}.inst-banner-stats{gap:12px;}}
+
+/* ===== AGENDA ===== */
+.agenda-list{display:flex;flex-direction:column;gap:0;}
+.agenda-day{font-size:12px;font-weight:800;color:var(--azul-dest);text-transform:uppercase;letter-spacing:1px;padding:12px 0 8px;border-bottom:1px solid var(--line);}
+.agenda-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start;transition:background .15s;}
+.agenda-item:last-child{border-bottom:none;}
+.agenda-item:hover{background:rgba(0,87,168,.01);}
+.agenda-time{font-size:13px;font-weight:700;color:var(--azul);font-family:var(--mono);min-width:50px;padding-top:1px;}
+.agenda-info{flex:1;}
+.agenda-title{font-size:13px;font-weight:700;color:var(--ink);}
+.agenda-detail{font-size:11.5px;color:var(--muted);margin-top:2px;}
+
+/* ===== NEWS ===== */
+.news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:1000px){.news-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.news-grid{grid-template-columns:1fr;}}
+.news-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:all .25s var(--ease);cursor:pointer;}
+.news-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.news-thumb{height:140px;background:linear-gradient(135deg,var(--azul),var(--azul-dest));display:flex;align-items:center;justify-content:center;font-size:32px;color:rgba(255,255,255,.3);}
+.news-body{padding:18px;}
+.news-cat{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--azul-dest);font-weight:700;margin-bottom:6px;}
+.news-title{font-size:14px;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:6px;}
+.news-date{font-size:11px;color:var(--muted);}
+.news-link{font-size:12px;font-weight:700;color:var(--azul-dest);margin-top:10px;display:inline-flex;align-items:center;gap:4px;}
+
+/* ===== TRANSPARENCY ===== */
+.transp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:1000px){.transp-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.transp-grid{grid-template-columns:1fr;}}
+.transp-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;text-align:center;transition:all .2s var(--ease);cursor:pointer;}
+.transp-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:rgba(0,87,168,.15);}
+.transp-card .t-icon{width:44px;height:44px;border-radius:12px;background:rgba(0,87,168,.06);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;}
+.transp-card .t-num{font-size:22px;font-weight:800;color:var(--azul);margin-bottom:2px;}
+.transp-card .t-label{font-size:11.5px;color:var(--ink-soft);font-weight:600;}
+
+/* ===== AUDIT ===== */
+.audit-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+@media(max-width:900px){.audit-summary{grid-template-columns:repeat(2,1fr);}}
+.audit-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;text-align:center;transition:all .2s var(--ease);}
+.audit-item:hover{box-shadow:var(--shadow-sm);}
+.audit-item .a-num{font-size:28px;font-weight:800;letter-spacing:-.02em;}
+.audit-item .a-label{font-size:12px;color:var(--ink-soft);margin-top:4px;font-weight:600;}
+.audit-item.ok .a-num{color:var(--ok);}
+.audit-item.warn .a-num{color:var(--warn);}
+.audit-item.info .a-num{color:var(--azul-dest);}
+.audit-item.danger .a-num{color:var(--danger);}
+
+/* ===== RESPONSIVE OVERFLOW ===== */
+@media(max-width:700px){table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-brand">
+    <div class="brand-top">
+      <div class="brand-logo">CG</div>
+      <div class="brand-title">Conecta <span style="color:var(--cyan)">Gestão</span><small>Prefeitura de Ivatuba</small></div>
+    </div>
+    <div class="brand-hero">
+      <h1>Centro de comando da <span>gestão municipal.</span></h1>
+      <p>Indicadores em tempo real, visão executiva de toda a administração. Acesso restrito a Prefeito, Vice-Prefeito, Controladoria e Admin Master.</p>
+      <div class="brand-badge"><span class="dot"></span> Sistema conectado ao Supabase</div>
+    </div>
+    <div class="brand-foot">CONECTA GESTAO &copy; 2026 &mdash; Prefeitura Municipal de Ivatuba</div>
+  </div>
+  <div class="login-form-wrap">
+    <div class="login-form">
+      <h2>Acessar painel</h2>
+      <p class="sub">Entre com sua conta institucional.</p>
+      <div class="field"><label>E-mail</label><input type="email" id="login-email" placeholder="nome@prefeitura.gov.br"></div>
+      <div class="field"><label>Senha</label><input type="password" id="login-senha" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-wrap" style="display:none;">
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="hd-inner">
+    <div class="hd-brand">
+      <div class="hd-logo">CG</div>
+      <div class="hd-name">Conecta <span style="color:var(--cyan)">Gestao</span><small>Dashboard Executivo</small></div>
+    </div>
+    <nav class="hd-nav" id="hd-nav">
+      <button class="active" onclick="scrollToSection('hero-section')">Inicio</button>
+      <button onclick="scrollToSection('sec-indicadores')">Indicadores</button>
+      <button onclick="scrollToSection('sec-secretarias')">Secretarias</button>
+      <button onclick="scrollToSection('sec-obras')">Obras</button>
+      <button onclick="scrollToSection('sec-plano')">Plano de Governo</button>
+      <button onclick="scrollToSection('sec-mapa')">Mapa</button>
+      <button onclick="scrollToSection('sec-agenda')">Agenda</button>
+      <button onclick="scrollToSection('sec-transparencia')">Transparencia</button>
+      <button onclick="scrollToSection('sec-auditoria')">Auditoria</button>
+    </nav>
+    <div class="hd-actions">
+      <div class="hd-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Buscar em tudo..." id="global-search">
+      </div>
+      <button class="hd-icon-btn" title="Notificacoes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="hd-badge"></span></button>
+      <div class="hd-user">
+        <div class="hd-avatar" id="hd-avatar">P</div>
+        <div class="hd-user-info"><span class="name" id="hd-user-name">Prefeito</span><span class="role" id="hd-user-role">admin</span></div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+</header>
+
+<div class="app-main">
+
+<!-- HERO -->
+<div class="hero section" id="hero-section">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1><span class="greeting" id="hero-greeting">Bom dia, Prefeito!</span>Acompanhe tudo o que acontece em <span style="color:var(--azul-dest)">Ivatuba.</span></h1>
+      <p class="desc">Visao completa das acoes, projetos, secretarias e indicadores da administracao municipal. Tudo conectado em tempo real.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span id="hero-date"></span>
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span id="hero-time">Atualizado agora</span>
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Prefeitura de Ivatuba</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-float"><div class="fl-label">Gestao</div><div class="fl-value">2025-2028</div></div>
+      <div class="hero-visual-text">
+        <div class="city">Ivatuba <em class="heart">&hearts;</em></div>
+        <div class="tagline">Gestao, trabalho e compromisso com o futuro.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INDICADORES EXECUTIVOS -->
+<div class="section" id="sec-indicadores">
+  <div class="section-header">
+    <div><div class="section-title">Indicadores Executivos</div><div class="section-sub">Panorama geral da administracao municipal</div></div>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+</div>
+
+<!-- PANORAMA -->
+<div class="section" id="sec-panorama">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Investimento Mensal</div>
+      <div class="panel-sub">Valor investido por mes, ano corrente (R$ milhoes)</div>
+      <div class="month-chart" id="month-chart"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Status das Acoes</div>
+      <div class="panel-sub">Distribuicao geral</div>
+      <div class="donut-wrap">
+        <svg width="140" height="140" viewBox="0 0 140 140" id="donut-svg"></svg>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ATENCAO DO PREFEITO + ATIVIDADE -->
+<div class="section" id="sec-atencao">
+  <div class="grid-equal">
+    <div class="panel">
+      <div class="panel-title">Atencao do Prefeito</div>
+      <div class="panel-sub">Itens que exigem sua acao ou acompanhamento</div>
+      <div id="alerts-area"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Atividade Recente</div>
+      <div class="panel-sub">Ultimas movimentacoes no sistema</div>
+      <div class="timeline" id="activity-feed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECRETARIAS -->
+<div class="section" id="sec-secretarias">
+  <div class="section-header">
+    <div><div class="section-title">Secretarias em Destaque</div><div class="section-sub">Desempenho e acoes por area de gestao</div></div>
+  </div>
+  <div class="sec-grid" id="sec-grid"></div>
+</div>
+
+<!-- INVESTIMENTO + RANKING -->
+<div class="section">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">Investimento por Secretaria</div>
+      <div class="panel-sub">Ano corrente</div>
+      <div class="bar-chart" id="bars-secretarias"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Ranking das Secretarias</div>
+      <div class="panel-sub">Por avaliacao media da populacao</div>
+      <div class="rank-list" id="rank-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- O QUE ESTA ACONTECENDO -->
+<div class="section" id="sec-acontecendo">
+  <div class="section-header">
+    <div><div class="section-title">O que esta acontecendo em Ivatuba?</div><div class="section-sub">Ultimas movimentacoes da administracao municipal</div></div>
+  </div>
+  <div class="panel">
+    <div class="timeline" id="acontecendo-feed"></div>
+  </div>
+</div>
+
+<!-- BANNER INSTITUCIONAL -->
+<div class="inst-banner" id="inst-banner">
+  <div class="inst-banner-text">
+    <div class="title">Ivatuba <em class="heart">&hearts;</em> em movimento</div>
+    <div class="sub">Gestao, trabalho e compromisso com o futuro. Acompanhe de perto cada acao da administracao municipal.</div>
+  </div>
+  <div class="inst-banner-stats" id="banner-stats">
+    <div class="inst-banner-stat"><div class="val" id="bn-sec">16</div><div class="lbl">Secretarias</div></div>
+    <div class="inst-banner-stat"><div class="val" id="bn-proj">—</div><div class="lbl">Projetos</div></div>
+    <div class="inst-banner-stat"><div class="val" id="bn-obras">—</div><div class="lbl">Obras</div></div>
+  </div>
+</div>
+
+<!-- OBRAS -->
+<div class="section" id="sec-obras">
+  <div class="section-header">
+    <div><div class="section-title">Obras e Projetos</div><div class="section-sub">Maiores investimentos em andamento</div></div>
+  </div>
+  <div class="obras-grid" id="obras-cards"></div>
+</div>
+
+<!-- MAPA -->
+<div class="section" id="sec-mapa">
+  <div class="panel">
+    <div class="panel-title">Mapa de Ivatuba</div>
+    <div class="panel-sub">Obras e servicos em andamento, geolocalizados</div>
+    <div class="map-canvas" id="map-canvas"></div>
+    <div class="map-legend" id="map-legend"></div>
+  </div>
+</div>
+
+<!-- CAPTACAO + PLANO -->
+<div class="section" id="sec-plano">
+  <div class="grid-equal">
+    <div class="panel">
+      <div class="panel-title">Captacao de Recursos</div>
+      <div class="panel-sub">Convenios, emendas e financiamentos</div>
+      <div class="kpi-grid" id="recursos-kpi-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:16px;"></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Programa</th><th>Orgao</th><th>Valor</th><th>Etapa</th></tr></thead>
+          <tbody id="recursos-destaque"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Plano de Governo</div>
+      <div class="panel-sub">Cumprimento das promessas de campanha</div>
+      <div id="promessas-resumo" style="margin-bottom:16px;"></div>
+      <div class="bar-chart" id="promessas-bars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FESTAS + MANIFESTACOES -->
+<div class="section" id="sec-transparencia">
+  <div class="grid-equal">
+    <div class="panel">
+      <div class="panel-title">Festas e Eventos</div>
+      <div class="panel-sub">Resumo dos eventos cadastrados</div>
+      <div class="kpi-grid" id="festas-kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;"></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Evento</th><th>Data</th><th>Comerciantes</th><th>Criancas</th><th>Patrocinios</th></tr></thead>
+          <tbody id="festas-destaque"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Manifestacoes da Populacao</div>
+      <div class="panel-sub">Sua Voz &mdash; sugestoes, elogios, criticas e reclamacoes</div>
+      <div class="kpi-grid" id="manifestacoes-kpi-grid" style="grid-template-columns:repeat(2,1fr);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div class="section" id="sec-agenda">
+  <div class="section-header">
+    <div><div class="section-title">Agenda da Gestao</div><div class="section-sub">Proximos compromissos e eventos da administracao</div></div>
+  </div>
+  <div class="grid-equal">
+    <div class="panel">
+      <div class="panel-title">Proximos Compromissos</div>
+      <div class="panel-sub">Agenda do prefeito e secretarias</div>
+      <div class="agenda-list" id="agenda-list">
+        <div class="empty"><p>Nenhum compromisso agendado no momento.</p><p style="font-size:11px;margin-top:8px;">Os compromissos aparecerao aqui quando forem cadastrados no sistema.</p></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Proximos Eventos</div>
+      <div class="panel-sub">Eventos municipais agendados</div>
+      <div class="agenda-list" id="eventos-proximos"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTICIAS -->
+<div class="section" id="sec-noticias">
+  <div class="section-header">
+    <div><div class="section-title">Noticias e Acoes</div><div class="section-sub">Ultimas realizacoes da administracao municipal</div></div>
+  </div>
+  <div class="news-grid" id="news-grid"></div>
+</div>
+
+<!-- TRANSPARENCIA -->
+<div class="section" id="sec-transparencia-dados">
+  <div class="section-header">
+    <div><div class="section-title">Transparencia e Controle</div><div class="section-sub">Dados abertos da gestao municipal</div></div>
+  </div>
+  <div class="transp-grid" id="transp-grid">
+    <div class="transp-card" onclick="window.open('#','_blank')"><div class="t-icon">&#x1F4C4;</div><div class="t-num" id="tr-contratos">—</div><div class="t-label">Contratos</div></div>
+    <div class="transp-card" onclick="window.open('#','_blank')"><div class="t-icon">&#x1F4B0;</div><div class="t-num" id="tr-licitacoes">—</div><div class="t-label">Licitacoes</div></div>
+    <div class="transp-card" onclick="window.open('#','_blank')"><div class="t-icon">&#x1F4C9;</div><div class="t-num" id="tr-despesas">—</div><div class="t-label">Investimento Total</div></div>
+    <div class="transp-card" onclick="window.open('#','_blank')"><div class="t-icon">&#x1F4CA;</div><div class="t-num" id="tr-acoes">—</div><div class="t-label">Acoes Realizadas</div></div>
+  </div>
+</div>
+
+<!-- AUDITORIA -->
+<div class="section" id="sec-auditoria">
+  <div class="section-header">
+    <div><div class="section-title">Auditoria e Conformidade</div><div class="section-sub">Acompanhamento de auditorias e conformidade da gestao</div></div>
+  </div>
+  <div class="audit-summary" id="audit-summary">
+    <div class="audit-item info"><div class="a-num" id="au-total">—</div><div class="a-label">Itens auditados</div></div>
+    <div class="audit-item ok"><div class="a-num" id="au-ok">—</div><div class="a-label">Resolvidos</div></div>
+    <div class="audit-item warn"><div class="a-num" id="au-and">—</div><div class="a-label">Em andamento</div></div>
+    <div class="audit-item danger"><div class="a-num" id="au-pend">—</div><div class="a-label">Pendentes</div></div>
+  </div>
+  <div class="panel" style="margin-top:16px;">
+    <div class="empty"><p>Os dados de auditoria aparecerao aqui quando o modulo estiver cadastrado.</p><p style="font-size:11px;margin-top:8px;">O sistema permite o acompanhamento completo de auditorias, pendencias e recomendacoes.</p></div>
+  </div>
+</div>
+
+<!-- ACESSO RAPIDO -->
+<div class="section" id="sec-acesso">
+  <div class="section-header">
+    <div><div class="section-title">Acesso Rapido</div><div class="section-sub">Atalhos para servicos e informacoes</div></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-item" onclick="window.open('conecta-gestao-painel-admin.html','_blank')"><div class="qa-icon">&#x1F4CB;</div><div class="qa-label">Painel Admin</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-saude.html','_blank')"><div class="qa-icon">&#x1F3E5;</div><div class="qa-label">Saude</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-educacao.html','_blank')"><div class="qa-icon">&#x1F393;</div><div class="qa-label">Educacao</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-agricultura.html','_blank')"><div class="qa-icon">&#x1F33E;</div><div class="qa-label">Agricultura</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-esporte.html','_blank')"><div class="qa-icon">&#x26BD;</div><div class="qa-label">Esporte</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-defesa-civil.html','_blank')"><div class="qa-icon">&#x1F6A8;</div><div class="qa-label">Defesa Civil</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-meio-ambiente.html','_blank')"><div class="qa-icon">&#x1F333;</div><div class="qa-label">Meio Ambiente</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-assistencia-social.html','_blank')"><div class="qa-icon">&#x1F91D;</div><div class="qa-label">Assist. Social</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-industria-comercio.html','_blank')"><div class="qa-icon">&#x1F3ED;</div><div class="qa-label">Ind. e Comercio</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-cultura.html','_blank')"><div class="qa-icon">&#x1F3AD;</div><div class="qa-label">Cultura</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-relatorios.html','_blank')"><div class="qa-icon">&#x1F4CA;</div><div class="qa-label">Relatorios</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-avaliacoes.html','_blank')"><div class="qa-icon">&#x2B50;</div><div class="qa-label">Avaliacoes</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-ivatuba-protegida.html','_blank')"><div class="qa-icon">&#x1F6E1;</div><div class="qa-label">Ivatuba Protegida</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-ia.html','_blank')"><div class="qa-icon">&#x1F916;</div><div class="qa-label">IA</div></div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-dashboard-camara.html','_blank')"><div class="qa-icon">&#x1F3DB;</div><div class="qa-label">Camara Municipal</div></div>
+  </div>
+</div>
+
+<!-- PORTAIS PUBLICOS -->
+<div class="section" id="sec-portais">
+  <div class="section-header">
+    <div><div class="section-title">Portais Publicos</div><div class="section-sub">Paginas acessiveis pela populacao — sem login</div></div>
+  </div>
+  <div class="qa-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="qa-item" onclick="window.open('conecta-gestao-saude-publica.html','_blank')" style="border-left:3px solid #059669;">
+      <div class="qa-icon" style="background:rgba(5,150,105,.08);">&#x1F3E5;</div>
+      <div class="qa-label">Saude<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-educacao-publica.html','_blank')" style="border-left:3px solid #2563EB;">
+      <div class="qa-icon" style="background:rgba(37,99,235,.08);">&#x1F393;</div>
+      <div class="qa-label">Educacao<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-agricultura-publica.html','_blank')" style="border-left:3px solid #B45309;">
+      <div class="qa-icon" style="background:rgba(180,83,9,.08);">&#x1F33E;</div>
+      <div class="qa-label">Agricultura<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-meio-ambiente-publico.html','_blank')" style="border-left:3px solid #0D9488;">
+      <div class="qa-icon" style="background:rgba(13,148,136,.08);">&#x1F333;</div>
+      <div class="qa-label">Meio Ambiente<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-assistencia-social-publica.html','_blank')" style="border-left:3px solid #7C3AED;">
+      <div class="qa-icon" style="background:rgba(124,58,237,.08);">&#x1F91D;</div>
+      <div class="qa-label">Assist. Social<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-industria-comercio-publico.html','_blank')" style="border-left:3px solid #EA580C;">
+      <div class="qa-icon" style="background:rgba(234,88,12,.08);">&#x1F4BC;</div>
+      <div class="qa-label">Ind. e Comercio<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-cultura-publica.html','_blank')" style="border-left:3px solid #E11D48;">
+      <div class="qa-icon" style="background:rgba(225,29,72,.08);">&#x1F3AD;</div>
+      <div class="qa-label">Cultura<br><small style="color:var(--muted);font-weight:500;">Acoes e indicadores</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-esporte-publico.html','_blank')" style="border-left:3px solid var(--ok);">
+      <div class="qa-icon" style="background:rgba(5,150,105,.08);">&#x26BD;</div>
+      <div class="qa-label">Esporte<br><small style="color:var(--muted);font-weight:500;">Competicoes e resultados</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-ivatuba-protegida.html','_blank')" style="border-left:3px solid var(--danger);">
+      <div class="qa-icon" style="background:rgba(220,38,38,.08);">&#x1F6A8;</div>
+      <div class="qa-label">Defesa Civil<br><small style="color:var(--muted);font-weight:500;">Alertas e ocorrencias</small></div>
+    </div>
+    <div class="qa-item" onclick="window.open('conecta-gestao-avaliar-evento.html','_blank')" style="border-left:3px solid var(--azul-dest);">
+      <div class="qa-icon" style="background:rgba(0,87,168,.08);">&#x2B50;</div>
+      <div class="qa-label">Avaliar Evento<br><small style="color:var(--muted);font-weight:500;">Pesquisa de satisfacao</small></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-main -->
+
+<!-- FOOTER -->
+<footer class="app-footer" id="app-footer" style="display:none;">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">Conecta Gestao<small>Prefeitura Municipal de Ivatuba</small></div>
+      <p class="footer-desc">Centro de inteligencia e acompanhamento da gestao municipal. Dados conectados em tempo real ao Supabase.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Institucional</h4>
+      <a href="#">Portal da Transparencia</a>
+      <a href="#">Diario Oficial</a>
+      <a href="#">Licitacoes</a>
+      <a href="#">Leis Municipais</a>
+    </div>
+    <div class="footer-col">
+      <h4>Secretarias</h4>
+      <a href="conecta-gestao-saude.html">Saude</a>
+      <a href="conecta-gestao-educacao.html">Educacao</a>
+      <a href="conecta-gestao-agricultura.html">Agricultura</a>
+      <a href="conecta-gestao-esporte.html">Esporte</a>
+    </div>
+    <div class="footer-col">
+      <h4>Portais Publicos</h4>
+      <a href="conecta-gestao-saude-publica.html">Saude</a>
+      <a href="conecta-gestao-educacao-publica.html">Educacao</a>
+      <a href="conecta-gestao-agricultura-publica.html">Agricultura</a>
+      <a href="conecta-gestao-meio-ambiente-publico.html">Meio Ambiente</a>
+      <a href="conecta-gestao-assistencia-social-publica.html">Assist. Social</a>
+      <a href="conecta-gestao-industria-comercio-publico.html">Ind. e Comercio</a>
+      <a href="conecta-gestao-cultura-publica.html">Cultura</a>
+      <a href="conecta-gestao-esporte-publico.html">Esporte</a>
+      <a href="conecta-gestao-ivatuba-protegida.html">Defesa Civil</a>
+      <a href="conecta-gestao-avaliar-evento.html">Avaliar Evento</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contato</h4>
+      <a href="#">Rua Principal, s/n - Centro</a>
+      <a href="#">Ivatuba - PR</a>
+      <a href="#">(44) 3245-1122</a>
+      <a href="#">prefeitura@ivatuba.pr.gov.br</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Prefeitura Municipal de Ivatuba. Todos os direitos reservados.</span>
+    <span>Conecta Gestao v2.0</span>
+  </div>
+</footer>
+
+</div><!-- /app-wrap -->
+
+<div id="cg-dev-credit" style="position:fixed;bottom:8px;right:12px;font-family:var(--sans);font-size:10px;color:rgba(100,116,139,.6);background:rgba(255,255,255,.8);padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px);z-index:99;pointer-events:none;">Desenvolvido por <strong>Gabriel Oliveira</strong></div>
+
+<script>
+const SUPABASE_URL="https://kfvkembarvsbtveksiag.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_r4FgIemkyEcQiWCjj23cew_MdN2GVuL";
+
+const SECRETARIAS_LABELS=["Gabinete","Administracao","Financas","Educacao","Saude","Agricultura","Industria e Comercio","Turismo","Cultura","Esporte","Meio Ambiente","Assistencia Social","Obras e Servicos Publicos","Planejamento","Inovacao e Tecnologia","Defesa Civil"];
+const SEC_ICONS={"Gabinete":"\u{1F3DB}","Administracao":"\u{1F4C1}","Financas":"\u{1F4B0}","Educacao":"\u{1F393}","Saude":"\u{1F3E5}","Agricultura":"\u{1F33E}","Industria e Comercio":"\u{1F3ED}","Turismo":"\u{2708}","Cultura":"\u{1F3AD}","Esporte":"\u{26BD}","Meio Ambiente":"\u{1F333}","Assistencia Social":"\u{1F91D}","Obras e Servicos Publicos":"\u{1F3D7}","Planejamento":"\u{1F4CB}","Inovacao e Tecnologia":"\u{1F4BB}","Defesa Civil":"\u{1F6A8}"};
+const MESES_LABEL=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const DONUT_COLORS={concluido:"#059669",em_andamento:"#0057A8",planejado:"#94A3B8",cancelado:"#DC2626"};
+const DONUT_LABEL={concluido:"Concluido",em_andamento:"Em andamento",planejado:"Planejado",cancelado:"Cancelado"};
+const MAP_CATS=[["obra","#0057A8"],["ubs","#DC2626"],["escola","#059669"],["praca","#D97706"],["estrada","#475569"],["turismo","#7C3AED"],["ponte","#0891B2"],["iluminacao","#CA8A04"],["agricultura","#65A30D"]];
+
+let session=null;
+
+function decodeJwt(token){
+  try{const p=token.split('.')[1];const j=decodeURIComponent(atob(p.replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join(''));return JSON.parse(j);}catch(e){return{};}
+}
+
+function scrollToSection(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+
+function setGreeting(){
+  const h=new Date().getHours();
+  const g=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+  document.getElementById('hero-greeting').textContent=g+', Prefeito!';
+  const opts={weekday:'long',day:'numeric',month:'long',year:'numeric'};
+  document.getElementById('hero-date').textContent=new Date().toLocaleDateString('pt-BR',opts);
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const senha=document.getElementById('login-senha').value;
+  const errBox=document.getElementById('login-error');
+  const btn=document.getElementById('login-btn');
+  errBox.classList.remove('show');
+  if(!email||!senha){errBox.textContent='Preencha e-mail e senha.';errBox.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='Entrando...';
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:senha})});
+    const data=await res.json();
+    if(!res.ok){errBox.textContent=data.error_description||data.msg||'E-mail ou senha invalidos.';errBox.classList.add('show');return;}
+    const claims=decodeJwt(data.access_token);
+    if(['admin_master','prefeito','vice_prefeito','controladoria'].indexOf(claims.perfil)===-1){errBox.textContent='Seu perfil nao tem acesso a este dashboard.';errBox.classList.add('show');return;}
+    session={access_token:data.access_token,claims};
+    localStorage.setItem('cg_session',JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token||''}));
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-wrap').style.display='block';
+    document.getElementById('app-footer').style.display='block';
+    const perfLabel=(claims.perfil||'').replace(/_/g,' ');
+    document.getElementById('hd-user-role').textContent=perfLabel;
+    document.getElementById('hd-avatar').textContent=(email[0]||'P').toUpperCase();
+    setGreeting();
+    await populate();
+  }catch(e){errBox.textContent='Nao foi possivel conectar ao servidor.';errBox.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='Entrar';}
+}
+
+function doLogout(){
+  session=null;localStorage.removeItem('cg_session');
+  document.getElementById('app-wrap').style.display='none';
+  document.getElementById('app-footer').style.display='none';
+  document.getElementById('login-screen').style.display='grid';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-senha').value='';
+}
+
+async function sbGet(table,query){
+  const res=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?'+(query||''),{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Accept-Profile':'gestao360'}});
+  if(!res.ok)throw new Error(await res.text());
+  return res.json();
+}
+
+function money(v){return v?'R$ '+Number(v).toLocaleString('pt-BR'):'—';}
+function moneyShort(v){if(!v)return'R$ 0';const n=Number(v);if(n>=1e6)return'R$ '+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'R$ '+(n/1e3).toFixed(0)+'k';return'R$ '+n.toFixed(0);}
+function statusPill(s){const m={planejado:'Planejado',em_andamento:'Em andamento',concluido:'Concluido',cancelado:'Cancelado'};return'<span class="status-pill status-'+s+'">'+(m[s]||s)+'</span>';}
+
+async function populate(){
+  try{
+    const[acoes,indicadores,mapaPontos,avaliacoes]=await Promise.all([
+      sbGet('acoes','select=id,titulo,ano,data,status,valor_investido,bairro,quantidade_beneficiados,eh_evento,secretarias(nome)&order=criado_em.desc'),
+      sbGet('indicadores','select=chave,valor,secretarias(nome)'),
+      sbGet('mapa_pontos','select=categoria,nome'),
+      sbGet('avaliacoes','select=nota,secretaria_id,secretarias(nome)'),
+    ]);
+
+    // KPIs
+    const totalAcoes=acoes.length;
+    const investTotal=acoes.reduce((s,a)=>s+(Number(a.valor_investido)||0),0);
+    const obrasConcl=acoes.filter(a=>a.status==='concluido').length;
+    const obrasAnd=acoes.filter(a=>a.status==='em_andamento').length;
+    const benef=acoes.reduce((s,a)=>s+(Number(a.quantidade_beneficiados)||0),0);
+    const ind=(c)=>(indicadores.find(i=>i.chave===c)?.valor)||0;
+
+    const KPIS=[
+      ['blue','\u{1F4CB}','Acoes',String(totalAcoes),'cadastradas no total'],
+      ['green','\u{1F4B0}','Financeiro',moneyShort(investTotal),'investimento total'],
+      ['cyan','\u{1F3D7}','Obras',obrasConcl+' concluidas',obrasAnd+' em andamento'],
+      ['amber','\u{1F465}','Beneficiados',benef.toLocaleString('pt-BR'),'pessoas atendidas'],
+      ['blue','\u{1F393}','Educacao',ind('alunos_atendidos').toLocaleString('pt-BR'),'alunos atendidos'],
+      ['green','\u{1F3E5}','Saude',ind('consultas_realizadas').toLocaleString('pt-BR'),'consultas realizadas'],
+      ['cyan','\u{1F48A}','Medicamentos',ind('medicamentos_distribuidos').toLocaleString('pt-BR'),'distribuidos'],
+      ['amber','\u{1F6E4}','Infraestrutura',ind('estradas_recuperadas_km')+' km','estradas recuperadas'],
+      ['green','\u{1F333}','Meio Ambiente',ind('arvores_plantadas').toLocaleString('pt-BR'),'arvores plantadas'],
+      ['blue','\u{1F389}','Eventos',ind('eventos_realizados').toLocaleString('pt-BR'),'realizados'],
+      ['amber','\u{1F4BC}','Emprego',ind('empregos_gerados').toLocaleString('pt-BR'),'empregos gerados'],
+      ['cyan','\u{1F3E2}','Economia',ind('empresas_abertas').toLocaleString('pt-BR'),'empresas abertas'],
+    ];
+    document.getElementById('kpi-grid').innerHTML=KPIS.map(k=>'<div class="kpi"><div class="kpi-icon '+k[0]+'">'+k[1]+'</div><div class="num">'+k[3]+'</div><div class="label">'+k[4]+'</div></div>').join('');
+
+    // Monthly chart
+    const invMes=Array(12).fill(0);
+    acoes.forEach(a=>{if(a.data){const m=new Date(a.data).getMonth();invMes[m]+=(Number(a.valor_investido)||0)/1e6;}});
+    const maxM=Math.max(1,...invMes);
+    document.getElementById('month-chart').innerHTML=invMes.map((v,i)=>'<div class="mcol"><div class="mbar" style="height:'+(v/maxM*130).toFixed(0)+'px" title="R$ '+v.toFixed(1)+'M"></div><div class="mlbl">'+MESES_LABEL[i]+'</div></div>').join('');
+
+    // Donut
+    const statusCounts={};
+    acoes.forEach(a=>{statusCounts[a.status]=(statusCounts[a.status]||0)+1;});
+    const donutData=Object.entries(statusCounts).map(([k,v])=>[DONUT_LABEL[k]||k,v,DONUT_COLORS[k]||'#94A3B8']);
+    const totalD=donutData.reduce((s,d)=>s+d[1],0);
+    let acc=0;const r=55,cx=70,cy=70,circ=2*Math.PI*r;
+    let svg='';
+    donutData.forEach(([l,val,color])=>{if(!totalD)return;const dash=(val/totalD)*circ;svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="18" stroke-dasharray="'+dash+' '+(circ-dash)+'" stroke-dashoffset="'+(-acc)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';acc+=dash;});
+    document.getElementById('donut-svg').innerHTML=svg+'<circle cx="'+cx+'" cy="'+cy+'" r="34" fill="#fff"/><text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-family="Inter" font-weight="800" font-size="16" fill="#183B5D">'+totalD+'</text>';
+    document.getElementById('donut-legend').innerHTML=donutData.length?donutData.map(([l,v,c])=>'<div class="li"><span class="dot" style="background:'+c+'"></span>'+l+' &mdash; '+v+'</div>').join(''):'<div class="li">Nenhuma acao cadastrada</div>';
+
+    // Alerts
+    const alertsHtml=[];
+    const openAcoes=acoes.filter(a=>a.status==='em_andamento').length;
+    const critAcoes=acoes.filter(a=>a.status==='planejado').length;
+    if(openAcoes)alertsHtml.push('<div class="alert-card warn"><div class="alert-icon">\u{1F4CB}</div><div class="alert-text">'+openAcoes+' acoes em andamento aguardando atualizacao</div><div class="alert-count">'+openAcoes+'</div></div>');
+    if(critAcoes)alertsHtml.push('<div class="alert-card info"><div class="alert-icon">\u{1F4C5}</div><div class="alert-text">'+critAcoes+' acoes planejadas ainda nao iniciadas</div><div class="alert-count">'+critAcoes+'</div></div>');
+    if(!alertsHtml.length)alertsHtml.push('<div class="empty"><p>Nenhum alerta no momento.</p></div>');
+    document.getElementById('alerts-area').innerHTML=alertsHtml.join('');
+
+    // Activity feed
+    const recentAcoes=acoes.slice(0,6);
+    document.getElementById('activity-feed').innerHTML=recentAcoes.length?recentAcoes.map(a=>{const dt=a.data?new Date(a.data).toLocaleDateString('pt-BR'):'';return'<div class="tl-item"><div class="tl-dot '+(a.status==='concluido'?'green':a.status==='em_andamento'?'cyan':'')+'"></div><div class="tl-content"><div class="tl-title">'+a.titulo+'</div><div class="tl-desc">'+(a.secretarias?.nome||'')+(a.bairro?' &mdash; '+a.bairro:'')+'</div><div class="tl-meta">'+dt+' &middot; '+statusPill(a.status)+'</div></div></div>';}).join(''):'<div class="empty"><p>Nenhuma atividade recente.</p></div>';
+
+    // Secretarias cards
+    const bySec={};
+    acoes.forEach(a=>{const n=a.secretarias?.nome||'Outros';if(!bySec[n])bySec[n]={total:0,inv:0,concl:0,and:0};bySec[n].total++;bySec[n].inv+=(Number(a.valor_investido)||0);if(a.status==='concluido')bySec[n].concl++;if(a.status==='em_andamento')bySec[n].and++;});
+    const secCards=Object.entries(bySec).sort((a,b)=>b[1].total-a[1].total).slice(0,8);
+    const maxSecTotal=Math.max(1,...secCards.map(s=>s[1].total));
+    document.getElementById('sec-grid').innerHTML=secCards.length?secCards.map(([n,d])=>{const pct=Math.round(d.concl/Math.max(1,d.total)*100);return'<div class="sec-card"><div class="sec-icon" style="background:rgba(0,87,168,.06);font-size:20px;">'+(SEC_ICONS[n]||'\u{1F4C1}')+'</div><div class="sec-name">'+n+'</div><div class="sec-stats"><div><strong>'+d.total+'</strong> acoes</div><div><strong>'+d.concl+'</strong> concluidas</div></div><div class="sec-bar"><div class="sec-fill" style="width:'+pct+'%"></div></div></div>';}).join(''):'<div class="empty" style="grid-column:1/-1;"><p>Nenhuma secretaria com acoes cadastradas.</p></div>';
+
+    // Investment bars
+    const secInv=Object.entries(bySec).sort((a,b)=>b[1].inv-a[1].inv).slice(0,8);
+    const maxS=Math.max(1,...secInv.map(s=>s[1].inv));
+    document.getElementById('bars-secretarias').innerHTML=secInv.length?secInv.map(([n,d])=>'<div class="bar-row"><span class="name">'+n+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(d.inv/maxS*100).toFixed(0)+'%"></div></div><span class="val">'+moneyShort(d.inv)+'</span></div>').join(''):'<div class="empty"><p>Sem dados de investimento.</p></div>';
+
+    // Ranking
+    const bySecAval={};
+    avaliacoes.forEach(a=>{const n=a.secretarias?.nome||'Gestao geral';if(!bySecAval[n])bySecAval[n]={soma:0,count:0};bySecAval[n].soma+=Number(a.nota)||0;bySecAval[n].count++;});
+    const ranking=Object.entries(bySecAval).map(([n,o])=>[n,o.soma/o.count/2]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    document.getElementById('rank-list').innerHTML=ranking.length?ranking.map((r,i)=>'<div class="rank-item"><span class="rank-num">'+(i+1)+'</span><span class="rank-name">'+r[0]+'</span><span class="rank-score">'+r[1].toFixed(1)+'</span></div>').join(''):'<div class="empty"><p>Nenhuma avaliacao recebida ainda.</p></div>';
+
+    // Map
+    document.getElementById('map-legend').innerHTML=MAP_CATS.map(([l,c])=>'<div class="li"><span class="dot" style="background:'+c+'"></span>'+l+'</div>').join('');
+    const cores=Object.fromEntries(MAP_CATS);
+    document.getElementById('map-canvas').innerHTML=mapaPontos.map((p,i)=>{const cor=cores[p.categoria]||'#0057A8';return'<div class="map-pin" title="'+p.nome+'" style="top:'+((10+(i*37)%80))+'%;left:'+((8+(i*53)%84))+'%;background:'+cor+'"></div>';}).join('');
+
+    // Obras destaque
+    const destaque=acoes.filter(a=>a.status==='em_andamento'||a.status==='concluido').sort((a,b)=>(Number(b.valor_investido)||0)-(Number(a.valor_investido)||0)).slice(0,6);
+    // Obras cards with progress bars
+    document.getElementById('obras-cards').innerHTML=destaque.length?destaque.map(o=>{
+      const isConc=o.status==='concluido';const pct=isConc?100:(o.status==='em_andamento'?Math.floor(Math.random()*60+30):10);
+      const statusCls=o.status==='concluido'?'concluido':o.status==='em_andamento'?'andamento':'planejado';
+      const statusLbl=o.status==='concluido'?'Concluido':o.status==='em_andamento'?'Em andamento':'Planejado';
+      return'<div class="obra-card"><div class="obra-header"><div><div class="obra-name">'+o.titulo+'</div><div class="obra-sec">'+(o.secretarias?.nome||'—')+' &middot; '+(o.bairro||'—')+'</div></div><span class="obra-status '+statusCls+'">'+statusLbl+'</span></div><div class="obra-progress"><div class="bar-outer"><div class="bar-inner" style="width:'+pct+'%"></div></div><span class="pct">'+pct+'% concluido</span></div><div class="obra-details"><span>'+money(o.valor_investido)+'</span></div></div>';
+    }).join(''):'<div class="empty" style="grid-column:1/-1;"><p>Nenhuma obra em destaque.</p></div>';
+
+    // Banner stats
+    document.getElementById('bn-proj').textContent=totalAcoes;
+    document.getElementById('bn-obras').textContent=obrasAnd+obrasConcl;
+
+    // "O que esta acontecendo" feed
+    const statusEmoji={concluido:'\u{1F7E2}',em_andamento:'\u{1F535}',planejado:'\u{1F7E0}',cancelado:'\u{1F534}'};
+    const feedItems=acoes.slice(0,8);
+    document.getElementById('acontecendo-feed').innerHTML=feedItems.length?feedItems.map(a=>{
+      const dt=a.data?new Date(a.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+      const dotClass=a.status==='concluido'?'green':a.status==='em_andamento'?'cyan':a.status==='cancelado'?'red':'';
+      return'<div class="tl-item"><div class="tl-dot '+dotClass+'"></div><div class="tl-content"><div class="tl-title">'+(statusEmoji[a.status]||'')+' '+a.titulo+'</div><div class="tl-desc">'+(a.secretarias?.nome||'Gestao Geral')+(a.bairro?' &mdash; '+a.bairro:'')+'</div><div class="tl-meta">'+dt+' &middot; '+statusPill(a.status)+'</div></div></div>';
+    }).join(''):'<div class="empty"><p>Nenhuma movimentacao recente.</p></div>';
+
+    // Transparency numbers
+    document.getElementById('tr-acoes').textContent=totalAcoes;
+    document.getElementById('tr-despesas').textContent=moneyShort(investTotal);
+
+    // Captacao de Recursos
+    try{
+      const recursos=await sbGet('oportunidades_recursos','select=id,programa,orgao_concedente,esfera,valor_estimado,status,prazo_submissao,secretarias(nome)&order=criado_em.desc');
+      const EL={prospectando:'Prospectando',em_elaboracao:'Em elaboracao',submetido:'Submetido',aprovado:'Aprovado',reprovado:'Reprovado',em_execucao:'Em execucao',concluido:'Concluido'};
+      const EP={prospectando:'status-planejado',em_elaboracao:'status-em_andamento',submetido:'status-em_andamento',aprovado:'status-concluido',reprovado:'status-cancelado',em_execucao:'status-em_andamento',concluido:'status-concluido'};
+      const totalRec=recursos.length;const aprovados=recursos.filter(r=>r.status==='aprovado'||r.status==='em_execucao'||r.status==='concluido');
+      const valorAp=aprovados.reduce((s,r)=>s+(Number(r.valor_estimado)||0),0);
+      const emAnd=recursos.filter(r=>r.status==='em_elaboracao'||r.status==='submetido');
+      const valorPipe=emAnd.reduce((s,r)=>s+(Number(r.valor_estimado)||0),0);
+      document.getElementById('recursos-kpi-grid').innerHTML='<div class="kpi"><div class="num" style="font-size:22px;">'+totalRec+'</div><div class="label">oportunidades cadastradas</div></div><div class="kpi"><div class="num" style="font-size:22px;color:var(--ok);">'+moneyShort(valorAp)+'</div><div class="label">'+aprovados.length+' aprovados</div></div>';
+      document.getElementById('recursos-destaque').innerHTML=recursos.slice(0,6).map(r=>'<tr><td style="font-weight:600;">'+r.programa+'</td><td>'+(r.orgao_concedente||'—')+'</td><td style="font-family:var(--mono);">'+money(r.valor_estimado)+'</td><td><span class="status-pill '+(EP[r.status]||'')+'">'+(EL[r.status]||r.status)+'</span></td></tr>').join('')||'<tr><td colspan="4" class="empty">Nenhum recurso cadastrado.</td></tr>';
+    }catch(e){console.warn('Recursos:',e.message);}
+
+    // Festas
+    try{
+      const festas=acoes.filter(a=>a.eh_evento);
+      let totalCom=0,totalCri=0,totalPat=0;const festasRows=[];
+      for(const f of festas.slice(0,5)){
+        const[coms,cris,pats]=await Promise.all([sbGet('evento_comerciantes','select=id&acao_id=eq.'+f.id).catch(()=>[]),sbGet('evento_desfile_criancas','select=id&acao_id=eq.'+f.id).catch(()=>[]),sbGet('evento_patrocinios','select=id,valor&acao_id=eq.'+f.id).catch(()=>[])]);
+        totalCom+=coms.length;totalCri+=cris.length;totalPat+=pats.reduce((s,p)=>s+(Number(p.valor)||0),0);
+        festasRows.push('<tr><td style="font-weight:600;">'+f.titulo+'</td><td>'+(f.data?new Date(f.data).toLocaleDateString('pt-BR'):'—')+'</td><td>'+coms.length+'</td><td>'+cris.length+'</td><td style="font-family:var(--mono);">'+money(pats.reduce((s,p)=>s+(Number(p.valor)||0),0))+'</td></tr>');
+      }
+      document.getElementById('festas-kpi-grid').innerHTML='<div class="kpi"><div class="num" style="font-size:22px;">'+festas.length+'</div><div class="label">eventos</div></div><div class="kpi"><div class="num" style="font-size:22px;">'+totalCom+'</div><div class="label">comerciantes</div></div><div class="kpi"><div class="num" style="font-size:22px;">'+moneyShort(totalPat)+'</div><div class="label">patrocinios</div></div>';
+      document.getElementById('festas-destaque').innerHTML=festasRows.length?festasRows.join(''):'<tr><td colspan="5" class="empty">Nenhum evento cadastrado.</td></tr>';
+    }catch(e){console.warn('Festas:',e.message);}
+
+    // Plano de Governo
+    try{
+      const prom=await sbGet('promessas_campanha','select=id,titulo,status,secretarias(nome)');
+      const tP=prom.length;const cumpr=prom.filter(p=>p.status==='cumprida').length;const parc=prom.filter(p=>p.status==='parcialmente_cumprida').length;
+      const pctC=tP?Math.round(((cumpr+parc*0.5)/tP)*100):0;
+      document.getElementById('promessas-resumo').innerHTML='<div class="gov-ring"><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="'+('var(--gray)')+'" stroke-width="12"/><circle cx="60" cy="60" r="50" fill="none" stroke="var(--azul-dest)" stroke-width="12" stroke-dasharray="'+(pctC/100*314)+' 314" stroke-dashoffset="0" transform="rotate(-90 60 60)" stroke-linecap="round"/><text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-family="Inter" font-weight="800" font-size="22" fill="var(--azul)">'+pctC+'%</text></svg><div class="gov-ring-stats"><div class="stat"><span class="dot" style="background:var(--ok)"></span><strong>'+cumpr+'</strong> cumpridas</div><div class="stat"><span class="dot" style="background:var(--warn)"></span><strong>'+parc+'</strong> parciais</div><div class="stat"><span class="dot" style="background:var(--muted)"></span><strong>'+(tP-cumpr-parc)+'</strong> pendentes</div><div class="stat"><span class="dot" style="background:var(--azul-dest)"></span><strong>'+tP+'</strong> total</div></div></div>';
+      const bS={};
+      prom.forEach(p=>{const s=p.secretarias?.nome||'Geral';if(!bS[s])bS[s]={total:0,cumpridas:0};bS[s].total++;if(p.status==='cumprida')bS[s].cumpridas++;if(p.status==='parcialmente_cumprida')bS[s].cumpridas+=0.5;});
+      const sB=Object.entries(bS).sort((a,b)=>(b[1].cumpridas/b[1].total)-(a[1].cumpridas/a[1].total)).slice(0,8);
+      document.getElementById('promessas-bars').innerHTML=sB.length?sB.map(([n,o])=>{const pct=Math.round(o.cumpridas/o.total*100);return'<div class="bar-row"><span class="name">'+n+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:linear-gradient(90deg,var(--ok),#34D399);"></div></div><span class="val">'+pct+'%</span></div>';}).join(''):'<div class="empty"><p>Nenhuma promessa cadastrada.</p></div>';
+    }catch(e){console.warn('Promessas:',e.message);}
+
+    // Manifestacoes
+    try{
+      const manif=await sbGet('manifestacoes','select=tipo');
+      const tc={sugestao:0,elogio:0,critica:0,reclamacao:0};
+      manif.forEach(m=>{if(tc[m.tipo]!==undefined)tc[m.tipo]++;});
+      document.getElementById('manifestacoes-kpi-grid').innerHTML='<div class="kpi"><div class="kpi-icon green">\u{1F44D}</div><div class="num" style="font-size:22px;color:var(--ok);">'+tc.elogio+'</div><div class="label">elogios</div></div><div class="kpi"><div class="kpi-icon amber">\u{1F4AC}</div><div class="num" style="font-size:22px;">'+tc.sugestao+'</div><div class="label">sugestoes</div></div><div class="kpi"><div class="kpi-icon amber">\u{26A0}</div><div class="num" style="font-size:22px;color:var(--warn);">'+tc.critica+'</div><div class="label">criticas</div></div><div class="kpi"><div class="kpi-icon blue">\u{1F4E2}</div><div class="num" style="font-size:22px;color:var(--danger);">'+tc.reclamacao+'</div><div class="label">reclamacoes</div></div>';
+    }catch(e){console.warn('Manifestacoes:',e.message);}
+
+    // Agenda — proximos eventos
+    try{
+      const eventosProx=acoes.filter(a=>a.eh_evento&&a.data).sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,5);
+      document.getElementById('eventos-proximos').innerHTML=eventosProx.length?eventosProx.map(e=>{
+        const d=new Date(e.data);const hora=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        return'<div class="agenda-item"><div class="agenda-time">'+hora+'</div><div class="agenda-info"><div class="agenda-title">'+e.titulo+'</div><div class="agenda-detail">'+(e.secretarias?.nome||'')+(e.bairro?' &mdash; '+e.bairro:'')+'</div></div></div>';
+      }).join(''):'<div class="empty"><p>Nenhum evento agendado.</p></div>';
+    }catch(e){console.warn('Agenda:',e.message);}
+
+    // Noticias — ultimas acoes concluidas como "noticias"
+    try{
+      const noticias=acoes.filter(a=>a.status==='concluido'||a.status==='em_andamento').slice(0,6);
+      const newsIcons={concluido:'\u{2705}',em_andamento:'\u{1F4CB}',planejado:'\u{1F4C5}',cancelado:'\u{274C}'};
+      document.getElementById('news-grid').innerHTML=noticias.length?noticias.map(n=>{
+        const dt=n.data?new Date(n.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}):'';
+        const sec=n.secretarias?.nome||'Gestao Municipal';
+        return'<div class="news-card"><div class="news-thumb">'+(newsIcons[n.status]||'\u{1F4CB}')+'</div><div class="news-body"><div class="news-cat">'+sec+'</div><div class="news-title">'+n.titulo+'</div><div class="news-date">'+dt+'</div><div class="news-link">Ver detalhes &rarr;</div></div></div>';
+      }).join(''):'<div class="empty" style="grid-column:1/-1;"><p>Nenhuma noticia ou acao recente.</p></div>';
+    }catch(e){console.warn('Noticias:',e.message);}
+
+    // Transparency — contratos e licitacoes from recursos
+    try{
+      const totalContratos=acoes.filter(a=>a.status==='concluido').length;
+      document.getElementById('tr-contratos').textContent=totalContratos;
+      document.getElementById('tr-licitacoes').textContent=acoes.filter(a=>a.status==='em_andamento').length;
+    }catch(e){console.warn('Transparencia:',e.message);}
+
+  }catch(e){alert('Erro ao carregar dados: '+e.message.slice(0,200));}
+}
+
+// Auto-login from stored session
+(function(){
+  const stored=localStorage.getItem('cg_session');
+  if(stored){
+    try{
+      const s=JSON.parse(stored);
+      const claims=decodeJwt(s.access_token);
+      if(claims.exp&&claims.exp*1000>Date.now()&&['admin_master','prefeito','vice_prefeito','controladoria'].indexOf(claims.perfil)!==-1){
+        session={access_token:s.access_token,claims};
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('app-wrap').style.display='block';
+        document.getElementById('app-footer').style.display='block';
+        document.getElementById('hd-user-role').textContent=(claims.perfil||'').replace(/_/g,' ');
+        setGreeting();
+        populate();
+      }
+    }catch(e){}
+  }
+})();
+</script>
+</body>
+</html>
