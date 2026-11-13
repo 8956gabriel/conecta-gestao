@@ -1161,6 +1161,9 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
   ];
   var page = (location.pathname.split('/').pop() || '').toLowerCase();
   var isAdmin = page === LOGIN_PAGE, isPref = page === PREF_PAGE;
+  // portais públicos (abertos à população): nunca forçam login nem redirecionam
+  var isPublic = /-public[ao]\.html$/.test(page);
+  function notify() { try { document.dispatchEvent(new CustomEvent('cg-auth-change')); } catch (e) {} }
 
   function cfg() {
     var u = null, k = null;
@@ -1243,7 +1246,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
   /* ---------- encerramento ---------- */
   var origLogout = typeof window.doLogout === 'function' ? window.doLogout : null;
   var leaving = false;
-  function clearAll() { del(KEY); del(META); clearTimeout(timer); }
+  function clearAll() { del(KEY); del(META); clearTimeout(timer); valid = false; }
   function revoke(t) {
     var c = cfg(); if (!t || !c.url) return;
     try { NF.call(window, c.url + '/auth/v1/logout?scope=local', { method: 'POST', keepalive: true, headers: { apikey: c.key, Authorization: 'Bearer ' + t } }).catch(function () {}); } catch (e) {}
@@ -1265,15 +1268,18 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
   };
   function expireSession() {
     clearAll();
+    if (isPublic) { notify(); return; }
     toLogin('Sua sessão expirou. Entre novamente.');
   }
   // logout feito em outra aba ou módulo: esta aba também encerra
   window.addEventListener('storage', function (e) {
     if (e.key === KEY && !e.newValue && !leaving) {
+      if (isPublic) { notify(); return; }
       if (origLogout) try { origLogout(); } catch (er) {}
       toLogin('Sua sessão foi encerrada.');
     } else if (e.key === KEY && e.newValue) {
       var t = token(); if (t) { setPageSession(t); schedule(); }
+      notify();
     }
   });
   function showMsg() {
@@ -1288,12 +1294,13 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     var t = token(), c = cfg(); if (!t || !c.url) return;
     NF.call(window, c.url + '/auth/v1/user', { headers: { apikey: c.key, Authorization: 'Bearer ' + t } })
       .then(function (r) {
-        if (r.ok) return;
+        if (r.ok) { valid = true; notify(); return; }
         if (r.status === 401 || r.status === 403) {
-          return refreshToken().then(function (ok) { if (ok === false) expireSession(); else if (ok) { if (!pageLoggedIn()) location.reload(); } });
+          return refreshToken().then(function (ok) { if (ok === false) expireSession(); else if (ok) { if (isPublic) validate(); else if (!pageLoggedIn()) location.reload(); } });
         }
       }).catch(function () {});
   }
+  var valid = false;
   function pageLoggedIn() {
     var a = document.getElementById('app') || document.getElementById('app-wrap');
     return !!(a && (a.style.display === 'block' || a.style.display === 'flex' || a.classList.contains('active')));
@@ -1306,8 +1313,9 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     if (expMs(t) - Date.now() < 30000) {
       // token vencido: renova e recarrega para a página entrar pelo próprio fluxo dela
       refreshToken().then(function (ok) {
-        if (ok) location.reload();
-        else if (ok === false) { clearAll(); showMsg(); }
+        if (ok && isPublic) { validate(); }
+        else if (ok) location.reload();
+        else if (ok === false) { clearAll(); showMsg(); notify(); }
       });
       return;
     }
@@ -1390,7 +1398,9 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     painelHref: painelHref, painelLabel: painelLabel, perfil: perfil,
     canPref: function () { return PREF_PERFIS.indexOf(perfil()) !== -1; },
     gestaoTotal: function () { return GESTAO_TOTAL.indexOf(perfil()) !== -1; },
-    modules: MODULES, page: page, isAdmin: isAdmin, isPref: isPref,
+    modules: MODULES, page: page, isAdmin: isAdmin, isPref: isPref, isPublic: isPublic,
+    // sessão confirmada pelo Supabase Auth nesta página (usado nos portais públicos)
+    signedIn: function () { return !!token() && valid; },
     mountSwitcher: mountSwitcher, sameTab: sameTab, isInternal: isInternal
   };
 
