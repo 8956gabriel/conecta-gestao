@@ -1689,22 +1689,13 @@ schedule();
     return w;
   }
   // módulos internos do sistema abrem na mesma aba (antes abriam como "outro site" em nova aba)
-  var PUBLIC_PAGES = ['saude-publica', 'educacao-publica', 'agricultura-publica', 'meio-ambiente-publico', 'assistencia-social-publica',
-    'industria-comercio-publico', 'cultura-publica', 'esporte-publico', 'ivatuba-protegida'].map(function (n) { return 'conecta-gestao-' + n + '.html'; });
-  var INTERNAL = [LOGIN_PAGE, PREF_PAGE, 'conecta-gestao-defesa-civil.html'].concat(MODULES.map(function (m) { return m[0]; }), PUBLIC_PAGES);
+  var INTERNAL = [LOGIN_PAGE, PREF_PAGE].concat(MODULES.map(function (m) { return m[0]; }));
   function isInternal(href) { var f = (href || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase(); return INTERNAL.indexOf(f) !== -1; }
   function sameTab(scope) {
     Array.prototype.forEach.call((scope || document).querySelectorAll('a[target="_blank"]'), function (a) {
       if (isInternal(a.getAttribute('href'))) a.removeAttribute('target');
     });
   }
-  // links <a target="_blank"> para páginas do próprio sistema (inclusive os criados depois do carregamento)
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[target="_blank"]');
-    if (!a || !isInternal(a.getAttribute('href'))) return;
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return; // nova aba pedida pelo próprio usuário
-    e.preventDefault(); location.href = a.href; // sem tocar no atributo (não altera o visual da página)
-  }, true);
   document.addEventListener('click', function (e) {
     var q = e.target.closest && e.target.closest('[onclick*="window.open("]');
     if (!q) return;
@@ -1738,9 +1729,6 @@ schedule();
    alteração visual). O botão "Painel" passa a levar ao painel correto do
    perfil (Dashboard do Prefeito ou Painel Administrativo), sem encerrar a
    sessão. Login, renovação, validação e "Sair" vêm do cg-auth.
-   Também: leitura segura das respostas de /api/sync-alertas e
-   /api/process-queue (status HTTP, Content-Type e JSON verificados antes
-   de interpretar), mantendo os mesmos botões e mensagens.
    ===================================================================== */
 (function () {
   'use strict';
@@ -1757,62 +1745,6 @@ schedule();
   if (app) new MutationObserver(fix).observe(app, { attributes: true, attributeFilter: ['style'] });
   document.addEventListener('DOMContentLoaded', function () { setTimeout(fix, 0); });
   fix();
-})();
-
-/* ---------- Sincronizar Alertas / Processar Fila: leitura segura das respostas ---------- */
-(function () {
-  'use strict';
-  // Lê a resposta sem presumir JSON: devolve {status, ct, data, text}
-  async function chamarApi(path) {
-    var r;
-    try { r = await fetch(path, { method: 'GET', cache: 'no-store', headers: { Accept: 'application/json' } }); }
-    catch (e) { var ne = new Error('Sem conexão com o servidor (' + path + '). Verifique a internet e tente de novo.'); ne.tecnico = String(e); throw ne; }
-    var ct = (r.headers.get('content-type') || '').toLowerCase();
-    var text = '';
-    try { text = await r.text(); } catch (e) {}
-    var data = null, corpo = text.trim();
-    if (corpo && (ct.indexOf('json') !== -1 || corpo.charAt(0) === '{' || corpo.charAt(0) === '[')) {
-      try { data = JSON.parse(corpo); } catch (e) { data = null; }
-    }
-    var info = { url: path, status: r.status, contentType: ct || '(nenhum)', inicioDaResposta: corpo.slice(0, 160) };
-    if (!data) {
-      console.error('[Conecta Gestão · Defesa Civil] Resposta inválida do servidor', info);
-      var msg = !corpo
-        ? 'O servidor não retornou nenhum dado (HTTP ' + r.status + ').'
-        : r.status === 404
-          ? 'O serviço ' + path + ' não foi encontrado no servidor (HTTP 404). A função de backend não está publicada neste endereço.'
-          : 'O servidor respondeu HTTP ' + r.status + ' com conteúdo que não é JSON (' + (ct || 'sem tipo') + ').';
-      var err = new Error(msg); err.tecnico = info; throw err;
-    }
-    if (!r.ok) console.error('[Conecta Gestão · Defesa Civil] Erro HTTP do servidor', info, data);
-    return { ok: r.ok, status: r.status, data: data };
-  }
-  function erroDe(res) {
-    var d = res.data || {};
-    return d.error || d.message || d.erro || ('HTTP ' + res.status);
-  }
-  window.sincronizarAlertas = async function () {
-    var btn = document.getElementById('btn-sync-alertas'); btn.disabled = true; btn.textContent = '⏳ Sincronizando...';
-    try {
-      var res = await chamarApi('/api/sync-alertas'), d = res.data;
-      if (res.ok && d.ok) {
-        alert('Sincronização concluída!\n\nAlertas encontrados: ' + (d.alertas_encontrados || 0) + '\nNovos: ' + (d.novos || 0) + '\nAtualizados: ' + (d.atualizados || 0) + '\nEncerrados: ' + (d.encerrados || 0));
-        if (typeof loadDashboard === 'function') loadDashboard();
-      } else { alert('Erro na sincronização: ' + erroDe(res)); }
-    } catch (e) { alert('Erro na sincronização: ' + e.message); }
-    finally { btn.disabled = false; btn.textContent = '🔄 Sincronizar Alertas'; }
-  };
-  window.processarFila = async function () {
-    var btn = document.getElementById('btn-proc-fila'); btn.disabled = true; btn.textContent = '⏳ Processando...';
-    try {
-      var res = await chamarApi('/api/process-queue'), d = res.data;
-      if (res.ok && d.ok) {
-        alert('Fila processada!\n\nTotal: ' + (d.total || 0) + '\nEnviados: ' + (d.enviados || 0) + '\nFalhas: ' + (d.falhas || 0) + (d.sandbox ? '\n\n⚠️ Modo SANDBOX — mensagens não enviadas de verdade.' : ''));
-        if (typeof loadDashboard === 'function') loadDashboard();
-      } else { alert('Erro no processamento da fila: ' + erroDe(res)); }
-    } catch (e) { alert('Erro no processamento da fila: ' + e.message); }
-    finally { btn.disabled = false; btn.textContent = '📤 Processar Fila'; }
-  };
 })();
 
 </script>
