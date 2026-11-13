@@ -80,7 +80,7 @@ td{padding:9px 8px;border-bottom:1px solid var(--line);}tr:last-child td{border-
 .bar-row .val{text-align:right;color:var(--ink-soft);font-family:var(--mono);}
 </style>
 
-<!-- CONECTA GESTÃO · camada visual compartilhada (não altera lógica) -->
+<!-- CONECTA GESTÃO 360 · camada visual compartilhada (não altera lógica) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -992,7 +992,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
 </script>
 <div style="position:fixed;bottom:8px;right:12px;font-family:'Inter',sans-serif;font-size:10.5px;color:rgba(71,85,105,.7);background:rgba(255,255,255,.7);padding:5px 10px;border-radius:20px;backdrop-filter:blur(4px);z-index:99;pointer-events:none;">Desenvolvido por <strong>Gabriel Oliveira</strong> · Tecnologia e Manutenção</div>
 
-<!-- CONECTA GESTÃO · camada de navegação e apresentação (não altera lógica) -->
+<!-- CONECTA GESTÃO 360 · autenticação, navegação e apresentação compartilhadas -->
 <script id="cg-core-js">
 /* =====================================================================
    CONECTA GESTÃO · Camada compartilhada (núcleo) — ícones, mensagens
@@ -1133,6 +1133,272 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
 })();
 
 </script>
+<script id="cg-auth-js">
+/* =====================================================================
+   CONECTA GESTÃO 360 · Autenticação e navegação compartilhadas
+   Mesmo arquivo em TODAS as páginas (Painel, Dashboard do Prefeito e
+   Secretarias). Centraliza: sessão única, renovação do token, validação
+   no Supabase Auth, logout real, "Voltar ao Painel" e troca de módulos.
+   Usa a configuração do Supabase já existente em cada página (mesmo
+   projeto e mesma chave pública). Nenhuma chave secreta é usada aqui.
+   As permissões dos dados continuam garantidas pelas políticas RLS.
+   ===================================================================== */
+(function () {
+  'use strict';
+  var KEY = 'cg_session';          // chave da sessão já usada por todas as páginas
+  var META = 'cg_auth_meta';       // token de renovação e validade (complemento)
+  var LOGIN_PAGE = 'conecta-gestao-painel-admin.html';
+  var PREF_PAGE = 'conecta-gestao-dashboard-prefeito.html';
+  // perfis que o próprio Dashboard do Prefeito aceita (regra existente na página dele)
+  var PREF_PERFIS = ['admin_master', 'prefeito', 'vice_prefeito', 'controladoria'];
+  // perfis com gestão total (regra existente no Painel: veem todos os módulos das secretarias)
+  var GESTAO_TOTAL = ['admin_master', 'prefeito', 'chefe_de_gabinete', 'vice_prefeito'];
+  var MODULES = [
+    ['conecta-gestao-saude.html', 'Saúde'], ['conecta-gestao-educacao.html', 'Educação'],
+    ['conecta-gestao-agricultura.html', 'Agricultura'], ['conecta-gestao-esporte.html', 'Esporte'],
+    ['conecta-gestao-cultura.html', 'Cultura'], ['conecta-gestao-assistencia-social.html', 'Assistência Social'],
+    ['conecta-gestao-meio-ambiente.html', 'Meio Ambiente'], ['conecta-gestao-industria-comercio.html', 'Indústria e Comércio']
+  ];
+  var page = (location.pathname.split('/').pop() || '').toLowerCase();
+  var isAdmin = page === LOGIN_PAGE, isPref = page === PREF_PAGE;
+
+  function cfg() {
+    var u = null, k = null;
+    try { if (typeof SB_URL !== 'undefined') u = SB_URL; } catch (e) {}
+    try { if (!u && typeof SUPABASE_URL !== 'undefined') u = SUPABASE_URL; } catch (e) {}
+    try { if (typeof SB_KEY !== 'undefined') k = SB_KEY; } catch (e) {}
+    try { if (!k && typeof SUPABASE_ANON_KEY !== 'undefined') k = SUPABASE_ANON_KEY; } catch (e) {}
+    return { url: u, key: k };
+  }
+  function b64json(p) {
+    try { var s = p.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return {}; }
+  }
+  function claimsOf(t) { return t ? b64json((t.split('.')[1] || '')) : {}; }
+  function read(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function token() { var s = read(KEY); return s && s.access_token ? s.access_token : null; }
+  function expMs(t) { var c = claimsOf(t); return c.exp ? c.exp * 1000 : 0; }
+  function nativeFetch() { return window.__cgNativeFetch || window.fetch; }
+  var NF = window.fetch; window.__cgNativeFetch = NF;
+
+  /* ---------- sessão em memória da página (variável "session" de cada página) ---------- */
+  function setPageSession(t) {
+    try {
+      if (typeof session !== 'undefined' && session) { session.access_token = t; session.claims = claimsOf(t); }
+    } catch (e) {}
+  }
+  function saveToken(t, refresh, expiresIn) {
+    var cur = read(KEY) || {};
+    cur.access_token = t; cur.claims = claimsOf(t);
+    if (refresh) cur.refresh_token = refresh;   // a página do Prefeito já guardava este campo
+    write(KEY, cur);
+    var m = read(META) || {};
+    if (refresh) m.refresh_token = refresh;
+    m.expires_at = expiresIn ? Date.now() + expiresIn * 1000 : expMs(t);
+    m.at = t.slice(-16);
+    write(META, m);
+    setPageSession(t);
+  }
+  function refreshToken() {
+    var m = read(META) || {}, s = read(KEY) || {};
+    var rt = m.refresh_token || s.refresh_token;
+    var c = cfg();
+    if (!rt || !c.url) return Promise.resolve(false);
+    return NF.call(window, c.url + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST', headers: { apikey: c.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: rt })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d && d.access_token) { saveToken(d.access_token, d.refresh_token, d.expires_in); schedule(); return true; } return false; })
+      .catch(function () { return null; });   // null = sem conexão (não derruba a sessão)
+  }
+  var timer = null;
+  function schedule() {
+    clearTimeout(timer);
+    var t = token(); if (!t) return;
+    var wait = expMs(t) - Date.now() - 120000 + Math.floor(Math.random() * 20000);
+    timer = setTimeout(function () {
+      // outra aba pode já ter renovado: só renova se o token guardado ainda for o mesmo
+      var now = token();
+      if (now && expMs(now) - Date.now() > 150000) { setPageSession(now); schedule(); return; }
+      refreshToken().then(function (ok) { if (ok === false) expireSession(); });
+    }, Math.max(wait, 5000));
+  }
+
+  /* ---------- captura o token de renovação no login feito por qualquer página ---------- */
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    var p = NF.apply(window, arguments);
+    if (/\/auth\/v1\/token\?grant_type=password/.test(url)) {
+      p.then(function (r) {
+        if (!r.ok) return;
+        r.clone().json().then(function (d) {
+          if (!d || !d.access_token) return;
+          setTimeout(function () { saveToken(d.access_token, d.refresh_token, d.expires_in); schedule(); }, 0);
+        }).catch(function () {});
+      }).catch(function () {});
+    }
+    return p;
+  };
+
+  /* ---------- encerramento ---------- */
+  var origLogout = typeof window.doLogout === 'function' ? window.doLogout : null;
+  var leaving = false;
+  function clearAll() { del(KEY); del(META); clearTimeout(timer); }
+  function revoke(t) {
+    var c = cfg(); if (!t || !c.url) return;
+    try { NF.call(window, c.url + '/auth/v1/logout?scope=local', { method: 'POST', keepalive: true, headers: { apikey: c.key, Authorization: 'Bearer ' + t } }).catch(function () {}); } catch (e) {}
+  }
+  function toLogin(msg) {
+    if (msg) try { sessionStorage.setItem('cg_login_msg', msg); } catch (e) {}
+    if (isAdmin) { if (origLogout) try { origLogout(); } catch (e) {} showMsg(); return; }
+    leaving = true;
+    location.replace(LOGIN_PAGE);
+  }
+  // "Sair": logout real no Supabase Auth, limpa a sessão em todas as abas e vai para o login oficial
+  window.doLogout = function () {
+    var t = token();
+    revoke(t);
+    clearAll();
+    if (isAdmin) { if (origLogout) try { origLogout(); } catch (e) {} return; }
+    if (origLogout) try { origLogout(); } catch (e) {}
+    toLogin();
+  };
+  function expireSession() {
+    clearAll();
+    toLogin('Sua sessão expirou. Entre novamente.');
+  }
+  // logout feito em outra aba ou módulo: esta aba também encerra
+  window.addEventListener('storage', function (e) {
+    if (e.key === KEY && !e.newValue && !leaving) {
+      if (origLogout) try { origLogout(); } catch (er) {}
+      toLogin('Sua sessão foi encerrada.');
+    } else if (e.key === KEY && e.newValue) {
+      var t = token(); if (t) { setPageSession(t); schedule(); }
+    }
+  });
+  function showMsg() {
+    var m = null; try { m = sessionStorage.getItem('cg_login_msg'); sessionStorage.removeItem('cg_login_msg'); } catch (e) {}
+    if (!m) return;
+    var box = document.getElementById('login-error');
+    if (box) { box.textContent = m; box.classList.add('show'); }
+  }
+
+  /* ---------- validação da sessão no Supabase Auth ---------- */
+  function validate() {
+    var t = token(), c = cfg(); if (!t || !c.url) return;
+    NF.call(window, c.url + '/auth/v1/user', { headers: { apikey: c.key, Authorization: 'Bearer ' + t } })
+      .then(function (r) {
+        if (r.ok) return;
+        if (r.status === 401 || r.status === 403) {
+          return refreshToken().then(function (ok) { if (ok === false) expireSession(); else if (ok) { if (!pageLoggedIn()) location.reload(); } });
+        }
+      }).catch(function () {});
+  }
+  function pageLoggedIn() {
+    var a = document.getElementById('app') || document.getElementById('app-wrap');
+    return !!(a && (a.style.display === 'block' || a.style.display === 'flex' || a.classList.contains('active')));
+  }
+
+  /* ---------- recuperação da sessão ao abrir qualquer página ---------- */
+  function start() {
+    var t = token();
+    if (!t) { showMsg(); return; }
+    if (expMs(t) - Date.now() < 30000) {
+      // token vencido: renova e recarrega para a página entrar pelo próprio fluxo dela
+      refreshToken().then(function (ok) {
+        if (ok) location.reload();
+        else if (ok === false) { clearAll(); showMsg(); }
+      });
+      return;
+    }
+    // o Painel Administrativo não recuperava a sessão ao abrir (causa do "Voltar ao Painel" cair no login)
+    if (isAdmin && !pageLoggedIn() && typeof enterApp === 'function') {
+      try { session = { access_token: t, claims: claimsOf(t) }; enterApp(); } catch (e) {}
+    }
+    schedule();
+    validate();
+  }
+
+
+  /* ---------- seletor de módulos (mesmo componente em todas as páginas) ---------- */
+  var SW_CSS = '.cgsw{position:relative;flex-shrink:0;font-family:inherit}' +
+    '.cgsw-btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}' +
+    '.cgsw.dark .cgsw-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#E6EEF5}.cgsw.dark .cgsw-btn:hover{background:rgba(255,255,255,.16);color:#fff}' +
+    '.cgsw.light .cgsw-btn{background:#fff;border:1px solid #D5DEE8;color:#123B5D}.cgsw.light .cgsw-btn:hover{border-color:#123B5D}' +
+    '.cgsw-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}' +
+    '.cgsw-panel{display:none;position:absolute;right:0;top:calc(100% + 8px);width:290px;max-height:calc(100vh - 90px);overflow-y:auto;background:#fff;border:1px solid #E1E8EF;border-radius:14px;box-shadow:0 16px 40px rgba(18,59,93,.22);padding:8px;z-index:300;text-align:left}' +
+    '.cgsw.open .cgsw-panel{display:block}' +
+    '.cgsw-h{font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#66768A;padding:10px 10px 4px}' +
+    '.cgsw-panel a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:8px;color:#243447;font-size:13.5px;font-weight:500;text-decoration:none}' +
+    '.cgsw-panel a:hover{background:#EAF3FA;color:#123B5D}' +
+    '.cgsw-panel a.cur{background:#EAF3FA;color:#123B5D;font-weight:700}.cgsw-panel a.cur small{font-size:11px;color:#165D99;font-weight:600}' +
+    '@media(max-width:860px){.cgsw-btn span{display:none}.cgsw-btn{width:38px;padding:0;justify-content:center}}' +
+    '@media(max-width:640px){.cgsw-panel{position:fixed;left:12px;right:12px;width:auto;top:70px}}';
+  function mountSwitcher(container, before, dark) {
+    if (!container || container.querySelector('.cgsw')) return null;
+    if (!document.getElementById('cgsw-css')) { var st = document.createElement('style'); st.id = 'cgsw-css'; st.textContent = SW_CSS; document.head.appendChild(st); }
+    var w = document.createElement('div'); w.className = 'cgsw ' + (dark ? 'dark' : 'light');
+    w.innerHTML = '<button type="button" class="cgsw-btn" aria-haspopup="true" aria-expanded="false" title="Ir para outro módulo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Módulos</span></button><div class="cgsw-panel" role="menu"></div>';
+    var btn = w.firstChild, panel = w.lastChild;
+    function link(href, label) {
+      var a = document.createElement('a'); a.href = href; a.setAttribute('role', 'menuitem');
+      var cur = href.toLowerCase() === page;
+      a.className = cur ? 'cur' : '';
+      a.textContent = label;
+      if (cur) { var sm = document.createElement('small'); sm.textContent = 'você está aqui'; a.appendChild(sm); }
+      panel.appendChild(a);
+    }
+    function build() {
+      panel.innerHTML = '';
+      var h = document.createElement('div'); h.className = 'cgsw-h'; h.textContent = 'Painéis'; panel.appendChild(h);
+      if (PREF_PERFIS.indexOf(perfil()) !== -1) link(PREF_PAGE, 'Dashboard do Prefeito');
+      link(LOGIN_PAGE, 'Painel Administrativo');
+      var gt = GESTAO_TOTAL.indexOf(perfil()) !== -1;
+      var list = MODULES.filter(function (m) { return gt || m[0] === page; });
+      if (list.length) {
+        var h2 = document.createElement('div'); h2.className = 'cgsw-h'; h2.textContent = 'Secretarias'; panel.appendChild(h2);
+        list.forEach(function (m) { link(m[0], m[1]); });
+      }
+    }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); build(); var o = w.classList.toggle('open'); btn.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+    document.addEventListener('click', function (e) { if (!w.contains(e.target)) { w.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') w.classList.remove('open'); });
+    container.insertBefore(w, before || null);
+    return w;
+  }
+  // módulos internos do sistema abrem na mesma aba (antes abriam como "outro site" em nova aba)
+  var INTERNAL = [LOGIN_PAGE, PREF_PAGE].concat(MODULES.map(function (m) { return m[0]; }));
+  function isInternal(href) { var f = (href || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase(); return INTERNAL.indexOf(f) !== -1; }
+  function sameTab(scope) {
+    Array.prototype.forEach.call((scope || document).querySelectorAll('a[target="_blank"]'), function (a) {
+      if (isInternal(a.getAttribute('href'))) a.removeAttribute('target');
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var q = e.target.closest && e.target.closest('[onclick*="window.open("]');
+    if (!q) return;
+    var m = /window\.open\('([^']+)'/.exec(q.getAttribute('onclick') || '');
+    if (m && isInternal(m[1])) { e.preventDefault(); e.stopImmediatePropagation(); location.href = m[1]; }
+  }, true);
+
+  /* ---------- destinos padrão ---------- */
+  function perfil() { var t = token(); return t ? claimsOf(t).perfil : null; }
+  function painelHref() { return PREF_PERFIS.indexOf(perfil()) !== -1 ? PREF_PAGE : LOGIN_PAGE; }
+  function painelLabel() { return PREF_PERFIS.indexOf(perfil()) !== -1 ? 'Dashboard do Prefeito' : 'Painel Administrativo'; }
+
+  window.CGAuth = {
+    painelHref: painelHref, painelLabel: painelLabel, perfil: perfil,
+    canPref: function () { return PREF_PERFIS.indexOf(perfil()) !== -1; },
+    gestaoTotal: function () { return GESTAO_TOTAL.indexOf(perfil()) !== -1; },
+    modules: MODULES, page: page, isAdmin: isAdmin, isPref: isPref,
+    mountSwitcher: mountSwitcher, sameTab: sameTab, isInternal: isInternal
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 0); });
+  else setTimeout(start, 0);
+})();
+
+</script>
 <script id="cg-mod-js">
 /* =====================================================================
    CONECTA GESTÃO · Camada dos módulos das Secretarias (mesmo arquivo
@@ -1186,14 +1452,10 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
       });
       var back = right.querySelector('.back-btn');
       if (back) {
-        back.innerHTML = ico('grid') + '<span class="cg-hlabel">Painel</span>';
-        back.title = 'Voltar ao Painel Administrativo';
-        // atalho ao Dashboard do Prefeito, exibido só para os perfis que já têm acesso a ele
-        prefLink = el('a', 'cg-hlink', ico('chart') + '<span class="cg-hlabel">Dashboard do Prefeito</span>');
-        prefLink.href = 'conecta-gestao-dashboard-prefeito.html';
-        prefLink.title = 'Dashboard do Prefeito';
-        prefLink.style.display = 'none';
-        right.insertBefore(prefLink, back);
+        // "Voltar ao Painel": só navega (nunca encerra a sessão). Destino definido pelo perfil (cg-auth).
+        back.innerHTML = ico('back') + '<span class="cg-hlabel">Voltar ao Painel</span>';
+        prefLink = back;
+        if (window.CGAuth) CGAuth.mountSwitcher(right, back, true);
       }
       var out = right.querySelector('.logout-btn');
       if (out) { out.innerHTML = ico('logout') + '<span class="cg-hlabel">Sair</span>'; out.title = 'Sair do sistema'; }
@@ -1286,7 +1548,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     if (st && st.cgv && st.d > 0) { history.back(); return; }
     var dk = dashKey();
     if (dk && keyOf(v) !== dk) { go(dk); return; }
-    window.location.href = 'conecta-gestao-painel-admin.html';
+    window.location.href = window.CGAuth ? CGAuth.painelHref() : 'conecta-gestao-painel-admin.html';
   }
   function refresh() {
     var v = curView(); if (!v) return;
@@ -1301,7 +1563,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
       else { var sp = el('span', '', ''); sp.textContent = txt; sp.setAttribute('aria-current', 'page'); li.appendChild(sp); }
       ol.appendChild(li);
     }
-    item('Painel', null, 'conecta-gestao-painel-admin.html');
+    item(window.CGAuth ? CGAuth.painelLabel() : 'Painel', null, window.CGAuth ? CGAuth.painelHref() : 'conecta-gestao-painel-admin.html');
     if (k === dk && !s) item(MODNAME, null);
     else {
       item(MODNAME, function () { go(dk); });
@@ -1310,7 +1572,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     }
     var st = history.state, atRoot = k === dk && !s && !(st && st.cgv && st.d > 0);
     b.querySelector('span').textContent = atRoot ? 'Voltar ao Painel' : 'Voltar';
-    b.title = atRoot ? 'Voltar ao Painel Administrativo' : 'Voltar';
+    b.title = atRoot ? 'Voltar ao ' + (window.CGAuth ? CGAuth.painelLabel() : 'Painel') : 'Voltar';
   }
   var subObs = new MutationObserver(function (muts) {
     muts.forEach(function (m) {
@@ -1386,7 +1648,7 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
       var m = c.user_metadata || {}, nm = m.nome || m.full_name || m.name || c.email || '';
       if (userName) { userName.textContent = nm; userName.title = nm; }
       if (userAvatar) userAvatar.textContent = initials(nm);
-      if (prefLink) prefLink.style.display = PREF_PERFIS.indexOf(c.perfil) !== -1 ? '' : 'none';
+      if (prefLink && window.CGAuth) { prefLink.href = CGAuth.painelHref(); prefLink.title = 'Voltar ao ' + CGAuth.painelLabel(); }
     }
   }
   new MutationObserver(onShow).observe(app, { attributes: true, attributeFilter: ['style'] });
