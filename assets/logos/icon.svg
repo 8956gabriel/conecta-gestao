@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="40" fill="#F0920A"/>
+  <!-- Barra superior roxa -->
+  <rect x="20" y="30" width="472" height="70" fill="#2D1A6E"/>
+  <text x="256" y="82" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="48" fill="#FFFFFF" letter-spacing="2">DEFESA CIVIL</text>
+  <!-- Triângulo central da defesa civil -->
+  <polygon points="256,195 210,275 302,275" fill="#2D1A6E"/>
+  <!-- Barra inferior roxa -->
+  <rect x="20" y="412" width="472" height="70" fill="#2D1A6E"/>
+  <text x="256" y="464" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="56" fill="#FFFFFF" letter-spacing="4">IVATUBA</text>
+</svg>
