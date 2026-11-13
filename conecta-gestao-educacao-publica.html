@@ -854,13 +854,22 @@ loadData();
     return w;
   }
   // módulos internos do sistema abrem na mesma aba (antes abriam como "outro site" em nova aba)
-  var INTERNAL = [LOGIN_PAGE, PREF_PAGE].concat(MODULES.map(function (m) { return m[0]; }));
+  var PUBLIC_PAGES = ['saude-publica', 'educacao-publica', 'agricultura-publica', 'meio-ambiente-publico', 'assistencia-social-publica',
+    'industria-comercio-publico', 'cultura-publica', 'esporte-publico', 'ivatuba-protegida'].map(function (n) { return 'conecta-gestao-' + n + '.html'; });
+  var INTERNAL = [LOGIN_PAGE, PREF_PAGE, 'conecta-gestao-defesa-civil.html'].concat(MODULES.map(function (m) { return m[0]; }), PUBLIC_PAGES);
   function isInternal(href) { var f = (href || '').split('?')[0].split('#')[0].split('/').pop().toLowerCase(); return INTERNAL.indexOf(f) !== -1; }
   function sameTab(scope) {
     Array.prototype.forEach.call((scope || document).querySelectorAll('a[target="_blank"]'), function (a) {
       if (isInternal(a.getAttribute('href'))) a.removeAttribute('target');
     });
   }
+  // links <a target="_blank"> para páginas do próprio sistema (inclusive os criados depois do carregamento)
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[target="_blank"]');
+    if (!a || !isInternal(a.getAttribute('href'))) return;
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return; // nova aba pedida pelo próprio usuário
+    e.preventDefault(); location.href = a.href; // sem tocar no atributo (não altera o visual da página)
+  }, true);
   document.addEventListener('click', function (e) {
     var q = e.target.closest && e.target.closest('[onclick*="window.open("]');
     if (!q) return;

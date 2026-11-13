@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/api/sync-alertas", "destination": "https://conectagestao360.vercel.app/api/sync-alertas" },
+    { "source": "/api/process-queue", "destination": "https://conectagestao360.vercel.app/api/process-queue" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "headers": [
@@ -10,12 +12,6 @@
         { "key": "Access-Control-Allow-Methods", "value": "POST, GET, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/sync-alertas",
-      "schedule": "0 6 * * *"
     }
   ]
 }
