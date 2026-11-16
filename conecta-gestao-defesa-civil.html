@@ -885,7 +885,7 @@ async function loadDashboard(){try{
       '<span>📤 <strong>'+pendentes+'</strong> pendentes na fila</span>'+
       '<span>✅ <strong>'+enviadas+'</strong> enviadas</span>'+
       (erros?'<span style="color:var(--danger);">❌ <strong>'+erros+'</strong> com erro</span>':'')+
-      '</div><div style="margin-top:8px;font-size:11px;color:var(--muted);">Cron diário: 06h (sincroniza alertas). Botões acima permitem sincronização manual a qualquer momento.</div>';
+      '</div><div style="margin-top:8px;font-size:11px;color:var(--muted);">Atualização automática a cada 20 minutos (sincroniza alertas e envia a fila). Botões acima permitem sincronização manual a qualquer momento.</div>';
   }catch(e){notifEl.innerHTML='<span style="color:var(--muted);font-size:12px;">Não foi possível carregar status.</span>';}
   // Carregar clima automaticamente
   carregarClimaDash();
@@ -1880,6 +1880,10 @@ schedule();
   };
 })();
 
+/* ---------- Painel aberto: recarrega o Dashboard a cada 20 minutos ---------- */
+setInterval(function(){
+  if(document.visibilityState==='visible' && currentView==='dashboard_dc' && typeof loadDashboard==='function') loadDashboard();
+}, 20*60*1000);
 </script>
 </body>
 </html>
