@@ -1195,9 +1195,70 @@ Object.keys(MODULES).forEach(k=>{LOADERS[k]=()=>loadData(k);});
     }, Math.max(wait, 5000));
   }
 
+  /* ---------- renovação sob demanda (uma só por vez, compartilhada) ---------- */
+  var refreshing = null;
+  function ensureFresh() {
+    if (!refreshing) refreshing = refreshToken().then(function (ok) {
+      refreshing = null;
+      if (ok === false) expireSession();
+      return ok;
+    }, function () { refreshing = null; return null; });
+    return refreshing;
+  }
+  // Abas em segundo plano e computador em repouso atrasam o setTimeout: ao voltar, confere a validade
+  function checkOnReturn() {
+    var t = token(); if (!t) return;
+    if (expMs(t) - Date.now() < 150000) ensureFresh(); else { setPageSession(t); schedule(); }
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') checkOnReturn(); });
+  window.addEventListener('focus', checkOnReturn);
+  window.addEventListener('online', checkOnReturn);
+
+  // Requisições de dados do Supabase feitas com o token do usuário
+  var SB_DATA = /\/(rest|storage|functions)\/v1\//;
+  function getAuthHeader(init) {
+    var h = init && init.headers; if (!h) return null;
+    if (typeof Headers !== 'undefined' && h instanceof Headers) return h.get('Authorization');
+    for (var k in h) if (k.toLowerCase() === 'authorization') return h[k];
+    return null;
+  }
+  function withToken(init, t) {
+    var n = {}; for (var k in init) n[k] = init[k];
+    var h = init.headers, out;
+    if (typeof Headers !== 'undefined' && h instanceof Headers) { out = new Headers(h); out.set('Authorization', 'Bearer ' + t); }
+    else { out = {}; for (var j in h) if (j.toLowerCase() !== 'authorization') out[j] = h[j]; out.Authorization = 'Bearer ' + t; }
+    n.headers = out; return n;
+  }
+  function isUserBearer(a) {
+    var m = /^Bearer\s+(.+)$/i.exec(a || ''); if (!m) return false;
+    var c = claimsOf(m[1]); return !!(c && c.sub);   // chave pública (anon) não tem "sub": não mexe
+  }
+  function authedFetch(input, init) {
+    var pre = Promise.resolve();
+    var t = token();
+    if (t && expMs(t) - Date.now() < 60000) pre = ensureFresh();
+    return pre.then(function () {
+      var cur = token() || t;
+      var req = cur ? withToken(init, cur) : init;
+      return NF.call(window, input, req).then(function (r) {
+        if (r.status !== 401) return r;
+        // token vencido no servidor: renova uma vez e repete a mesma requisição
+        return r.clone().text().then(function (txt) {
+          if (!/JWT expired|PGRST303|PGRST301|invalid JWT|jwt/i.test(txt || '')) return r;
+          return ensureFresh().then(function (ok) {
+            var nt = token();
+            if (!ok || !nt) return r;
+            return NF.call(window, input, withToken(init, nt));
+          });
+        }, function () { return r; });
+      });
+    });
+  }
+
   /* ---------- captura o token de renovação no login feito por qualquer página ---------- */
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (typeof input === 'string' && SB_DATA.test(url) && isUserBearer(getAuthHeader(init))) return authedFetch(input, init);
     var p = NF.apply(window, arguments);
     if (/\/auth\/v1\/token\?grant_type=password/.test(url)) {
       p.then(function (r) {
