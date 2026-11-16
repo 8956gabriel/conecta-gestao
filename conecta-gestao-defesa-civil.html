@@ -515,7 +515,7 @@ function buildViews(){
     '<div class="panel"><h3>Alterar status geral</h3><p class="panel-sub">O status será exibido no topo da página pública.</p><div class="form-grid">'+
     '<div class="field"><label>Status</label><select id="cfg-status"><option value="normal">🟢 Normal</option><option value="atencao">🟡 Atenção</option><option value="alerta">🟠 Alerta</option><option value="emergencia">🔴 Emergência</option></select></div>'+
     '<div class="field span-2"><label>Mensagem personalizada</label><input id="cfg-msg" placeholder="Ex: Chuvas previstas para as próximas 48h"></div></div>'+
-    '<div class="form-actions"><button class="btn-accent" onclick="salvarConfig()" id="cfg-btn">Salvar status</button> <button class="btn-ghost" onclick="atualizarClima()" id="cfg-clima-btn" style="margin-left:8px;">🌤️ Atualizar pelo Clima</button></div>'+
+    '<div class="form-actions"><button class="btn-accent" onclick="salvarConfig()" id="cfg-btn">Salvar status</button></div>'+
     '<div id="clima-info" style="margin-top:14px;"></div></div></section>';
 
   Object.keys(MODULES).forEach(key=>{
@@ -761,65 +761,7 @@ function buildKpis(k,data){const el=document.getElementById('kpi-'+k);if(!el)ret
 
 let cfgId=null;
 async function loadConfig(){try{const rows=await sbGet('dc_config','select=*&tenant_id=eq.'+tid()+'&limit=1');if(rows.length){const c=rows[0];cfgId=c.id;document.getElementById('cfg-status').value=c.status_municipio||'normal';document.getElementById('cfg-msg').value=c.status_mensagem||'';}}catch(e){}}
-async function atualizarClima(){
-  const btn=document.getElementById('cfg-clima-btn');
-  btn.disabled=true;btn.textContent='Consultando...';
-  const info=document.getElementById('clima-info');
-  try{
-    // Ivatuba, PR: lat -23.62, lon -52.22
-    const url='https://api.open-meteo.com/v1/forecast?latitude=-23.62&longitude=-52.22&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&hourly=precipitation_probability,weather_code,wind_speed_10m&forecast_days=1&timezone=America/Sao_Paulo';
-    const res=await fetch(url);
-    const d=await res.json();
-    const cur=d.current||{};
-    const hourly=d.hourly||{};
-    const wc=cur.weather_code||0;
-    const wind=cur.wind_speed_10m||0;
-    const precip=cur.precipitation||0;
-    const temp=cur.temperature_2m||0;
-    const humidity=cur.relative_humidity_2m||0;
-    // Verificar próximas horas para chuva forte
-    const probChuva=hourly.precipitation_probability||[];
-    const maxProb=Math.max(...probChuva.slice(0,12));
-    const ventoMax=Math.max(...(hourly.wind_speed_10m||[]).slice(0,12));
-    const wcFuturo=(hourly.weather_code||[]).slice(0,12);
-    const temTempestade=wcFuturo.some(c=>c>=95);
-    const temChuvaForte=wcFuturo.some(c=>c>=63&&c<95);
-    // Determinar status
-    let status='normal',mensagem='';
-    const wcDesc={0:'Céu limpo',1:'Parcialmente nublado',2:'Nublado',3:'Encoberto',45:'Nevoeiro',48:'Nevoeiro com geada',51:'Garoa leve',53:'Garoa',55:'Garoa forte',61:'Chuva leve',63:'Chuva moderada',65:'Chuva forte',71:'Neve leve',73:'Neve',75:'Neve forte',80:'Pancadas leves',81:'Pancadas',82:'Pancadas fortes',85:'Neve em pancadas',95:'Tempestade',96:'Tempestade com granizo',99:'Tempestade forte com granizo'};
-    const climaAtual=wcDesc[wc]||'Indefinido';
-    if(temTempestade||wc>=95||ventoMax>80){
-      status='emergencia';
-      mensagem='Tempestade/vendaval previsto. Ventos de até '+Math.round(ventoMax)+'km/h. Procure abrigo seguro!';
-    }else if(temChuvaForte||wc>=63||maxProb>80||ventoMax>60){
-      status='alerta';
-      mensagem='Chuva forte prevista (prob. '+maxProb+'%). Ventos de até '+Math.round(ventoMax)+'km/h. Evite áreas de risco.';
-    }else if(wc>=51||maxProb>50||ventoMax>40){
-      status='atencao';
-      mensagem='Chuva prevista nas próximas horas (prob. '+maxProb+'%). Fique atento.';
-    }else{
-      status='normal';
-      mensagem='Município sem alertas ativos. '+climaAtual+', '+Math.round(temp)+'°C.';
-    }
-    // Atualizar campos
-    document.getElementById('cfg-status').value=status;
-    document.getElementById('cfg-msg').value=mensagem;
-    // Mostrar info do clima
-    info.innerHTML='<div style="background:#EFF6FF;border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:14px;font-size:12px;line-height:1.8;">'+
-      '<strong>🌤️ Clima atual em Ivatuba:</strong><br>'+
-      '🌡️ Temperatura: <strong>'+Math.round(temp)+'°C</strong><br>'+
-      '💧 Umidade: <strong>'+Math.round(humidity)+'%</strong><br>'+
-      '💨 Vento: <strong>'+Math.round(wind)+' km/h</strong> (máx próx. 12h: '+Math.round(ventoMax)+' km/h)<br>'+
-      '🌧️ Precipitação: <strong>'+precip+' mm</strong><br>'+
-      '☁️ Condição: <strong>'+climaAtual+'</strong><br>'+
-      '📊 Prob. chuva (próx. 12h): <strong>'+maxProb+'%</strong><br>'+
-      '<hr style="border:0;border-top:1px solid rgba(37,99,235,.15);margin:8px 0;">'+
-      '➡️ Status sugerido: <strong style="color:'+(status==='emergencia'?'var(--danger)':status==='alerta'?'var(--warn)':status==='atencao'?'#D97706':'var(--ok)')+';">'+status.toUpperCase()+'</strong><br>'+
-      '<small style="color:var(--muted);">Clique "Salvar status" para aplicar na página pública.</small></div>';
-  }catch(e){
-    info.innerHTML='<div style="color:var(--danger);font-size:12px;">Erro ao consultar clima: '+e.message+'</div>';
-  }finally{btn.disabled=false;btn.textContent='🌤️ Atualizar pelo Clima';}
-}
+/* atualizarClima() substituída pelo monitoramento automático (dc-monitor-admin.js) */
 async function salvarConfig(){const btn=document.getElementById('cfg-btn');btn.disabled=true;const data={tenant_id:tid(),status_municipio:document.getElementById('cfg-status').value,status_mensagem:document.getElementById('cfg-msg').value.trim()||null,status_atualizado_em:new Date().toISOString()};try{if(cfgId)await sbPatch('dc_config','id=eq.'+cfgId,data);else{const r=await sbPost('dc_config',data);cfgId=r[0].id;}alert('Status atualizado!');}catch(e){alert('Erro: '+e.message.slice(0,200));}finally{btn.disabled=false;}}
 
 async function loadDashboard(){try{
@@ -885,7 +827,7 @@ async function loadDashboard(){try{
       '<span>📤 <strong>'+pendentes+'</strong> pendentes na fila</span>'+
       '<span>✅ <strong>'+enviadas+'</strong> enviadas</span>'+
       (erros?'<span style="color:var(--danger);">❌ <strong>'+erros+'</strong> com erro</span>':'')+
-      '</div><div style="margin-top:8px;font-size:11px;color:var(--muted);">Cron diário: 06h (sincroniza alertas). Botões acima permitem sincronização manual a qualquer momento.</div>';
+      '</div><div style="margin-top:8px;font-size:11px;color:var(--muted);">Monitoramento meteorológico automático a cada 10 minutos (Defesa Civil Nacional/IDAP e INMET). Botões acima permitem sincronização manual a qualquer momento.</div>';
   }catch(e){notifEl.innerHTML='<span style="color:var(--muted);font-size:12px;">Não foi possível carregar status.</span>';}
   // Carregar clima automaticamente
   carregarClimaDash();
@@ -919,18 +861,7 @@ async function carregarClimaDash(){
       '🌧️ Prob. chuva: '+maxProb+'%<br>'+
       (precip>0?'☔ Precipitação: '+precip+' mm<br>':'')+
       '</div>'+alerta;
-    // Atualizar status automaticamente no banco
-    let status='normal',mensagem='';
-    if(wc>=95||ventoMax>80){status='emergencia';mensagem='Tempestade/vendaval previsto. Ventos de até '+ventoMax+'km/h. Procure abrigo seguro!';}
-    else if(wc>=63||maxProb>80||ventoMax>60){status='alerta';mensagem='Chuva forte prevista (prob. '+maxProb+'%). Ventos de até '+ventoMax+'km/h. Evite áreas de risco.';}
-    else if(wc>=51||maxProb>50||ventoMax>40){status='atencao';mensagem='Chuva prevista nas próximas horas (prob. '+maxProb+'%). Fique atento.';}
-    else{status='normal';mensagem='Município sem alertas ativos. '+(wcDesc[wc]||'').replace(/^[^\s]+\s/,'')+', '+temp+'°C.';}
-    try{
-      const cfgRows=await sbGet('dc_config','select=id,status_municipio&tenant_id=eq.'+tid()+'&limit=1');
-      const cfgData={tenant_id:tid(),status_municipio:status,status_mensagem:mensagem,status_atualizado_em:new Date().toISOString()};
-      if(cfgRows.length){await sbPatch('dc_config','id=eq.'+cfgRows[0].id,cfgData);}
-      else{await sbPost('dc_config',cfgData);}
-    }catch(e){}
+    // O status do município agora é definido somente pelo monitoramento automático no servidor (fontes oficiais).
   }catch(e){el.innerHTML='<span style="color:var(--muted);font-size:12px;">Erro ao carregar clima.</span>';}
 }
 
@@ -1416,6 +1347,7 @@ function enviarTodosWA(){
 <div class="mdl-foot"><div style="display:flex;gap:10px;"><button id="resp-oc-btn" onclick="confirmarResponder()" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">Salvar e Enviar WhatsApp</button><button type="button" id="resp-oc-wa-direto" onclick="abrirWhatsAppDireto()" title="Abrir o WhatsApp com esta mensagem, sem alterar o status" style="padding:12px 16px;background:#fff;color:#166534;border:1px solid #86EFAC;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">Só abrir WhatsApp</button><button onclick="fecharResponder()" style="padding:12px 20px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button></div>
 </div></div></div>
 <script src="/dc-admin-extras.js"></script>
+<script src="/dc-monitor-admin.js"></script>
 <script>
 (function(){
 var P={dashboard_dc:'M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10',config_dc:'M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6z',telefones_dc:'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2',alertas_dc:'M12 3l10 18H2zM12 10v5M12 18h.01',ocorrencias_dc:'M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11zM12 12a2 2 0 100-4 2 2 0 000 4',historico_oc:'M3 12a9 9 0 109-9 9 9 0 00-7 3.5M3 4v4h4M12 7v5l3 2',abrigos_dc:'M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6',recursos_dc:'M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8',equipes_dc:'M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 10a4 4 0 100-8 4 4 0 000 8M21 20v-2a4 4 0 00-3-3.9M16 2.1a4 4 0 010 7.8',comunicados_dc:'M3 11v2a1 1 0 001 1h3l6 4V6L7 10H4a1 1 0 00-1 1zM17 8a5 5 0 010 8',notificacoes_dc:'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0',sms_dc:'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',pessoas_sms:'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M22 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8',pontos_risco:'M12 2l2.4 6.9H22l-6 4.4 2.3 7L12 16l-6.3 4.3 2.3-7-6-4.4h7.6z',eventos_hist:'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2',preparacao_dc:'M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9',notas_tecnicas:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M8 13h8M8 17h8',danos_dc:'M3 3v18h18M7 14l4-4 3 3 5-6',relatorios_dc:'M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3',auditoria_dc:'M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6zM9 12l2 2 4-4',dev_config:'M12 15a3 3 0 100-6 3 3 0 000 6M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z'};

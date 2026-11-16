@@ -1110,6 +1110,7 @@ function nivelIco(n){
 }
 
 /* ===== LOAD STATUS ===== */
+let _ultimoStatus=null;
 async function loadStatus(){
   try{
     const rows=await sbGet('dc_config','select=*&tenant_id=eq.'+TID+'&limit=1');
@@ -1119,13 +1120,27 @@ async function loadStatus(){
       const banner=document.getElementById('status-banner');
       banner.className='status-banner status-'+s;
       const icos={normal:'🟢',atencao:'🟡',alerta:'🟠',emergencia:'🔴'};
-      const txts={normal:'MUNICÍPIO SEM ALERTAS ATIVOS',atencao:'ATENÇÃO — Alerta climático ativo',alerta:'ALERTA — Condições climáticas exigem atenção',emergencia:'EMERGÊNCIA — Situação de emergência registrada'};
+      const rot={normal:'NORMAL',atencao:'ATENÇÃO',alerta:'ALERTA',emergencia:'ALERTA MÁXIMO'};
+      const txts={normal:'MUNICÍPIO SEM ALERTAS ATIVOS',atencao:'ATENÇÃO — Alerta climático ativo',alerta:'ALERTA — Condições climáticas exigem atenção',emergencia:'ALERTA MÁXIMO — Situação meteorológica grave'};
       document.getElementById('status-ico').textContent=icos[s]||'🟢';
       document.getElementById('status-text').textContent=c.status_mensagem||txts[s]||'';
-      document.getElementById('status-update').textContent=c.status_atualizado_em?'Atualizado em '+fmtDateTime(c.status_atualizado_em):'';
+      const partes=[];
+      if(s!=='normal'&&c.status_risco)partes.push('Risco: '+c.status_risco);
+      if(c.status_orientacao&&s!=='normal')partes.push(c.status_orientacao);
+      const quando=c.status_consulta_em||c.status_atualizado_em;
+      if(quando)partes.push('Atualizado em '+fmtDateTime(quando)+(c.status_fonte?' · Fonte: '+c.status_fonte:''));
+      if(c.status_desatualizado)partes.push('⚠️ '+(c.status_aviso_falha||'Falha de comunicação com o serviço meteorológico')+' Dados de '+fmtDateTime(c.status_dados_em||c.status_atualizado_em)+'.');
+      document.getElementById('status-update').textContent=partes.join(' · ');
+      // Mudou o nível enquanto a página estava aberta: atualiza também a lista de alertas
+      if(_ultimoStatus!==null&&_ultimoStatus!==s){try{loadAlertas();}catch(e){}}
+      _ultimoStatus=s;
+      banner.setAttribute('aria-label','Status do município: '+(rot[s]||s));
     }
   }catch(e){}
 }
+// Atualiza o status sem recarregar a página (a cada 60 s e ao voltar para a aba)
+setInterval(()=>{if(document.visibilityState==='visible')loadStatus();},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadStatus();});
 
 /* ===== LOAD ALERTAS ===== */
 async function loadAlertas(){
