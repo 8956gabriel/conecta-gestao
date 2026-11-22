@@ -378,7 +378,7 @@ revoke all on natal_acessos, natal_config, natal_pessoas, natal_despesas, natal_
 -- ---------- RPC: gerar bloquinhos com numeração sequencial ----------
 create or replace function gestao360.natal_gerar_bloquinhos(p_qtd int)
 returns int language plpgsql security definer set search_path = gestao360, public as $$
-declare v_t uuid := gestao360.jwt_tenant_id(); c natal_config%rowtype; v_ini int; i int; b uuid; k int; v_num0 int;
+declare v_t uuid := gestao360.jwt_tenant_id(); c natal_config%rowtype; v_ini int; i int; b uuid; v_num0 int;
 begin
   if not gestao360.natal_pode('bloquinhos') then raise exception 'Sem permissão para gerar bloquinhos'; end if;
   if p_qtd < 1 or p_qtd > 500 then raise exception 'Quantidade deve ser entre 1 e 500'; end if;
@@ -391,8 +391,8 @@ begin
       values (v_t, v_ini + i, c.numeros_por_bloquinho, c.numeros_por_bloquinho * c.valor_numero)
       returning id into b;
     insert into natal_numeros(tenant_id, bloquinho_id, numero, valor)
-      select v_t, b, v_num0 + (i - 1) * c.numeros_por_bloquinho + k, c.valor_numero
-      from generate_series(1, c.numeros_por_bloquinho) k;
+      select v_t, b, v_num0 + (i - 1) * c.numeros_por_bloquinho + g.x, c.valor_numero
+      from generate_series(1, c.numeros_por_bloquinho) as g(x);
   end loop;
   return p_qtd;
 end $$;
