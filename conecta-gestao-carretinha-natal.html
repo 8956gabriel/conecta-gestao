@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d24">
+<title>🎄 Carretinha de Natal — Conecta Gestão</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.8/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{
+  --verde:#0f3d24; --verde2:#166534; --verde3:#1f7a45; --verde-claro:#e7f3ea;
+  --vermelho:#b91c1c; --vermelho2:#dc2626; --vermelho-claro:#fdecec;
+  --dourado:#c9a227; --dourado2:#e6c45c; --dourado-claro:#fbf4dc;
+  --creme:#fbf8f1; --branco:#fff; --txt:#1c2a22; --txt2:#55635a; --txt3:#8a958e;
+  --borda:#e6e0d2; --sombra:0 6px 24px rgba(15,61,36,.08); --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font:14.5px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--txt);background:var(--creme);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+.titulo-natal{font-family:'Playfair Display',Georgia,serif;letter-spacing:.01em}
+a{color:var(--verde2)}
+.oculto{display:none!important}
+
+/* ===== Login ===== */
+#tela-login,#tela-sem-acesso,#tela-carregando{min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(900px 500px at 15% 0%,rgba(201,162,39,.22),transparent 60%),radial-gradient(800px 500px at 100% 100%,rgba(185,28,28,.25),transparent 60%),linear-gradient(160deg,#0b2e1b,#0f3d24 55%,#13502f)}
+.login-card{width:100%;max-width:400px;background:var(--branco);border-radius:20px;padding:30px 28px;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;overflow:hidden}
+.login-card::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:repeating-linear-gradient(90deg,var(--vermelho) 0 18px,#fff 18px 26px,var(--verde2) 26px 44px,#fff 44px 52px)}
+.login-card .arvore{font-size:46px;text-align:center}
+.login-card h1{text-align:center;font-size:26px;color:var(--verde)}
+.login-card p.sub{text-align:center;color:var(--txt2);margin:4px 0 20px}
+.flocos{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.flocos i{position:absolute;top:-20px;color:#fff;opacity:.6;animation:cai linear infinite}
+@keyframes cai{to{transform:translateY(110vh) rotate(360deg)}}
+
+/* ===== Formulários ===== */
+.form{display:flex;flex-direction:column;gap:12px}
+.form label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--txt2)}
+input,select,textarea{border:1px solid var(--borda);background:#fff;border-radius:10px;padding:10px 12px;outline:none;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--verde3);box-shadow:0 0 0 3px rgba(31,122,69,.15)}
+.grade-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grade-form .inteiro{grid-column:1/-1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--borda);background:#fff;border-radius:10px;padding:9px 15px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;color:var(--txt)}
+.btn:hover{filter:brightness(.97)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.prim{background:linear-gradient(135deg,var(--verde2),var(--verde));border-color:transparent;color:#fff}
+.btn.ouro{background:linear-gradient(135deg,var(--dourado2),var(--dourado));border-color:transparent;color:#3b2c00}
+.btn.verm{background:linear-gradient(135deg,var(--vermelho2),var(--vermelho));border-color:transparent;color:#fff}
+.btn.perigo{color:var(--vermelho);border-color:#f3c6c6;background:#fff}
+.btn.peq{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.grande{padding:12px;font-size:15px;width:100%}
+.link{background:none;border:none;color:var(--verde2);font-weight:600;cursor:pointer;padding:0}
+.erro-box{background:var(--vermelho-claro);color:var(--vermelho);border:1px solid #f3c6c6;border-radius:10px;padding:9px 12px;font-size:13px}
+.ok-box{background:var(--verde-claro);color:var(--verde2);border:1px solid #bfe0c9;border-radius:10px;padding:9px 12px;font-size:13px}
+.dica{color:var(--txt2);font-size:12.5px;margin:0}
+
+/* ===== Layout ===== */
+#app{display:flex;min-height:100vh}
+.lateral{width:250px;flex:none;background:linear-gradient(180deg,#0b2e1b,#0f3d24 40%,#11462a);color:#e8f1ea;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 12px;overflow:auto}
+.lateral .marca{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:10px}
+.lateral .marca .ic{font-size:30px}
+.lateral .marca b{display:block;font-family:'Playfair Display',serif;font-size:18px;color:#fff;line-height:1.1}
+.lateral .marca small{color:var(--dourado2);font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.lateral nav{display:flex;flex-direction:column;gap:2px}
+.lateral nav button{display:flex;align-items:center;gap:10px;background:none;border:none;color:#cfe0d4;text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px}
+.lateral nav button:hover{background:rgba(255,255,255,.06)}
+.lateral nav button.ativo{background:linear-gradient(90deg,rgba(201,162,39,.28),rgba(201,162,39,.05));color:#fff;box-shadow:inset 3px 0 0 var(--dourado2)}
+.lateral nav .n{width:22px;text-align:center}
+.lateral nav .cont{margin-left:auto;background:var(--vermelho2);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px}
+.lateral .rodape{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#a9c2b0}
+.lateral .rodape b{color:#fff}
+.lateral .rodape a,.lateral .rodape button{color:var(--dourado2)}
+.principal{flex:1;min-width:0;display:flex;flex-direction:column}
+.topo{background:linear-gradient(120deg,#0f3d24,#166534 60%,#0f3d24);color:#fff;padding:18px 26px 16px;position:relative;overflow:hidden}
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:repeating-linear-gradient(90deg,var(--vermelho2) 0 16px,#fff 16px 22px,var(--dourado2) 22px 38px,#fff 38px 44px)}
+.topo .linha{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.topo h1{font-family:'Playfair Display',serif;font-size:24px}
+.topo .cam{font-size:12px;color:#bfe0c9}
+.topo .acoes{display:flex;gap:8px;flex-wrap:wrap}
+.topo .papel{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600}
+.topo .enfeite{position:absolute;right:16px;top:-6px;font-size:64px;opacity:.12}
+#conteudo{padding:22px 26px 60px;display:flex;flex-direction:column;gap:18px}
+.btn-menu{display:none}
+
+/* ===== Componentes ===== */
+.card{background:var(--branco);border:1px solid var(--borda);border-radius:var(--r);box-shadow:var(--sombra);padding:18px}
+.card h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--verde)}
+.entre{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.grade2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grade3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.kpi{background:#fff;border:1px solid var(--borda);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;box-shadow:var(--sombra)}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--verde3)}
+.kpi.v::before{background:var(--vermelho2)} .kpi.o::before{background:var(--dourado)} .kpi.a::before{background:#2563eb}
+.kpi span{display:block;font-size:12px;color:var(--txt2);font-weight:600}
+.kpi b{display:block;font-size:21px;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi small{color:var(--txt3);font-size:11.5px}
+.kpi.destaque{background:linear-gradient(135deg,#0f3d24,#166534);color:#fff;border:none}
+.kpi.destaque span,.kpi.destaque small{color:#cfe8d6}
+.kpi.destaque::before{background:var(--dourado2)}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filtros input,.filtros select{width:auto;min-width:150px;padding:8px 10px}
+.filtros input[type=search]{min-width:220px;flex:1}
+.tabela-wrap{overflow:auto;border:1px solid var(--borda);border-radius:12px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:#f5f1e6;color:var(--verde);text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:10px;white-space:nowrap;position:sticky;top:0}
+td{padding:9px 10px;border-top:1px solid #f0ebe0;vertical-align:middle}
+tr:hover td{background:#fdfbf6}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.acoes{white-space:nowrap;text-align:right}
+tfoot td{font-weight:700;background:#faf7ef}
+.vazio{text-align:center;color:var(--txt3);padding:26px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;border:1px solid transparent;white-space:nowrap}
+.b-verde{background:var(--verde-claro);color:var(--verde2);border-color:#bfe0c9}
+.b-verm{background:var(--vermelho-claro);color:var(--vermelho);border-color:#f3c6c6}
+.b-ouro{background:var(--dourado-claro);color:#8a6a00;border-color:#efdca0}
+.b-azul{background:#e8effd;color:#1d4ed8;border-color:#c7d7fb}
+.b-cinza{background:#f1f1ee;color:#5b625e;border-color:#e2e2dc}
+.b-roxo{background:#f1e9fd;color:#6d28d9;border-color:#dccbfa}
+.barra{height:8px;background:#efe9da;border-radius:99px;overflow:hidden}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--verde3),var(--verde2));border-radius:99px}
+.barra.verm i{background:linear-gradient(90deg,var(--vermelho2),var(--vermelho))}
+.alertas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.alerta{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#fff;border:1px solid var(--borda);border-left:4px solid var(--dourado);cursor:pointer}
+.alerta.grave{border-left-color:var(--vermelho2)}
+.alerta .ic{font-size:20px}
+.alerta b{display:block;font-size:13.5px}
+.alerta small{color:var(--txt2)}
+.abas{display:flex;gap:4px;background:#f1ece0;padding:4px;border-radius:12px;width:fit-content;flex-wrap:wrap}
+.abas button{border:none;background:none;padding:8px 14px;border-radius:9px;font-weight:600;cursor:pointer;color:var(--txt2)}
+.abas button.on{background:#fff;color:var(--verde);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.cat-cards div{background:#faf7ef;border:1px solid var(--borda);border-radius:10px;padding:8px 10px}
+.cat-cards small{display:block;color:var(--txt2);font-size:11.5px}
+.cat-cards b{font-variant-numeric:tabular-nums}
+.chart-box{position:relative;height:260px}
+
+/* Números da rifa */
+.numeros-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.num-tile{border:1px solid var(--borda);border-radius:12px;background:#fff;padding:8px;cursor:pointer;text-align:center;position:relative;min-height:70px;display:flex;flex-direction:column;justify-content:center;gap:2px;transition:transform .08s}
+.num-tile:hover{transform:translateY(-2px);box-shadow:var(--sombra)}
+.num-tile b{font-size:17px;font-variant-numeric:tabular-nums}
+.num-tile small{font-size:10.5px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num-tile.st-disponivel{background:#fff}
+.num-tile.st-reservado{background:#eef3fe;border-color:#c7d7fb}
+.num-tile.st-vendido{background:var(--dourado-claro);border-color:#efdca0}
+.num-tile.st-pendente{background:#fff4e5;border-color:#f6cf98}
+.num-tile.st-pago{background:var(--verde-claro);border-color:#9fd3b0}
+.num-tile.st-cancelado{background:#f1f1ee;color:#9aa19c;text-decoration:line-through}
+.legenda{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--txt2)}
+.legenda i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-2px;border:1px solid var(--borda)}
+.bloq-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px;flex-wrap:wrap}
+.bloq-cab b{color:var(--verde)}
+
+/* Prêmios */
+.premios{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.premio{background:#fff;border:1px solid var(--borda);border-radius:14px;overflow:hidden;box-shadow:var(--sombra);display:flex;flex-direction:column}
+.premio .foto{height:150px;background:linear-gradient(135deg,#f5efe0,#efe6cf);display:grid;place-items:center;font-size:46px;overflow:hidden}
+.premio .foto img{width:100%;height:100%;object-fit:cover}
+.premio .corpo{padding:12px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.premio .corpo b{font-size:15px}
+
+/* Modal */
+.modal-fundo{position:fixed;inset:0;background:rgba(10,30,18,.55);backdrop-filter:blur(2px);display:grid;place-items:center;z-index:100;padding:16px}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:640px;max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal.largo{max-width:900px}
+.modal .m-topo{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--borda);position:sticky;top:0;background:#fff;z-index:2}
+.modal .m-topo h2{font-size:18px;color:var(--verde);font-family:'Playfair Display',serif}
+.modal .m-corpo{padding:18px 20px}
+.modal .m-rodape{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--borda);position:sticky;bottom:0;background:#fff;flex-wrap:wrap}
+.modal .x{background:none;border:none;font-size:26px;cursor:pointer;color:var(--txt3);line-height:1}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--verde);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:90vw}
+.toast.erro{background:var(--vermelho)}
+.secao-titulo{font-size:13px;font-weight:700;color:var(--verde);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
+.relatorio-bloco{border:1px solid var(--borda);border-radius:12px;overflow:hidden}
+.relatorio-bloco .cab{background:var(--verde);color:#fff;padding:9px 14px;font-weight:700;font-size:13px;letter-spacing:.04em}
+.relatorio-bloco .cab.v{background:var(--vermelho)}
+.relatorio-bloco .cab.o{background:#8a6a00}
+.relatorio-bloco .lin{display:flex;justify-content:space-between;padding:8px 14px;border-top:1px solid #f0ebe0}
+.relatorio-bloco .lin.total{background:#faf7ef;font-weight:800}
+
+@media (max-width:1100px){.grade3{grid-template-columns:1fr 1fr}}
+@media (max-width:860px){
+  .lateral{position:fixed;left:0;top:0;z-index:90;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.4)}
+  .lateral.aberta{transform:none}
+  .btn-menu{display:inline-flex}
+  .grade2,.grade3{grid-template-columns:1fr}
+  #conteudo{padding:16px 12px 60px}
+  .topo{padding:14px 14px 14px}
+  .topo h1{font-size:20px}
+  .grade-form{grid-template-columns:1fr}
+  .filtros input,.filtros select{min-width:0;flex:1 1 140px}
+  .modal-fundo{padding:0;align-items:end}
+  .modal{border-radius:18px 18px 0 0;max-height:94vh}
+  .kpi b{font-size:18px}
+}
+@media print{.lateral,.topo .acoes,.btn,.filtros{display:none!important}#conteudo{padding:0}}
+</style>
+</head>
+<body>
+<div class="flocos" id="flocos"></div>
+
+<div id="tela-carregando"><div style="color:#fff;text-align:center"><div style="font-size:48px">🎄</div><p>Carregando…</p></div></div>
+
+<div id="tela-login" class="oculto">
+  <div class="login-card">
+    <div class="arvore">🎄</div>
+    <h1 class="titulo-natal">Carretinha de Natal</h1>
+    <p class="sub">Conecta Gestão · use seu login do sistema</p>
+    <form class="form" id="form-login">
+      <label>E-mail<input type="email" id="login-email" required autocomplete="email"></label>
+      <label>Senha<input type="password" id="login-senha" required autocomplete="current-password"></label>
+      <div id="login-erro" class="erro-box oculto"></div>
+      <button class="btn prim grande" id="login-btn">Entrar</button>
+    </form>
+    <p class="dica" style="text-align:center;margin-top:14px"><a href="conecta-gestao-painel-admin.html">← Voltar ao Painel Administrativo</a></p>
+  </div>
+</div>
+
+<div id="tela-sem-acesso" class="oculto">
+  <div class="login-card" style="text-align:center">
+    <div class="arvore">🔒</div>
+    <h1 class="titulo-natal">Acesso não liberado</h1>
+    <p class="sub" id="sem-acesso-msg">Seu usuário ainda não tem acesso ao módulo Carretinha de Natal.</p>
+    <p class="dica">Peça a um Administrador (Admin Master, Prefeito ou Chefe de Gabinete) para liberar seu acesso em <b>Carretinha de Natal → Configurações → Acessos</b>.</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+      <a class="btn" href="conecta-gestao-painel-admin.html">Voltar ao Painel</a>
+      <button class="btn perigo" onclick="sair()">Sair</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="oculto">
+  <aside class="lateral" id="lateral">
+    <div class="marca"><span class="ic">🎄</span><div><b>Carretinha de Natal</b><small id="marca-ano">Conecta Gestão</small></div></div>
+    <nav id="menu"></nav>
+    <div class="rodape">
+      <div>Logado como <b id="usuario-email"></b></div>
+      <div style="margin:4px 0 8px">Papel: <b id="usuario-papel"></b></div>
+      <a href="conecta-gestao-painel-admin.html">← Painel Administrativo</a> ·
+      <button class="link" style="color:var(--dourado2)" onclick="sair()">Sair</button>
+    </div>
+  </aside>
+  <div class="principal">
+    <header class="topo">
+      <span class="enfeite">🎁</span>
+      <div class="linha">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn peq btn-menu" onclick="document.getElementById('lateral').classList.toggle('aberta')">☰</button>
+          <div><div class="cam">Conecta Gestão / Carretinha de Natal</div><h1 id="titulo-secao">Dashboard</h1></div>
+        </div>
+        <div class="acoes"><span class="papel" id="topo-sync">●</span><button class="btn peq" onclick="recarregar(true)">↻ Atualizar</button></div>
+      </div>
+    </header>
+    <main id="conteudo"></main>
+  </div>
+</div>
+
+<div id="modais"></div>
+<script src="carretinha-natal.js"></script>
+</body>
+</html>
