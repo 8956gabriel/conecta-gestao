@@ -959,7 +959,7 @@ function formBloquinho(b) {
     } : null,
   });
 }
-window.formBloquinho = (id) => formBloquinho(S.bloqPorId[id]);
+window.abrirBloquinho = (id) => formBloquinho(S.bloqPorId[id]);
 function gerarBloquinhos() {
   abrirForm({
     titulo: 'Gerar bloquinhos',
@@ -997,7 +997,7 @@ function listaBloquinhos() {
   const linhas = lista.map((b) => {
     const r = resumoBloq(b);
     const atrasado = ['entregue', 'em_andamento'].includes(b.situacao) && b.data_devolucao && b.data_devolucao < hj;
-    return `<tr style="cursor:pointer" onclick="formBloquinho('${b.id}')">
+    return `<tr style="cursor:pointer" onclick="abrirBloquinho('${b.id}')">
       <td><b>${pad3(b.numero)}</b></td><td>${esc(b.responsavel_nome || '—')}</td><td>${esc(b.telefone || '')}</td><td>${dataBR(b.data_retirada)}</td>
       <td>${dataBR(b.data_devolucao)}${atrasado ? ' <span class="badge b-verm">vencida</span>' : ''}</td><td><span class="badge ${ST_BLOQ_COR[b.situacao]}">${ST_BLOQ[b.situacao]}</span></td>
       <td class="num">${r.vendidos}/${r.total}</td><td class="num">${r.pagos}</td><td class="num">${brl(r.recebido)}</td><td class="num">${r.aberto > 0 ? `<b style="color:var(--vermelho)">${brl(r.aberto)}</b>` : '—'}</td>
