@@ -6033,35 +6033,5 @@ async function importarPdf(input, tipo){
 })();
 
 </script>
-
-<!-- ===== Módulo Carretinha de Natal: botão exclusivo no menu principal ===== -->
-<style>
-.cg-natal-btn{display:flex;align-items:center;gap:10px;margin:4px 8px 12px;padding:12px 14px;border-radius:12px;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.04em;color:#fff!important;
-  background:linear-gradient(135deg,#b91c1c 0%,#166534 100%);box-shadow:0 6px 18px rgba(22,101,52,.35),inset 0 0 0 1px rgba(230,196,92,.55);position:relative;overflow:hidden}
-.cg-natal-btn::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:repeating-linear-gradient(90deg,#e6c45c 0 10px,#fff 10px 14px)}
-.cg-natal-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.cg-natal-btn .ic{font-size:20px}
-.cg-natal-btn small{display:block;font-weight:500;font-size:10.5px;letter-spacing:0;opacity:.85}
-</style>
-<script>
-(function () {
-  function garantirBotaoNatal() {
-    var nav = document.getElementById('nav-container');
-    if (!nav || !nav.children.length || nav.querySelector('.cg-natal-btn')) return;
-    var a = document.createElement('a');
-    a.className = 'cg-natal-btn';
-    a.href = 'conecta-gestao-carretinha-natal.html';
-    a.innerHTML = '<span class="ic">🎄</span><span>CARRETINHA DE NATAL<small>Rifas, despesas e prestação de contas</small></span>';
-    nav.insertBefore(a, nav.firstChild);
-  }
-  function iniciar() {
-    var nav = document.getElementById('nav-container');
-    if (!nav) return;
-    new MutationObserver(function () { setTimeout(garantirBotaoNatal, 0); }).observe(nav, { childList: true });
-    garantirBotaoNatal();
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
-})();
-</script>
 </body>
 </html>
