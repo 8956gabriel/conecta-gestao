@@ -10,6 +10,7 @@ var DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira'
 var DIAS_C=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 var dados=null, logoImg=null;
+var STATUS={normal:['NORMAL','#16A34A'],atencao:['ATENÇÃO','#CA8A04'],alerta:['ALERTA','#EA580C'],emergencia:['EMERGÊNCIA','#DC2626']};
 
 function tempo(c){
   if(c===0)return['☀️','Céu limpo'];
@@ -60,6 +61,12 @@ function desenhar(){
   var y=60*S;
   if(logoImg&&logoImg.complete&&logoImg.naturalWidth){var lh=150;ctx.drawImage(logoImg,60,y,lh*logoImg.naturalWidth/logoImg.naturalHeight,lh);}
   txt(ctx,'DEFESA CIVIL',240,y+68,46,'#fff',800);txt(ctx,'IVATUBA - PR',240,y+120,40,LARANJA,800);
+  var stv=(document.getElementById('arte-status-mun')||{}).value;
+  if(stv&&STATUS[stv]){var sl=STATUS[stv][0],sc=STATUS[stv][1];ctx.font='800 34px '+FONTE;var pw=ctx.measureText(sl).width+90,px=W-60-pw,py=y+52;
+    txt(ctx,'STATUS DO MUNICÍPIO',W-60,y+36,20,'#CFE0F5',700,'right');
+    rr(ctx,px,py,pw,70,35);ctx.fillStyle=sc;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.stroke();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px+38,py+35,11,0,7);ctx.fill();
+    txt(ctx,sl,px+60,py+47,34,'#fff',800);}
   y+=210*S;
   rr(ctx,60,y,W-120,96,48);ctx.fillStyle=LARANJA;ctx.fill();
   txt(ctx,(document.getElementById('arte-titulo').value||'PREVISÃO DO TEMPO').toUpperCase(),W/2,y+64,46,'#fff',800,'center');
@@ -134,7 +141,12 @@ function compartilhar(){var cv=document.getElementById('arte-canvas');cv.toBlob(
 /* ---------- Aba no painel ---------- */
 var grp=NAV_GROUPS.find(function(g){return g.label==='Comunicação';})||NAV_GROUPS[0];
 grp.items.push(['arte_previsao','🎨 Arte da Previsão']);
-LOADERS.arte_previsao=function(){if(!dados)carregar();else desenhar();};
+async function statusAtual(){
+  try{var rows=await sbGet('dc_config','select=status_municipio&tenant_id=eq.'+tid()+'&limit=1');
+    var el=document.getElementById('arte-status-mun');if(el&&!el.dataset.mexeu)el.value=(rows[0]&&rows[0].status_municipio)||'normal';}catch(e){}
+  desenhar();
+}
+LOADERS.arte_previsao=function(){statusAtual();if(!dados)carregar();else desenhar();};
 
 var _bv=buildViews;
 buildViews=function(){
@@ -147,6 +159,8 @@ buildViews=function(){
     '<div class="panel">'+
      '<div class="field"><label>Período</label><select id="arte-periodo"><option value="hoje">Hoje</option><option value="amanha">Amanhã</option><option value="3">Próximos 3 dias</option><option value="5">Próximos 5 dias</option></select></div>'+
      '<div class="field"><label>Formato</label><select id="arte-formato"><option value="feed">Feed (1080×1350)</option><option value="story">Story / Status (1080×1920)</option></select></div>'+
+     '<div class="field"><label>Status do município na arte</label><select id="arte-status-mun"><option value="">Não mostrar</option><option value="normal">🟢 Normal</option><option value="atencao">🟡 Atenção</option><option value="alerta">🟠 Alerta</option><option value="emergencia">🔴 Emergência</option></select>'+
+     '<div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Vem com o status atual do município. Pode trocar só para a arte.</div></div>'+
      '<div class="field"><label>Título da arte</label><input id="arte-titulo" maxlength="32" value="Previsão do Tempo"></div>'+
      '<div class="field"><label>Recado à população</label><textarea id="arte-recado" rows="4" maxlength="220"></textarea>'+
      '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);">Preenchido automaticamente conforme a previsão. Pode editar.</span><button type="button" class="btn-ghost" id="arte-recado-auto" style="padding:4px 10px;">↺ Automático</button></div></div>'+
@@ -159,6 +173,7 @@ buildViews=function(){
   document.getElementById('arte-compartilhar').onclick=compartilhar;
   document.getElementById('arte-periodo').onchange=autoRecado;
   document.getElementById('arte-formato').onchange=desenhar;
+  var sm=document.getElementById('arte-status-mun');sm.onchange=function(){sm.dataset.mexeu='1';desenhar();};
   document.getElementById('arte-titulo').oninput=desenhar;
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
