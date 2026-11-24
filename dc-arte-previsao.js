@@ -1,0 +1,169 @@
+/* DEFESA CIVIL IVATUBA — PAINEL ADMIN: aba "Arte da Previsão" (módulo adicional, não altera nada existente).
+   Puxa a previsão de Ivatuba (Open-Meteo, grátis e sem chave) e monta a arte pronta para postar
+   (feed quadrado ou story), com o logo da Defesa Civil e um recado de orientação editável.
+   Uso: carregar logo depois de dc-admin-extras.js com a tag script src="/dc-arte-previsao.js".      */
+(function(){
+'use strict';
+var LAT=-23.62, LON=-52.22, LOGO='/assets/logos/defesa-civil-ivatuba.png';
+var AZUL1='#0B2F5E', AZUL2='#1E5FAF', LARANJA='#F28C28', FONTE="'Inter',-apple-system,'Segoe UI',Arial,sans-serif";
+var DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+var DIAS_C=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+var dados=null, logoImg=null;
+
+function tempo(c){
+  if(c===0)return['☀️','Céu limpo'];
+  if(c===1)return['🌤️','Poucas nuvens'];
+  if(c===2)return['⛅','Parcialmente nublado'];
+  if(c===3)return['☁️','Nublado'];
+  if(c===45||c===48)return['🌫️','Neblina'];
+  if(c>=51&&c<=57)return['🌦️','Garoa'];
+  if(c===61||c===80)return['🌦️','Chuva fraca'];
+  if(c===63||c===81)return['🌧️','Chuva moderada'];
+  if(c===65||c===82||c===66||c===67)return['🌧️','Chuva forte'];
+  if(c>=71&&c<=77||c===85||c===86)return['🌨️','Frio extremo'];
+  if(c===95)return['⛈️','Tempestade'];
+  if(c===96||c===99)return['⛈️','Tempestade com granizo'];
+  return['🌡️','Tempo variável'];
+}
+function dataLonga(iso){var d=new Date(iso+'T12:00:00');return DIAS[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()];}
+function diaCurto(iso){var d=new Date(iso+'T12:00:00');return DIAS_C[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function dia(i){var D=dados.daily;return{data:D.time[i],code:D.weather_code[i],max:Math.round(D.temperature_2m_max[i]),min:Math.round(D.temperature_2m_min[i]),
+  prob:Math.round(D.precipitation_probability_max[i]||0),mm:String(Math.round((D.precipitation_sum[i]||0)*10)/10).replace('.',','),vento:Math.round(D.wind_speed_10m_max[i]||0),uv:Math.round(D.uv_index_max[i]||0)};}
+
+function recadoAuto(ds){
+  var pior=function(f){return ds.reduce(function(a,d){return Math.max(a,f(d));},-99);};
+  if(pior(function(d){return d.code;})>=95||pior(function(d){return d.vento;})>=60)return'⚠️ Risco de temporal e ventos fortes. Evite áreas abertas, não se abrigue sob árvores e fique longe da rede elétrica.';
+  if(pior(function(d){return d.prob;})>=70||pior(function(d){return d.code>=63&&d.code<=67||d.code>=81&&d.code<=82?1:0;})===1)return'🌧️ Chuva forte prevista. Evite áreas alagadas e nunca atravesse ruas ou pontes com água.';
+  if(pior(function(d){return d.max;})>=34)return'🥵 Calor intenso: beba bastante água, evite o sol entre 10h e 16h e cuide de crianças, idosos e animais.';
+  if(ds.reduce(function(a,d){return Math.min(a,d.min);},99)<=8)return'🥶 Frio intenso: agasalhe-se e proteja crianças, idosos, pessoas em situação de rua e animais.';
+  if(pior(function(d){return d.uv;})>=8)return'☀️ Índice UV muito alto: use protetor solar, chapéu e evite o sol do meio-dia.';
+  return'😊 Tempo estável. Em caso de emergência, ligue para a Defesa Civil: 199.';
+}
+
+/* ---------- Desenho ---------- */
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function quebra(ctx,txt,maxW){var ps=String(txt).split(/\s+/),ls=[],l='';ps.forEach(function(p){var t=l?l+' '+p:p;if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=p;}else l=t;});if(l)ls.push(l);return ls;}
+function txt(ctx,t,x,y,size,cor,peso,alin){ctx.font=(peso||700)+' '+size+'px '+FONTE;ctx.fillStyle=cor||'#fff';ctx.textAlign=alin||'left';ctx.textBaseline='alphabetic';ctx.fillText(t,x,y);}
+function emoji(ctx,e,x,y,size){ctx.font=size+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.fillText(e,x,y);}
+
+function desenhar(){
+  var cv=document.getElementById('arte-canvas'); if(!cv||!dados)return;
+  var formato=document.getElementById('arte-formato').value, periodo=document.getElementById('arte-periodo').value;
+  var W=1080,H=formato==='story'?1920:1350; cv.width=W;cv.height=H;
+  var ctx=cv.getContext('2d'), S=formato==='story'?1.6:1;
+  var g=ctx.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,AZUL1);g.addColorStop(1,AZUL2);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=.07;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(W-80,180,320,0,7);ctx.fill();ctx.beginPath();ctx.arc(60,H-120,260,0,7);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle=LARANJA;ctx.fillRect(0,0,W,14);
+
+  // Cabeçalho
+  var y=60*S;
+  if(logoImg&&logoImg.complete&&logoImg.naturalWidth){var lh=150;ctx.drawImage(logoImg,60,y,lh*logoImg.naturalWidth/logoImg.naturalHeight,lh);}
+  txt(ctx,'DEFESA CIVIL',240,y+68,46,'#fff',800);txt(ctx,'IVATUBA - PR',240,y+120,40,LARANJA,800);
+  y+=210*S;
+  rr(ctx,60,y,W-120,96,48);ctx.fillStyle=LARANJA;ctx.fill();
+  txt(ctx,(document.getElementById('arte-titulo').value||'PREVISÃO DO TEMPO').toUpperCase(),W/2,y+64,46,'#fff',800,'center');
+  y+=140*S;
+
+  var ini=periodo==='amanha'?1:0, n=periodo==='3'?3:periodo==='5'?5:1, ds=[];
+  for(var i=0;i<n;i++)ds.push(dia(ini+i));
+
+  if(n===1){
+    var d=ds[0],t=tempo(d.code);
+    txt(ctx,(periodo==='amanha'?'AMANHÃ · ':'HOJE · ')+dataLonga(d.data).toUpperCase(),W/2,y,34,'#CFE0F5',700,'center');
+    y+=140*S;emoji(ctx,t[0],W/2-210,y,180);
+    txt(ctx,d.max+'°',W/2+150,y+20,170,'#fff',800,'center');
+    txt(ctx,'mín. '+d.min+'°',W/2+150,y+85,40,'#CFE0F5',700,'center');
+    y+=160*S;txt(ctx,t[1],W/2,y,56,'#fff',800,'center');
+    y+=45*S;
+    var cards=[['💧','Chuva',d.prob+'%'],['🌧️','Volume',d.mm+' mm'],['💨','Vento',d.vento+' km/h'],['🔆','Índice UV',String(d.uv)]];
+    var cw=(W-120-3*24)/4,ch=180;
+    cards.forEach(function(c,k){var x=60+k*(cw+24);rr(ctx,x,y,cw,ch,26);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fill();
+      emoji(ctx,c[0],x+cw/2,y+48,48);txt(ctx,c[2],x+cw/2,y+118,42,'#fff',800,'center');txt(ctx,c[1],x+cw/2,y+158,26,'#CFE0F5',600,'center');});
+    y+=ch+36*S;
+  } else {
+    txt(ctx,'IVATUBA · PRÓXIMOS '+n+' DIAS',W/2,y,34,'#CFE0F5',700,'center');y+=40*S;
+    var gap=18,cw2=(W-120-(n-1)*gap)/n,base=n===3?520:470,ch2=formato==='story'?base*1.45:base,K=ch2/base;
+    ds.forEach(function(d,k){var x=60+k*(cw2+gap),t=tempo(d.code),cx=x+cw2/2,f=n===3?1:.82;
+      rr(ctx,x,y,cw2,ch2,28);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fill();
+      txt(ctx,diaCurto(d.data),cx,y+62,36*f,'#fff',800,'center');
+      emoji(ctx,t[0],cx,y+165*K,110*f);
+      txt(ctx,d.max+'°',cx,y+300*(n===3?1:.95)*K,84*f,'#fff',800,'center');
+      txt(ctx,'mín. '+d.min+'°',cx,y+(300*(n===3?1:.95)*K+50),32*f,'#CFE0F5',700,'center');
+      txt(ctx,'💧 '+d.prob+'%',cx,y+(300*(n===3?1:.95)*K+120),34*f,'#fff',700,'center');
+      ctx.font='600 '+Math.round(24*f)+'px '+FONTE;var l=quebra(ctx,t[1],cw2-24);txt(ctx,l[0]+(l.length>1?'…':''),cx,y+ch2-26,24*f,'#CFE0F5',600,'center');});
+    y+=ch2+40*S;
+  }
+
+  // Recado
+  var rec=(document.getElementById('arte-recado').value||'').trim();
+  if(rec){ctx.font='700 34px '+FONTE;var ls=quebra(ctx,rec,W-200).slice(0,4),rh=46+ls.length*46;
+    rr(ctx,60,y,W-120,rh,30);ctx.fillStyle='#fff';ctx.fill();ctx.fillStyle=LARANJA;rr(ctx,60,y,14,rh,7);ctx.fill();
+    ls.forEach(function(l,k){txt(ctx,l,100,y+56+k*46,34,AZUL1,700);});}
+
+  // Rodapé
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,H-110,W,110);
+  emoji(ctx,'📞',90,H-55,46);txt(ctx,'Emergência: 199',130,H-40,44,'#fff',800);
+  txt(ctx,'Fonte: Open-Meteo · '+new Date().toLocaleDateString('pt-BR'),W-60,H-44,24,'#CFE0F5',500,'right');
+}
+
+/* ---------- Dados ---------- */
+async function carregar(){
+  var st=document.getElementById('arte-status');st.textContent='Buscando a previsão de Ivatuba...';
+  try{
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,uv_index_max&forecast_days=7&timezone=America/Sao_Paulo';
+    var r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);dados=await r.json();
+    st.textContent='Previsão atualizada às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.';
+    autoRecado();
+  }catch(e){st.textContent='Não foi possível buscar a previsão agora ('+e.message+'). Tente "Atualizar".';}
+}
+function autoRecado(){
+  if(!dados)return;var p=document.getElementById('arte-periodo').value,ini=p==='amanha'?1:0,n=p==='3'?3:p==='5'?5:1,ds=[];
+  for(var i=0;i<n;i++)ds.push(dia(ini+i));
+  var el=document.getElementById('arte-recado');if(!el.dataset.editado)el.value=recadoAuto(ds);
+  desenhar();
+}
+function nomeArquivo(){return 'previsao-ivatuba-'+document.getElementById('arte-periodo').value+'-'+new Date().toISOString().slice(0,10)+'.png';}
+function baixar(){var cv=document.getElementById('arte-canvas');cv.toBlob(function(b){var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nomeArquivo();a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},2000);},'image/png');}
+function compartilhar(){var cv=document.getElementById('arte-canvas');cv.toBlob(async function(b){
+  var f=new File([b],nomeArquivo(),{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Previsão do tempo — Defesa Civil Ivatuba'});}catch(e){}}
+  else{alert('Este navegador não compartilha imagens direto. A arte será baixada; depois é só postar no WhatsApp/Instagram.');baixar();}
+},'image/png');}
+
+/* ---------- Aba no painel ---------- */
+var grp=NAV_GROUPS.find(function(g){return g.label==='Comunicação';})||NAV_GROUPS[0];
+grp.items.push(['arte_previsao','🎨 Arte da Previsão']);
+LOADERS.arte_previsao=function(){if(!dados)carregar();else desenhar();};
+
+var _bv=buildViews;
+buildViews=function(){
+  _bv.apply(this,arguments);
+  if(document.getElementById('view-arte_previsao'))return;
+  var sec=document.createElement('section');sec.className='view';sec.id='view-arte_previsao';
+  sec.innerHTML='<div class="topbar"><div><h1>🎨 Arte da Previsão do Tempo</h1><div class="sub">Gera a arte pronta para postar no WhatsApp, Instagram e Facebook, com a previsão de Ivatuba</div></div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
+   '<div style="display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:20px;align-items:start;" class="arte-grid">'+
+    '<div class="panel">'+
+     '<div class="field"><label>Período</label><select id="arte-periodo"><option value="hoje">Hoje</option><option value="amanha">Amanhã</option><option value="3">Próximos 3 dias</option><option value="5">Próximos 5 dias</option></select></div>'+
+     '<div class="field"><label>Formato</label><select id="arte-formato"><option value="feed">Feed (1080×1350)</option><option value="story">Story / Status (1080×1920)</option></select></div>'+
+     '<div class="field"><label>Título da arte</label><input id="arte-titulo" maxlength="32" value="Previsão do Tempo"></div>'+
+     '<div class="field"><label>Recado à população</label><textarea id="arte-recado" rows="4" maxlength="220"></textarea>'+
+     '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);">Preenchido automaticamente conforme a previsão. Pode editar.</span><button type="button" class="btn-ghost" id="arte-recado-auto" style="padding:4px 10px;">↺ Automático</button></div></div>'+
+     '<p id="arte-status" style="font-size:12.5px;color:var(--ink-soft);margin:0;"></p></div>'+
+    '<div class="panel" style="text-align:center;"><canvas id="arte-canvas" style="width:100%;max-width:460px;height:auto;border-radius:14px;box-shadow:0 8px 30px rgba(15,23,42,.18);"></canvas></div>'+
+   '</div><style>@media(max-width:820px){.arte-grid{grid-template-columns:1fr!important}}</style>';
+  var ultima=document.querySelectorAll('section.view');var pai=ultima.length?ultima[ultima.length-1].parentNode:document.body;pai.appendChild(sec);
+  document.getElementById('arte-atualizar').onclick=carregar;
+  document.getElementById('arte-baixar').onclick=baixar;
+  document.getElementById('arte-compartilhar').onclick=compartilhar;
+  document.getElementById('arte-periodo').onchange=autoRecado;
+  document.getElementById('arte-formato').onchange=desenhar;
+  document.getElementById('arte-titulo').oninput=desenhar;
+  var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
+  document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
+};
+
+logoImg=new Image();logoImg.onload=function(){desenhar();};logoImg.src=LOGO;
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){desenhar();});
+})();
