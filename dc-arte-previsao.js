@@ -150,7 +150,7 @@ function linhas(ctx,t,size,peso,maxW,max){ctx.font=peso+' '+size+'px '+FONTE;var
 function corpoAviso(ctx,y,W,H,S,tipo,formato){
   if(tipo==='comunicado')return corpoComunicado(ctx,y,W,H,S,formato);
   var a=tipo==='alerta'?alertaSel():null;
-  var lv=tipo==='alerta'?((a&&a.nivel)||'alerta'):((document.getElementById('arte-status-mun')||{}).value||cfgMun.status_municipio||'normal');
+  var lv=tipo==='alerta'?((a&&a.nivel)||'alerta'):((OVR&&OVR.lv)||(OVR?'':(document.getElementById('arte-status-mun')||{}).value)||cfgMun.status_municipio||'normal');
   if(!STATUS[lv])lv='alerta';
   var cor=STATUS[lv][1],story=formato==='story',F=story?1.2:1,BH=story?250:210;
   rr(ctx,60,y,W-120,BH,34);ctx.fillStyle=cor;ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.stroke();
@@ -160,7 +160,7 @@ function corpoAviso(ctx,y,W,H,S,tipo,formato){
   txt(ctx,STATUS[lv][0],290,y+BH/2+60*F,(lv==='emergencia'?84:96)*F,'#fff',800);
   y+=BH+(story?110:85);
   var titulo=tipo==='alerta'?(a?a.titulo:'Escolha um alerta na lista'):STATUS_FRASE[lv];
-  var desc=tipo==='alerta'?(a&&a.descricao)||'':(cfgMun.status_mensagem||'');
+  var desc=tipo==='alerta'?(a&&a.descricao)||'':((OVR&&OVR.msg)||cfgMun.status_mensagem||'');
   var lt=linhas(ctx,titulo,54*F,800,W-120,2),lh=64*F;
   lt.forEach(function(l,k){txt(ctx,l,60,y+k*lh,54*F,'#fff',800);});y+=(lt.length-1)*lh;
   if(desc){y+=58*F;var dl=46*F,ld=linhas(ctx,desc,34*F,500,W-120,story?6:(a?2:3));ld.forEach(function(l,k){txt(ctx,l,60,y+k*dl,34*F,'#DCE8F7',500);});y+=(ld.length-1)*dl;}
@@ -196,7 +196,8 @@ async function subirArte(blob,nome){
 function blobDe(cv){return new Promise(function(ok){cv.toBlob(ok,'image/png');});}
 var baseCarregada=null;
 function garantirBase(){if(!baseCarregada)baseCarregada=statusAtual();return baseCarregada;}
-async function publicarArte(tipo,reg,canvasPronto){
+async function publicarArte(tipo,reg,canvasPronto){INTERNO++;try{return await publicarArte_(tipo,reg,canvasPronto);}finally{INTERNO--;}}
+async function publicarArte_(tipo,reg,canvasPronto){
   if(!reg||!reg.id)throw new Error('Registro não encontrado');
   var cv=canvasPronto;
   if(!cv){await garantirBase();if(document.fonts&&document.fonts.ready)await document.fonts.ready;
@@ -270,7 +271,8 @@ function abrirDivulgar(){
   document.getElementById('dv-ok').onclick=function(){divulgar(inf,{com:dv('dv-com'),ale:dv('dv-ale'),wa:dv('dv-wa'),canal:dv('dv-canal'),sms:dv('dv-sms')});};
   function dv(id){return document.getElementById(id).checked;}
 }
-async function divulgar(inf,op){
+async function divulgar(inf,op){INTERNO++;try{return await divulgar_(inf,op);}finally{INTERNO--;}}
+async function divulgar_(inf,op){
   var b=document.getElementById('dv-ok'),res=document.getElementById('dv-res'),feito=[];
   if(!op.com&&!op.ale&&!op.wa&&!op.canal&&!op.sms){res.textContent='Marque pelo menos uma opção.';return;}
   if(inf.t==='previsao'&&!dados){res.textContent='A previsão ainda não carregou. Clique em Atualizar previsão.';return;}
@@ -427,6 +429,7 @@ buildViews=function(){
      '<div class="field"><label>Título da arte</label><input id="arte-titulo" maxlength="32" value="Previsão do Tempo"></div>'+
      '<div class="field"><label>Recado à população</label><textarea id="arte-recado" rows="4" maxlength="220"></textarea>'+
      '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);">Preenchido automaticamente conforme a previsão. Pode editar.</span><button type="button" class="btn-ghost" id="arte-recado-auto" style="padding:4px 10px;">↺ Automático</button></div></div>'+
+     '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 12px;cursor:pointer;"><input type="checkbox" id="arte-auto" style="width:auto;margin-top:2px;"> <span>🤖 Divulgar automaticamente no site quando o status mudar ou entrar um alerta novo</span></label>'+
      '<p id="arte-status" style="font-size:12.5px;color:var(--ink-soft);margin:0;"></p></div>'+
     '<div class="panel" style="text-align:center;"><canvas id="arte-canvas" style="width:100%;max-width:460px;height:auto;border-radius:14px;box-shadow:0 8px 30px rgba(15,23,42,.18);"></canvas></div>'+
    '</div><style>@media(max-width:820px){.arte-grid{grid-template-columns:1fr!important}}</style>';
@@ -449,6 +452,7 @@ buildViews=function(){
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
   trocarTipo();
+  var au=document.getElementById('arte-auto');au.checked=autoLigado();au.onchange=function(){try{localStorage.setItem('dc_auto_divulgar',au.checked?'1':'0');}catch(e){}};
 };
 
 /* Botão "🎨 Arte" em cada alerta climático */
@@ -476,7 +480,7 @@ submitCrud=async function(k){
   if(k!=='alertas_dc'&&k!=='comunicados_dc')return _sc2.apply(this,arguments);
   var auto=document.getElementById('arte-auto-'+k),gerar=!auto||auto.checked,ed=editingId[k],tipo=k==='alertas_dc'?'alerta':'comunicado';
   var antes=new Date(Date.now()-60000).toISOString();
-  var r=await _sc2.apply(this,arguments);
+  SALVANDO_FORM++;var r;try{r=await _sc2.apply(this,arguments);}finally{SALVANDO_FORM--;}
   if(!gerar)return r;
   try{
     var rows=ed?await sbGet(TABELA[tipo],'select=*&id=eq.'+ed):await sbGet(TABELA[tipo],'select=*&criado_em=gte.'+antes+'&order=criado_em.desc&limit=1');
@@ -486,6 +490,89 @@ submitCrud=async function(k){
   }catch(e){console.warn('Arte automática:',e);alert('O registro foi salvo, mas a arte não pôde ser gerada: '+e.message+'\nUse o botão "🖼️ Publicar arte" na lista.');}
   return r;
 };
+
+/* ================= DIVULGAÇÃO AUTOMÁTICA =================
+   Quando o status do município muda (manual ou pela previsão) ou entra um alerta novo
+   (cadastro, SMS ou sincronização oficial), gera a arte e publica no site sozinho.
+   WhatsApp e Canal Oficial não aceitam postagem automática: aparece um aviso com botões de 1 clique. */
+var SALVANDO_FORM=0, INTERNO=0;
+function autoLigado(){try{return localStorage.getItem('dc_auto_divulgar')!=='0';}catch(e){return true;}}
+async function interno(fn){INTERNO++;try{return await fn();}finally{INTERNO--;}}
+function avisoAuto(titulo,msg,url){
+  var old=document.getElementById('dc-aviso-auto');if(old)old.remove();
+  var d=document.createElement('div');d.id='dc-aviso-auto';
+  d.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:340px;max-width:calc(100vw - 32px);padding:14px;border-top:5px solid #F28C28;font-size:13px;';
+  d.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;"><strong>🤖 '+String(titulo).replace(/[<>&]/g,'')+'</strong><button id="dca-x" style="border:none;background:none;font-size:16px;cursor:pointer;">✕</button></div>'+
+    '<div style="color:#475569;margin:6px 0 10px;">Arte gerada e publicada no site. Toque para divulgar também:</div>'+
+    (url?'<a href="'+url+'" target="_blank" rel="noopener"><img src="'+url+'" style="width:100%;border-radius:8px;margin-bottom:8px;"></a>':'')+
+    '<div style="display:flex;flex-direction:column;gap:6px;"><button id="dca-canal" style="padding:9px;border:none;border-radius:9px;background:#128C7E;color:#fff;font-weight:700;cursor:pointer;">📢 Postar no Canal Oficial</button>'+
+    '<button id="dca-wa" style="padding:9px;border:none;border-radius:9px;background:#25D366;color:#fff;font-weight:700;cursor:pointer;">📲 Enviar para pessoas cadastradas</button></div>';
+  document.body.appendChild(d);
+  document.getElementById('dca-x').onclick=function(){d.remove();};
+  document.getElementById('dca-canal').onclick=async function(){var link=CANAL_PADRAO;try{var g=await sbGet('dc_grupo_oficial','select=link_whatsapp&order=atualizado_em.desc&limit=1');if(g[0]&&/^https:\/\//.test(g[0].link_whatsapp||''))link=g[0].link_whatsapp;}catch(e){}
+    var blob=url?await (await fetch(url)).blob():null;try{await navigator.clipboard.writeText(msg);}catch(e){}
+    if(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='arte-defesa-civil.png';a.click();}
+    window.open(link,'_blank','noopener');alert('A arte foi baixada e a mensagem copiada. No Canal Oficial, anexe a imagem e cole a mensagem (Ctrl+V).');};
+  document.getElementById('dca-wa').onclick=async function(){try{var ps=await sbGet('dc_pessoas_alerta','select=id,nome,telefone,whatsapp,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo');
+    if(!ps.length){alert('Nenhuma pessoa cadastrada.');return;}d.remove();abrirNotificarWhatsApp(null,msg,ps);}catch(e){alert('Erro: '+e.message);}};
+}
+function msgDe(cab,titulo,texto,url){var pagina=location.origin+'/conecta-gestao-ivatuba-protegida.html';
+  return cab+'\n\n*'+titulo+'*'+(texto?'\n\n'+texto:'')+(url?'\n\n🖼️ Veja a arte: '+url:'')+'\n\n📞 Emergência: 199\nMais informações: '+pagina;}
+
+var statusEmAndamento=false;
+async function autoStatus(lv,msg){
+  if(!autoLigado()||statusEmAndamento||!STATUS[lv])return;statusEmAndamento=true;
+  try{await interno(async function(){
+    var desde=new Date(Date.now()-6*3600e3).toISOString(),rotulo=STATUS[lv][0];
+    var ativosC=await sbGet('dc_comunicados','select=id,titulo&ativo=eq.true&titulo=like.'+encodeURIComponent(MARCA.status+'*'));
+    var ativosA=await sbGet('dc_alertas','select=id,titulo&ativo=eq.true&titulo=like.'+encodeURIComponent(MARCA.status+'*'));
+    if(lv==='normal'){ /* voltou ao normal: tira do ar os avisos de status */
+      for(var i=0;i<ativosC.length;i++)await sbPatch('dc_comunicados','id=eq.'+ativosC[i].id,{ativo:false});
+      for(var j=0;j<ativosA.length;j++)await sbPatch('dc_alertas','id=eq.'+ativosA[j].id,{ativo:false});
+      if(ativosC.length||ativosA.length){if(typeof toast==='function')toast('🟢 Status normal: avisos de status retirados do site');}
+      return;}
+    if(ativosC.some(function(c){return c.titulo.indexOf(': '+rotulo+' ')>0;}))return; /* já publicado para este nível */
+    var recentes=await sbGet('dc_comunicados','select=id&titulo=like.'+encodeURIComponent(MARCA.status+': '+rotulo+'*')+'&criado_em=gte.'+desde+'&limit=1');
+    if(recentes.length)return; /* evita repetir o mesmo nível em menos de 6 horas */
+    await garantirBase();if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    cfgMun={status_municipio:lv,status_mensagem:msg||''};
+    var cv=document.createElement('canvas'),rec=STATUS_REC[lv];
+    OVR={tipo:'status',formato:'feed',lv:lv,msg:msg||'',canvas:cv,titulo:'Status do Município',recado:rec};try{desenhar();}finally{OVR=null;}
+    var url=await subirArte(await blobDe(cv),'status-'+lv+'-'+Date.now()+'.png');
+    for(var k=0;k<ativosC.length;k++)await sbPatch('dc_comunicados','id=eq.'+ativosC[k].id,{ativo:false});
+    for(var m=0;m<ativosA.length;m++)await sbPatch('dc_alertas','id=eq.'+ativosA[m].id,{ativo:false});
+    var hoje=new Date().toLocaleDateString('pt-BR'),titulo=MARCA.status+': '+rotulo+' ('+hoje+')',texto=[msg,rec].filter(Boolean).join('\n\n');
+    await sbPost('dc_comunicados',{tenant_id:tid(),titulo:titulo,tipo:'mudanca_situacao',texto:texto,prioridade:{emergencia:'urgente',alerta:'alta',atencao:'normal'}[lv],publico_alvo:'Toda a população',ativo:true,imagem_url:url});
+    await sbPost('dc_alertas',{tenant_id:tid(),titulo:titulo,tipo:'status_municipio',nivel:lv,descricao:msg||null,recomendacoes:rec,regiao_afetada:'Ivatuba',fonte:'Defesa Civil Ivatuba',inicio:new Date().toISOString(),ativo:true,imagem_url:url});
+    avisoAuto('Status mudou para '+rotulo,msgDe('⚠️ *'+rotulo+' — DEFESA CIVIL IVATUBA*',STATUS_FRASE[lv],texto,url),url);
+  });}catch(e){console.warn('Divulgação automática do status:',e);}
+  finally{statusEmAndamento=false;}
+}
+async function autoAlerta(reg){
+  if(!autoLigado()||!reg||!reg.id||reg.ativo===false||reg.imagem_url)return;
+  if(reg.tipo==='status_municipio'||reg.tipo==='previsao_tempo'||reg.tipo==='comunicado')return;
+  try{await interno(async function(){var url=await publicarArte('alerta',reg);
+    avisoAuto('Novo alerta: '+(reg.titulo||''),msgDe('⚠️ *'+((STATUS[reg.nivel]||STATUS.alerta)[0])+' — DEFESA CIVIL IVATUBA*',reg.titulo||'Alerta',[reg.descricao,reg.recomendacoes?'Orientações: '+reg.recomendacoes:''].filter(Boolean).join('\n\n'),url),url);});}
+  catch(e){console.warn('Arte automática do alerta:',e);}
+}
+/* Observa as gravações do painel */
+var _patch=sbPatch,_post=sbPost;
+sbPatch=async function(t,q,d){var r=await _patch.apply(this,arguments);
+  if(!INTERNO&&t==='dc_config'&&d&&d.status_municipio)setTimeout(function(){autoStatus(d.status_municipio,d.status_mensagem);},0);return r;};
+sbPost=async function(t,d){var r=await _post.apply(this,arguments);
+  if(!INTERNO&&!SALVANDO_FORM){if(t==='dc_config'&&d&&d.status_municipio)setTimeout(function(){autoStatus(d.status_municipio,d.status_mensagem);},0);
+    if(t==='dc_alertas'&&r&&r[0])setTimeout(function(){autoAlerta(r[0]);},0);}return r;};
+/* Ao abrir o painel (e a cada carga do Dashboard): alertas ativos sem arte ganham arte — inclusive os da sincronização oficial */
+var ultimaVerif=0;
+async function verificarPendentes(){
+  if(!autoLigado()||Date.now()-ultimaVerif<5*60e3)return;ultimaVerif=Date.now();
+  try{var al=await sbGet('dc_alertas','select=*&ativo=eq.true&imagem_url=is.null&order=criado_em.desc&limit=5');
+    for(var i=0;i<al.length;i++)await autoAlerta(al[i]);
+    var c=await sbGet('dc_config','select=status_municipio,status_mensagem&tenant_id=eq.'+tid()+'&limit=1');
+    if(c[0])await autoStatus(c[0].status_municipio||'normal',c[0].status_mensagem);}catch(e){}
+}
+var _ldash=LOADERS.dashboard_dc;
+LOADERS.dashboard_dc=function(){var r=_ldash&&_ldash.apply(this,arguments);setTimeout(verificarPendentes,4000);return r;};
 
 logoImg=new Image();logoImg.onload=function(){desenhar();};logoImg.src=LOGO;
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){desenhar();});
