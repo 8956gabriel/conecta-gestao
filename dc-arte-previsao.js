@@ -210,7 +210,7 @@ async function publicarArte(tipo,reg,canvasPronto){
 }
 /* Previsão e status viram um comunicado no site (com a arte). O post anterior do mesmo tipo sai do ar. */
 var MARCA={previsao:'🌤️ Previsão do tempo',status:'🚦 Status do município'};
-async function postarComoComunicado(t){
+async function postarComoComunicado(t,urlPronta){
   var hoje=new Date().toLocaleDateString('pt-BR');
   var lv=V('arte-status-mun','')||cfgMun.status_municipio||'normal';
   var titulo=t==='previsao'?MARCA.previsao+' — '+(document.getElementById('arte-periodo').selectedOptions[0].text)+' ('+hoje+')'
@@ -221,10 +221,89 @@ async function postarComoComunicado(t){
     for(var i=0;i<antigos.length;i++)await sbPatch('dc_comunicados','id=eq.'+antigos[i].id,{ativo:false});}catch(e){}
   var res=await sbPost('dc_comunicados',{tenant_id:tid(),titulo:titulo,tipo:t==='status'?'mudanca_situacao':'comunicado',texto:texto,prioridade:prio,publico_alvo:'Toda a população',ativo:true});
   var reg=res&&res[0];if(!reg)throw new Error('O comunicado não foi criado.');
-  var url=await subirArte(await blobDe(document.getElementById('arte-canvas')),'comunicado-'+reg.id+'.png');
+  var url=urlPronta||await subirArte(await blobDe(document.getElementById('arte-canvas')),'comunicado-'+reg.id+'.png');
   await sbPatch('dc_comunicados','id=eq.'+reg.id,{imagem_url:url});
-  return url;
+  return reg;
 }
+/* ---------- Divulgar: Comunicados, Alertas Climáticos, WhatsApp e SMS ---------- */
+function infoArte(){
+  var t=tipoArte(),hoje=new Date().toLocaleDateString('pt-BR'),lv,titulo,texto,risco=false;
+  var rec=(V('arte-recado','')||'').trim();
+  if(t==='alerta'){var a=alertaSel()||{};lv=a.nivel||'alerta';titulo=a.titulo||'Alerta climático';texto=[a.descricao,a.recomendacoes?'Orientações: '+a.recomendacoes:''].filter(Boolean).join('\n\n');risco=true;}
+  else if(t==='comunicado'){var c=comSel()||{};lv=c.prioridade==='urgente'?'emergencia':c.prioridade==='alta'?'alerta':'normal';titulo=c.titulo||'Comunicado';texto=c.texto||'';}
+  else if(t==='status'){lv=V('arte-status-mun','')||cfgMun.status_municipio||'normal';titulo=STATUS_FRASE[lv]+' ('+hoje+')';texto=[cfgMun.status_mensagem,rec].filter(Boolean).join('\n\n');risco=lv!=='normal';}
+  else{var p=document.getElementById('arte-periodo'),ini=p.value==='amanha'?1:0,n=p.value==='3'?3:p.value==='5'?5:1,ds=[];for(var k=0;k<n&&dados;k++)ds.push(dia(ini+k));
+    risco=ds.some(function(d){return d.prob>=70||d.code>=63||d.vento>=60;});
+    lv=ds.some(function(d){return d.code>=95||d.vento>=60;})?'alerta':risco?'atencao':'normal';
+    titulo=MARCA.previsao+' — '+p.selectedOptions[0].text+' ('+hoje+')';
+    texto=ds.map(function(d){var tt=tempo(d.code);return diaCurto(d.data)+': '+tt[1]+', '+d.min+'° a '+d.max+'°, chuva '+d.prob+'%';}).join('\n')+(rec?'\n\n'+rec:'');}
+  return {t:t,lv:lv,titulo:titulo,texto:texto,risco:risco};
+}
+function abrirDivulgar(){
+  var inf=infoArte(),old=document.getElementById('arte-divulgar');if(old)old.remove();
+  var ok=function(c){return c?' checked':'';};
+  var linha=function(id,marc,tit,sub){return '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;cursor:pointer;"><input type="checkbox" id="'+id+'"'+ok(marc)+' style="width:18px;height:18px;margin-top:2px;"><span><strong style="font-size:14px;">'+tit+'</strong><br><span style="font-size:12px;color:#64748B;">'+sub+'</span></span></label>';};
+  var d=document.createElement('div');d.id='arte-divulgar';
+  d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  d.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:90vh;overflow:auto;">'+
+    '<h3 style="margin:0 0 4px;">📤 Divulgar esta arte</h3><p style="margin:0 0 14px;font-size:13px;color:#64748B;">'+String(inf.titulo).replace(/[<>&]/g,'')+'</p>'+
+    linha('dv-com',true,'📢 Comunicados (site)',inf.t==='comunicado'?'Coloca a arte neste comunicado.':'Cria um comunicado com a arte no site Ivatuba Protegida.')+
+    linha('dv-ale',inf.t==='alerta'||inf.risco,'⚠️ Alertas Climáticos (site)',inf.t==='alerta'?'Coloca a arte neste alerta.':'Cria um alerta (nível '+(STATUS[inf.lv]||STATUS.normal)[0]+') com a arte. O alerta anterior do mesmo tipo sai do ar.')+
+    linha('dv-wa',true,'📲 WhatsApp','Abre a lista de pessoas cadastradas para enviar a mensagem com o link da arte.')+
+    linha('dv-sms',false,'📱 SMS','Coloca na fila de SMS (mensagem curta com o link do site) para quem aceita SMS.')+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button class="btn-ghost" id="dv-cancelar">Cancelar</button><button class="btn-accent" id="dv-ok" style="background:linear-gradient(135deg,#16A34A,#15803D);">📤 Divulgar agora</button></div>'+
+    '<div id="dv-res" style="margin-top:10px;font-size:13px;"></div></div>';
+  document.body.appendChild(d);
+  d.onclick=function(e){if(e.target===d)d.remove();};
+  document.getElementById('dv-cancelar').onclick=function(){d.remove();};
+  document.getElementById('dv-ok').onclick=function(){divulgar(inf,{com:dv('dv-com'),ale:dv('dv-ale'),wa:dv('dv-wa'),sms:dv('dv-sms')});};
+  function dv(id){return document.getElementById(id).checked;}
+}
+async function divulgar(inf,op){
+  var b=document.getElementById('dv-ok'),res=document.getElementById('dv-res'),feito=[];
+  if(!op.com&&!op.ale&&!op.wa&&!op.sms){res.textContent='Marque pelo menos uma opção.';return;}
+  if(inf.t==='previsao'&&!dados){res.textContent='A previsão ainda não carregou. Clique em Atualizar previsão.';return;}
+  if((inf.t==='alerta'&&!alertaSel())||(inf.t==='comunicado'&&!comSel())){res.textContent='Escolha o registro na lista primeiro.';return;}
+  if(op.sms&&!confirm('Confirma colocar a mensagem na fila de SMS para todas as pessoas cadastradas que aceitam SMS?'))return;
+  b.disabled=true;b.textContent='⏳ Divulgando...';
+  var log=function(m){feito.push(m);res.innerHTML=feito.map(function(x){return '<div>'+x+'</div>';}).join('');};
+  try{
+    var url=await subirArte(await blobDe(document.getElementById('arte-canvas')),'divulgacao-'+inf.t+'-'+Date.now()+'.png');
+    var alertaId=null;
+    if(op.com){
+      if(inf.t==='comunicado'){await sbPatch('dc_comunicados','id=eq.'+comSel().id,{imagem_url:url});}
+      else if(inf.t==='alerta'){var a0=alertaSel();var rc=await sbPost('dc_comunicados',{tenant_id:tid(),titulo:a0.titulo,tipo:'alerta',texto:inf.texto||a0.titulo,prioridade:a0.nivel==='emergencia'?'urgente':'alta',publico_alvo:'Toda a população',ativo:true,imagem_url:url});}
+      else{await postarComoComunicado(inf.t,url);}
+      log('✅ Publicado em Comunicados');}
+    if(op.ale){
+      if(inf.t==='alerta'){alertaId=alertaSel().id;await sbPatch('dc_alertas','id=eq.'+alertaId,{imagem_url:url});}
+      else{
+        var marca=inf.t==='previsao'?MARCA.previsao:inf.t==='status'?MARCA.status:'📢';
+        if(inf.t!=='comunicado'){try{var ant=await sbGet('dc_alertas','select=id&ativo=eq.true&titulo=like.'+encodeURIComponent(marca+'*'));for(var i=0;i<ant.length;i++)await sbPatch('dc_alertas','id=eq.'+ant[i].id,{ativo:false});}catch(e){}}
+        var tit=inf.t==='status'?MARCA.status+': '+(STATUS[inf.lv]||STATUS.normal)[0]+' — '+inf.titulo:inf.t==='comunicado'?'📢 '+inf.titulo:inf.titulo;
+        var ra=await sbPost('dc_alertas',{tenant_id:tid(),titulo:tit,tipo:inf.t==='previsao'?'previsao_tempo':inf.t==='status'?'status_municipio':'comunicado',nivel:STATUS[inf.lv]?inf.lv:'atencao',
+          descricao:inf.texto||null,recomendacoes:(V('arte-recado','')||'').trim()||null,regiao_afetada:'Ivatuba',fonte:inf.t==='previsao'?'Open-Meteo / Defesa Civil Ivatuba':'Defesa Civil Ivatuba',
+          inicio:new Date().toISOString(),ativo:true,imagem_url:url});
+        alertaId=ra&&ra[0]&&ra[0].id;}
+      log('✅ Publicado em Alertas Climáticos');}
+    var pagina=location.origin+'/conecta-gestao-ivatuba-protegida.html';
+    var cab=inf.t==='comunicado'?'📢 *COMUNICADO — DEFESA CIVIL IVATUBA*':inf.t==='previsao'?'🌤️ *PREVISÃO DO TEMPO — DEFESA CIVIL IVATUBA*':'⚠️ *'+(STATUS[inf.lv]||STATUS.alerta)[0]+' — DEFESA CIVIL IVATUBA*';
+    var msg=cab+'\n\n*'+inf.titulo+'*'+(inf.texto?'\n\n'+inf.texto:'')+'\n\n🖼️ Veja a arte: '+url+'\n\n📞 Emergência: 199\nMais informações: '+pagina;
+    if(op.wa||op.sms){
+      var pessoas=await sbGet('dc_pessoas_alerta','select=id,nome,telefone,whatsapp,receber_sms,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo')||[];
+      if(op.sms){var curto='DEFESA CIVIL IVATUBA: '+inf.titulo.replace(/[^\w\sÀ-ú°%.,:()\/-]/g,'').replace(/\s+/g,' ').trim();var lk=' Info: '+pagina.replace(/^https?:\/\//,'');
+        if((curto+lk).length>160)curto=curto.slice(0,157-lk.length)+'...';
+        var n=0;for(var k=0;k<pessoas.length;k++){var p=pessoas[k],ph=(p.telefone||p.whatsapp||'').replace(/\D/g,'');if(p.receber_sms===false||ph.length<10)continue;
+          try{await sbPost('dc_notification_queue',{tenant_id:tid(),pessoa_id:p.id,alerta_id:alertaId,canal:'sms',telefone:ph,mensagem:curto+lk,status:'pendente',provider:'sandbox',tentativas:0});n++;}catch(e){}}
+        log('✅ SMS: '+n+' mensagem(ns) na fila — envie em Dashboard › 📤 Processar Fila');}
+      if(op.wa){if(!pessoas.length)log('⚠️ WhatsApp: nenhuma pessoa cadastrada em Pessoas Cadastradas');
+        else{log('✅ WhatsApp: lista aberta para envio');document.getElementById('arte-divulgar').remove();abrirNotificarWhatsApp(alertaId,msg,pessoas);}}
+    }
+    b.textContent='✔ Divulgado';if(typeof toast==='function')toast('📤 Arte divulgada');
+    try{statusAtual();}catch(e){}
+  }catch(e){log('❌ Erro: '+String(e.message||e).slice(0,180));b.disabled=false;b.textContent='📤 Tentar de novo';}
+}
+
 window.dcPublicarArte=async function(tipo,id,btn){
   var t0=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='⏳ Gerando...';}
   try{var rows=await sbGet(TABELA[tipo],'select=*&id=eq.'+id);var url=await publicarArte(tipo,rows[0]);
@@ -316,7 +395,7 @@ buildViews=function(){
   if(document.getElementById('view-arte_previsao'))return;
   var sec=document.createElement('section');sec.className='view';sec.id='view-arte_previsao';
   sec.innerHTML='<div class="topbar"><div><h1>🎨 Artes da Defesa Civil</h1><div class="sub">Artes prontas para WhatsApp, Instagram e Facebook: previsão do tempo, status do município e alertas climáticos</div></div>'+
-   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-accent" id="arte-publicar" style="background:linear-gradient(135deg,#16A34A,#15803D);">📤 Postar no site</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-accent" id="arte-publicar" style="background:linear-gradient(135deg,#16A34A,#15803D);">📤 Divulgar</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
    '<div style="display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:20px;align-items:start;" class="arte-grid">'+
     '<div class="panel">'+
      '<div class="field"><label>Tipo de arte</label><select id="arte-tipo"><option value="previsao">🌤️ Previsão do tempo</option><option value="status">🚦 Status do município</option><option value="alerta">⚠️ Alerta climático</option><option value="comunicado">📢 Comunicado</option></select></div>'+
@@ -346,23 +425,8 @@ buildViews=function(){
   var ti=document.getElementById('arte-titulo');ti.oninput=function(){ti.dataset.editado='1';desenhar();};
   document.getElementById('arte-tipo').onchange=trocarTipo;
   document.getElementById('arte-comunicado').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
-  document.getElementById('arte-publicar').onclick=async function(){
-    var b=this,t=tipoArte(),t0='📤 Postar no site';
-    b.disabled=true;b.textContent='⏳ Postando...';
-    try{
-      if(t==='alerta'||t==='comunicado'){
-        var reg=t==='alerta'?alertaSel():comSel();if(!reg)throw new Error('Escolha o '+(t==='alerta'?'alerta':'comunicado')+' na lista.');
-        await publicarArte(t,reg,document.getElementById('arte-canvas'));
-      }else{
-        if(t==='previsao'&&!dados)throw new Error('A previsão ainda não carregou. Clique em Atualizar previsão.');
-        await postarComoComunicado(t);
-      }
-      b.textContent='✔ Postado no site';
-      if(typeof toast==='function')toast('📤 Arte postada no site Ivatuba Protegida');
-      else alert('Arte postada no site Ivatuba Protegida!');
-    }catch(e){alert('Não foi possível postar: '+e.message);b.textContent=t0;}
-    finally{b.disabled=false;setTimeout(function(){b.textContent=t0;},3000);}
-  };  document.getElementById('arte-alerta').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
+  document.getElementById('arte-publicar').onclick=abrirDivulgar;
+ document.getElementById('arte-alerta').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
   trocarTipo();
