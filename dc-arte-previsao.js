@@ -22,7 +22,7 @@ var telefones=TEL_PADRAO, alertas=[], cfgMun={status_municipio:'normal',status_m
 var OVR=null; /* geração automática: {tipo,formato,titulo,recado,registro,canvas} */
 var comunicados=[];
 var COM_TIPO={comunicado:['📢','COMUNICADO'],alerta:['🚨','ALERTA'],orientacao:['📋','ORIENTAÇÃO'],prevencao:['🛡️','PREVENÇÃO'],encerramento:['✅','ENCERRAMENTO'],mudanca_situacao:['🔄','MUDANÇA DE SITUAÇÃO']};
-var COM_PRIO={urgente:['URGENTE','#DC2626'],alta:['PRIORIDADE ALTA','#EA580C'],media:['INFORMATIVO','#2563EB'],baixa:['INFORMATIVO','#16A34A']};
+var COM_PRIO={urgente:['URGENTE','#DC2626'],alta:['PRIORIDADE ALTA','#EA580C'],normal:['INFORMATIVO','#2563EB'],media:['INFORMATIVO','#2563EB'],baixa:['INFORMATIVO','#16A34A']};
 function V(id,def){if(OVR){var m={'arte-formato':'formato','arte-titulo':'titulo','arte-recado':'recado'}[id];if(m&&OVR[m]!=null)return OVR[m];}var e=document.getElementById(id);return e?e.value:def;}
 function tipoArte(){return OVR?OVR.tipo:((document.getElementById('arte-tipo')||{}).value||'previsao');}
 function comSel(){if(OVR&&OVR.tipo==='comunicado')return OVR.registro;var id=(document.getElementById('arte-comunicado')||{}).value;return comunicados.find(function(c){return String(c.id)===String(id);})||null;}
@@ -170,7 +170,7 @@ function corpoAviso(ctx,y,W,H,S,tipo,formato){
 }
 
 function corpoComunicado(ctx,y,W,H,S,formato){
-  var c=comSel()||{titulo:'Escolha um comunicado na lista',tipo:'comunicado',prioridade:'media'};
+  var c=comSel()||{titulo:'Escolha um comunicado na lista',tipo:'comunicado',prioridade:'normal'};
   var story=formato==='story',F=story?1.2:1,ti=COM_TIPO[c.tipo]||COM_TIPO.comunicado,pr=COM_PRIO[c.prioridade]||COM_PRIO.media;
   ctx.font='800 '+Math.round(34*F)+'px '+FONTE;var lw=ctx.measureText(ti[1]).width+110*F,bh=78*F;
   rr(ctx,60,y,lw,bh,bh/2);ctx.fillStyle=pr[1];ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.stroke();
@@ -215,7 +215,7 @@ async function postarComoComunicado(t){
   var lv=V('arte-status-mun','')||cfgMun.status_municipio||'normal';
   var titulo=t==='previsao'?MARCA.previsao+' — '+(document.getElementById('arte-periodo').selectedOptions[0].text)+' ('+hoje+')'
                            :MARCA.status+': '+((STATUS[lv]||STATUS.normal)[0])+' ('+hoje+')';
-  var prio=t==='status'?({emergencia:'urgente',alerta:'alta',atencao:'media'}[lv]||'baixa'):'media';
+  var prio=t==='status'?({emergencia:'urgente',alerta:'alta',atencao:'normal'}[lv]||'baixa'):'normal';
   var texto=(V('arte-recado','')||'').trim()||(t==='status'?(cfgMun.status_mensagem||STATUS_REC[lv]):'Confira a previsão do tempo para Ivatuba.');
   try{var antigos=await sbGet('dc_comunicados','select=id,titulo&ativo=eq.true&titulo=like.'+encodeURIComponent(MARCA[t]+'*'));
     for(var i=0;i<antigos.length;i++)await sbPatch('dc_comunicados','id=eq.'+antigos[i].id,{ativo:false});}catch(e){}
@@ -271,8 +271,11 @@ async function statusAtual(){
     if(rows[0])cfgMun=rows[0];
     var el=document.getElementById('arte-status-mun');if(el&&!el.dataset.mexeu)el.value=cfgMun.status_municipio||'normal';}catch(e){}
   try{var ts=await sbGet('dc_telefones','select=nome,numero,categoria,ativo,ordem&order=ordem.asc.nullslast');
+    var dig=function(t){return String(t.numero).replace(/\D/g,'');};
     var ok=(ts||[]).filter(function(t){return t.ativo!==false&&t.numero&&/emergencia|defesa_civil|saude|seguranca/.test(t.categoria||'emergencia');});
-    ok.sort(function(a,b){var dc=function(t){return /defesa/i.test(t.categoria+' '+t.nome)||String(t.numero).trim()==='199'?0:1;};return dc(a)-dc(b)||String(a.numero).replace(/\D/g,'').length-String(b.numero).replace(/\D/g,'').length||(a.ordem||99)-(b.ordem||99);});
+    var vistos={};ok=ok.filter(function(t){var d=dig(t);if(!d||vistos[d])return false;vistos[d]=1;return true;});
+    ok.sort(function(a,b){var cur=function(t){return dig(t).length<=4?0:1;},dc=function(t){return /defesa/i.test(t.categoria+' '+t.nome)?0:1;};
+      return cur(a)-cur(b)||dc(a)-dc(b)||(a.ordem||99)-(b.ordem||99);});
     if(ok.length)telefones=ok.slice(0,4).map(function(t){return[String(t.numero).trim(),String(t.nome).trim()];});}catch(e){}
   try{alertas=await sbGet('dc_alertas','select=*&order=criado_em.desc&limit=50')||[];}catch(e){alertas=[];}
   try{comunicados=await sbGet('dc_comunicados','select=*&order=criado_em.desc&limit=50')||[];}catch(e){comunicados=[];}
