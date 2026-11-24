@@ -60,7 +60,7 @@ function txt(ctx,t,x,y,size,cor,peso,alin){ctx.font=(peso||700)+' '+size+'px '+F
 function emoji(ctx,e,x,y,size){ctx.font=size+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.fillText(e,x,y);}
 
 function desenhar(){
-  var cv=document.getElementById('arte-canvas'); if(!cv||!dados)return;
+  var cv=document.getElementById('arte-canvas'); if(!cv||(!dados&&tipoArte()==='previsao'))return;
   var formato=document.getElementById('arte-formato').value, periodo=document.getElementById('arte-periodo').value;
   var W=1080,H=formato==='story'?1920:1350; cv.width=W;cv.height=H;
   var ctx=cv.getContext('2d'), S=formato==='story'?1.6:1;
