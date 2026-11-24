@@ -125,9 +125,13 @@ function desenhar(){
   // Recado
   var rec=(V('arte-recado','')||'').trim();
   var RF=formato==='story'?1.15:1,RL=46*RF,maxL=Math.max(1,Math.min(5,Math.floor((H-200-y-46)/RL)));
-  if(rec){ctx.font='700 '+Math.round(34*RF)+'px '+FONTE;var ls=quebra(ctx,rec,W-200);if(ls.length>maxL){ls=ls.slice(0,maxL);ls[maxL-1]=ls[maxL-1].replace(/\s*\S*$/,'')+'…';}var rh=46+ls.length*RL;
+  if(rec){
+    /* diminui a letra do recado (até 26px) para caber inteiro, antes de cortar com "…" */
+    for(var tam=34;tam>=26;tam-=2){RF=(formato==='story'?1.15:1)*tam/34;RL=46*RF;maxL=Math.max(1,Math.min(5,Math.floor((H-200-y-30)/RL)));
+      ctx.font='700 '+Math.round(34*RF)+'px '+FONTE;if(quebra(ctx,rec,W-200).length<=maxL)break;}
+    ctx.font='700 '+Math.round(34*RF)+'px '+FONTE;var ls=quebra(ctx,rec,W-200);if(ls.length>maxL){ls=ls.slice(0,maxL);ls[maxL-1]=ls[maxL-1].replace(/\s*\S*$/,'')+'…';}var rh=Math.round(30+16*RF)+ls.length*RL;
     rr(ctx,60,y,W-120,rh,30);ctx.fillStyle='#fff';ctx.fill();ctx.fillStyle=LARANJA;rr(ctx,60,y,14,rh,7);ctx.fill();
-    ls.forEach(function(l,k){txt(ctx,l,100,y+56+k*RL,34*RF,AZUL1,700);});}
+    ls.forEach(function(l,k){txt(ctx,l,100,y+RL+6+k*RL,34*RF,AZUL1,700);});}
 
   // Rodapé
   ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(0,H-170,W,170);
@@ -251,7 +255,7 @@ async function statusAtual(){
     var el=document.getElementById('arte-status-mun');if(el&&!el.dataset.mexeu)el.value=cfgMun.status_municipio||'normal';}catch(e){}
   try{var ts=await sbGet('dc_telefones','select=nome,numero,categoria,ativo,ordem&order=ordem.asc.nullslast');
     var ok=(ts||[]).filter(function(t){return t.ativo!==false&&t.numero&&/emergencia|defesa_civil|saude|seguranca/.test(t.categoria||'emergencia');});
-    ok.sort(function(a,b){return String(a.numero).replace(/\D/g,'').length-String(b.numero).replace(/\D/g,'').length;});
+    ok.sort(function(a,b){var dc=function(t){return /defesa/i.test(t.categoria+' '+t.nome)||String(t.numero).trim()==='199'?0:1;};return dc(a)-dc(b)||String(a.numero).replace(/\D/g,'').length-String(b.numero).replace(/\D/g,'').length||(a.ordem||99)-(b.ordem||99);});
     if(ok.length)telefones=ok.slice(0,4).map(function(t){return[String(t.numero).trim(),String(t.nome).trim()];});}catch(e){}
   try{alertas=await sbGet('dc_alertas','select=*&order=criado_em.desc&limit=50')||[];}catch(e){alertas=[];}
   try{comunicados=await sbGet('dc_comunicados','select=*&order=criado_em.desc&limit=50')||[];}catch(e){comunicados=[];}
