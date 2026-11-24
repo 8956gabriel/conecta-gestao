@@ -302,6 +302,8 @@ async function divulgar_(inf,op){
     var pagina=location.origin+'/conecta-gestao-ivatuba-protegida.html';
     var cab=inf.t==='comunicado'?'📢 *COMUNICADO — DEFESA CIVIL IVATUBA*':inf.t==='previsao'?'🌤️ *PREVISÃO DO TEMPO — DEFESA CIVIL IVATUBA*':'⚠️ *'+(STATUS[inf.lv]||STATUS.alerta)[0]+' — DEFESA CIVIL IVATUBA*';
     var msg=cab+'\n\n*'+inf.titulo+'*'+(inf.texto?'\n\n'+inf.texto:'')+'\n\n🖼️ Veja a arte: '+url+'\n\n📞 Emergência: 199\nMais informações: '+pagina;
+    if(inf.t==='status'&&STATUS[inf.lv]&&inf.lv!=='normal')msg=preencher(modelo(inf.lv),{nivel:STATUS[inf.lv][0],titulo:inf.titulo,mensagem:cfgMun.status_mensagem||STATUS_FRASE[inf.lv],orientacoes:(V('arte-recado','')||'').trim(),link_arte:url});
+    if(inf.t==='alerta'){var aa=alertaSel()||{};msg=preencher(modelo('novo_alerta'),{nivel:(STATUS[aa.nivel]||STATUS.alerta)[0],titulo:aa.titulo,mensagem:aa.descricao||'',orientacoes:aa.recomendacoes||'',regiao:aa.regiao_afetada||'Ivatuba',link_arte:url});}
     if(op.wa||op.sms){
       var pessoas=await sbGet('dc_pessoas_alerta','select=id,nome,telefone,whatsapp,receber_sms,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo')||[];
       if(op.sms){var curto='DEFESA CIVIL IVATUBA: '+inf.titulo.replace(/[^\w\sÀ-ú°%.,:()\/-]/g,'').replace(/\s+/g,' ').trim();var lk=' Info: '+pagina.replace(/^https?:\/\//,'');
@@ -367,8 +369,8 @@ function compartilhar(){var cv=document.getElementById('arte-canvas');cv.toBlob(
 var grp=NAV_GROUPS.find(function(g){return g.label==='Comunicação';})||NAV_GROUPS[0];
 grp.items.push(['arte_previsao','🎨 Artes (previsão, status e alertas)']);
 async function statusAtual(){
-  try{var rows=await sbGet('dc_config','select=status_municipio,status_mensagem&tenant_id=eq.'+tid()+'&limit=1');
-    if(rows[0])cfgMun=rows[0];
+  try{var rows=await sbGet('dc_config','select=id,status_municipio,status_mensagem,mensagens_auto,fila_whatsapp_auto&tenant_id=eq.'+tid()+'&limit=1');
+    if(rows[0]){cfgMun=rows[0];modelosCfg=rows[0].mensagens_auto||null;filaWaAuto=!!rows[0].fila_whatsapp_auto;preencherPainelModelos();}
     var el=document.getElementById('arte-status-mun');if(el&&!el.dataset.mexeu)el.value=cfgMun.status_municipio||'normal';}catch(e){}
   try{var ts=await sbGet('dc_telefones','select=nome,numero,categoria,ativo,ordem&order=ordem.asc.nullslast');
     var dig=function(t){return String(t.numero).replace(/\D/g,'');};
@@ -432,7 +434,14 @@ buildViews=function(){
      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 12px;cursor:pointer;"><input type="checkbox" id="arte-auto" style="width:auto;margin-top:2px;"> <span>🤖 Divulgar automaticamente no site quando o status mudar ou entrar um alerta novo</span></label>'+
      '<p id="arte-status" style="font-size:12.5px;color:var(--ink-soft);margin:0;"></p></div>'+
     '<div class="panel" style="text-align:center;"><canvas id="arte-canvas" style="width:100%;max-width:460px;height:auto;border-radius:14px;box-shadow:0 8px 30px rgba(15,23,42,.18);"></canvas></div>'+
-   '</div><style>@media(max-width:820px){.arte-grid{grid-template-columns:1fr!important}}</style>';
+   '</div>'+
+   '<div class="panel" style="margin-top:20px;"><h3 style="margin-top:0;">✍️ Mensagens automáticas por situação</h3>'+
+   '<p style="font-size:13px;color:var(--ink-soft);margin:4px 0 12px;">Usadas quando o status muda ou entra um alerta novo (aviso na tela, Canal Oficial e WhatsApp). Campos que você pode usar: <code>{nivel}</code> <code>{titulo}</code> <code>{mensagem}</code> <code>{orientacoes}</code> <code>{regiao}</code> <code>{link_arte}</code> <code>{link_site}</code> <code>{data}</code> <code>{hora}</code></p>'+
+   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;">'+
+   MODELOS_NOMES.map(function(m){return '<div class="field" style="margin:0;"><label>'+m[1]+'</label><textarea id="mod-'+m[0]+'" rows="8" style="font-size:13px;"></textarea></div>';}).join('')+'</div>'+
+   '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:600;margin:14px 0 4px;cursor:pointer;"><input type="checkbox" id="mod-fila" style="width:auto;margin-top:2px;"> <span>📲 Colocar automaticamente na fila de WhatsApp das pessoas cadastradas<br><span style="font-weight:400;color:var(--ink-soft);">A fila é enviada pelo processamento automático (a cada 20 min). Hoje está em modo de teste: as mensagens só saem de verdade quando um provedor de WhatsApp for configurado.</span></span></label>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button class="btn-accent" id="mod-salvar">💾 Salvar mensagens</button><button class="btn-ghost" id="mod-padrao">↺ Voltar ao padrão</button><span id="mod-st" style="font-size:12.5px;align-self:center;color:var(--ink-soft);"></span></div></div>'+
+   '<style>@media(max-width:820px){.arte-grid{grid-template-columns:1fr!important}}</style>';
   ['alertas_dc','comunicados_dc'].forEach(function(k){var sb=document.getElementById('sb-'+k);if(!sb||document.getElementById('arte-auto-'+k))return;
     var l=document.createElement('label');l.style.cssText='display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 12px;cursor:pointer;';
     l.innerHTML='<input type="checkbox" id="arte-auto-'+k+'" checked style="width:auto;"> 🖼️ Gerar a arte e publicar no site automaticamente ao salvar';
@@ -452,6 +461,15 @@ buildViews=function(){
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
   trocarTipo();
+  preencherPainelModelos();
+  document.getElementById('mod-padrao').onclick=function(){MODELOS_NOMES.forEach(function(m){var el=document.getElementById('mod-'+m[0]);el.value=MODELOS_PADRAO[m[0]];el.dataset.mexeu='1';});document.getElementById('mod-st').textContent='Padrão carregado. Clique em Salvar.';};
+  document.getElementById('mod-salvar').onclick=async function(){var b=this,st=document.getElementById('mod-st');b.disabled=true;st.style.color='';st.textContent='Salvando...';
+    var obj={};MODELOS_NOMES.forEach(function(m){var v=document.getElementById('mod-'+m[0]).value.trim();if(v&&v!==MODELOS_PADRAO[m[0]])obj[m[0]]=v;});
+    var d_={mensagens_auto:Object.keys(obj).length?obj:null,fila_whatsapp_auto:document.getElementById('mod-fila').checked};
+    try{await interno(async function(){var c=await sbGet('dc_config','select=id&tenant_id=eq.'+tid()+'&limit=1');
+        if(c[0])await sbPatch('dc_config','id=eq.'+c[0].id,d_);else await sbPost('dc_config',Object.assign({tenant_id:tid(),status_municipio:'normal'},d_));});
+      modelosCfg=d_.mensagens_auto;filaWaAuto=d_.fila_whatsapp_auto;st.style.color='#059669';st.textContent='✔ Mensagens salvas';}
+    catch(e){st.style.color='#DC2626';st.textContent='Erro: '+String(e.message).slice(0,120);}finally{b.disabled=false;}};
   var au=document.getElementById('arte-auto');au.checked=autoLigado();au.onchange=function(){try{localStorage.setItem('dc_auto_divulgar',au.checked?'1':'0');}catch(e){}};
 };
 
@@ -496,14 +514,33 @@ submitCrud=async function(k){
    (cadastro, SMS ou sincronização oficial), gera a arte e publica no site sozinho.
    WhatsApp e Canal Oficial não aceitam postagem automática: aparece um aviso com botões de 1 clique. */
 var SALVANDO_FORM=0, INTERNO=0;
+var MODELOS_PADRAO={
+  atencao:'🟡 *ATENÇÃO — DEFESA CIVIL IVATUBA*\n\n{mensagem}\n\n👀 {orientacoes}\n\n🖼️ Arte: {link_arte}\n📞 Emergência: 199\nℹ️ {link_site}',
+  alerta:'🟠 *ALERTA — DEFESA CIVIL IVATUBA*\n\n{mensagem}\n\n⚠️ {orientacoes}\n\n🖼️ Arte: {link_arte}\n📞 Emergência: 199\nℹ️ {link_site}',
+  emergencia:'🔴 *EMERGÊNCIA — DEFESA CIVIL IVATUBA*\n\n{mensagem}\n\n🚨 {orientacoes}\n\n🖼️ Arte: {link_arte}\n📞 Ligue 199 (Defesa Civil) ou 193 (Bombeiros)\nℹ️ {link_site}',
+  normal:'🟢 *SITUAÇÃO NORMALIZADA — DEFESA CIVIL IVATUBA*\n\nO município voltou à situação normal ({data} às {hora}).\n\nObrigado pela atenção de todos! Em caso de emergência, ligue 199.\nℹ️ {link_site}',
+  novo_alerta:'⚠️ *{nivel} — DEFESA CIVIL IVATUBA*\n\n*{titulo}*\n\n{mensagem}\n\n📍 {regiao}\n✅ Orientações: {orientacoes}\n\n🖼️ Arte: {link_arte}\n📞 Emergência: 199\nℹ️ {link_site}'
+};
+var MODELOS_NOMES=[['atencao','🟡 Status ATENÇÃO'],['alerta','🟠 Status ALERTA'],['emergencia','🔴 Status EMERGÊNCIA'],['normal','🟢 Voltou ao NORMAL'],['novo_alerta','⚠️ Novo alerta climático']];
+var modelosCfg=null, filaWaAuto=false;
+function modelo(k){return (modelosCfg&&modelosCfg[k])||MODELOS_PADRAO[k]||'';}
+function preencher(tpl,v){var agora=new Date();v=Object.assign({data:agora.toLocaleDateString('pt-BR'),hora:agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),link_site:location.origin+'/conecta-gestao-ivatuba-protegida.html'},v);
+  return tpl.replace(/\{(\w+)\}/g,function(m,k){return v[k]!=null&&v[k]!==''?String(v[k]):'';}).split('\n').filter(function(l){return !/^\s*\S{0,3}\s*(Arte|Orientações):?\s*$/.test(l);}).join('\n').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();}
+async function enfileirarWhatsApp(msg,alertaId){
+  if(!filaWaAuto)return 0;var n=0;
+  try{var ps=await sbGet('dc_pessoas_alerta','select=id,telefone,whatsapp,receber_whatsapp&tenant_id=eq.'+tid()+'&status=eq.ativo');
+    for(var i=0;i<ps.length;i++){var p=ps[i],ph=(p.whatsapp||p.telefone||'').replace(/\D/g,'');if(p.receber_whatsapp===false||ph.length<10)continue;
+      try{await sbPost('dc_notification_queue',{tenant_id:tid(),pessoa_id:p.id,alerta_id:alertaId||null,canal:'whatsapp',telefone:ph,mensagem:msg,status:'pendente',provider:'sandbox',tentativas:0});n++;}catch(e){}}}catch(e){}
+  return n;}
 function autoLigado(){try{return localStorage.getItem('dc_auto_divulgar')!=='0';}catch(e){return true;}}
 async function interno(fn){INTERNO++;try{return await fn();}finally{INTERNO--;}}
-function avisoAuto(titulo,msg,url){
+function avisoAuto(titulo,msg,url,naFila){
   var old=document.getElementById('dc-aviso-auto');if(old)old.remove();
   var d=document.createElement('div');d.id='dc-aviso-auto';
   d.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9998;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:340px;max-width:calc(100vw - 32px);padding:14px;border-top:5px solid #F28C28;font-size:13px;';
   d.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px;"><strong>🤖 '+String(titulo).replace(/[<>&]/g,'')+'</strong><button id="dca-x" style="border:none;background:none;font-size:16px;cursor:pointer;">✕</button></div>'+
-    '<div style="color:#475569;margin:6px 0 10px;">Arte gerada e publicada no site. Toque para divulgar também:</div>'+
+    '<div style="color:#475569;margin:6px 0 10px;">'+(url?'Arte gerada e publicada no site. ':'Avisos de status retirados do site. ')+(naFila?'✅ '+naFila+' WhatsApp na fila automática. ':'')+'Toque para divulgar também:</div>'+
+    '<details style="margin-bottom:8px;"><summary style="cursor:pointer;font-size:12px;color:#1E5FAF;">Ver mensagem</summary><pre style="white-space:pre-wrap;font-family:inherit;font-size:12px;background:#F8FAFC;padding:8px;border-radius:8px;margin:6px 0 0;">'+String(msg).replace(/[<>&]/g,'')+'</pre></details>'+
     (url?'<a href="'+url+'" target="_blank" rel="noopener"><img src="'+url+'" style="width:100%;border-radius:8px;margin-bottom:8px;"></a>':'')+
     '<div style="display:flex;flex-direction:column;gap:6px;"><button id="dca-canal" style="padding:9px;border:none;border-radius:9px;background:#128C7E;color:#fff;font-weight:700;cursor:pointer;">📢 Postar no Canal Oficial</button>'+
     '<button id="dca-wa" style="padding:9px;border:none;border-radius:9px;background:#25D366;color:#fff;font-weight:700;cursor:pointer;">📲 Enviar para pessoas cadastradas</button></div>';
@@ -529,7 +566,8 @@ async function autoStatus(lv,msg){
     if(lv==='normal'){ /* voltou ao normal: tira do ar os avisos de status */
       for(var i=0;i<ativosC.length;i++)await sbPatch('dc_comunicados','id=eq.'+ativosC[i].id,{ativo:false});
       for(var j=0;j<ativosA.length;j++)await sbPatch('dc_alertas','id=eq.'+ativosA[j].id,{ativo:false});
-      if(ativosC.length||ativosA.length){if(typeof toast==='function')toast('🟢 Status normal: avisos de status retirados do site');}
+      if(ativosC.length||ativosA.length){var mn=preencher(modelo('normal'),{nivel:'NORMAL',mensagem:msg||''});
+        var q0=await enfileirarWhatsApp(mn,null);avisoAuto('Situação normalizada',mn,null,q0);}
       return;}
     if(ativosC.some(function(c){return c.titulo.indexOf(': '+rotulo+' ')>0;}))return; /* já publicado para este nível */
     var recentes=await sbGet('dc_comunicados','select=id&titulo=like.'+encodeURIComponent(MARCA.status+': '+rotulo+'*')+'&criado_em=gte.'+desde+'&limit=1');
@@ -544,7 +582,9 @@ async function autoStatus(lv,msg){
     var hoje=new Date().toLocaleDateString('pt-BR'),titulo=MARCA.status+': '+rotulo+' ('+hoje+')',texto=[msg,rec].filter(Boolean).join('\n\n');
     await sbPost('dc_comunicados',{tenant_id:tid(),titulo:titulo,tipo:'mudanca_situacao',texto:texto,prioridade:{emergencia:'urgente',alerta:'alta',atencao:'normal'}[lv],publico_alvo:'Toda a população',ativo:true,imagem_url:url});
     await sbPost('dc_alertas',{tenant_id:tid(),titulo:titulo,tipo:'status_municipio',nivel:lv,descricao:msg||null,recomendacoes:rec,regiao_afetada:'Ivatuba',fonte:'Defesa Civil Ivatuba',inicio:new Date().toISOString(),ativo:true,imagem_url:url});
-    avisoAuto('Status mudou para '+rotulo,msgDe('⚠️ *'+rotulo+' — DEFESA CIVIL IVATUBA*',STATUS_FRASE[lv],texto,url),url);
+    var mst=preencher(modelo(lv),{nivel:rotulo,titulo:STATUS_FRASE[lv],mensagem:msg||STATUS_FRASE[lv],orientacoes:rec.replace(/^\S+\s/,''),link_arte:url});
+    var qn=await enfileirarWhatsApp(mst,null);
+    avisoAuto('Status mudou para '+rotulo,mst,url,qn);
   });}catch(e){console.warn('Divulgação automática do status:',e);}
   finally{statusEmAndamento=false;}
 }
@@ -552,9 +592,14 @@ async function autoAlerta(reg){
   if(!autoLigado()||!reg||!reg.id||reg.ativo===false||reg.imagem_url)return;
   if(reg.tipo==='status_municipio'||reg.tipo==='previsao_tempo'||reg.tipo==='comunicado')return;
   try{await interno(async function(){var url=await publicarArte('alerta',reg);
-    avisoAuto('Novo alerta: '+(reg.titulo||''),msgDe('⚠️ *'+((STATUS[reg.nivel]||STATUS.alerta)[0])+' — DEFESA CIVIL IVATUBA*',reg.titulo||'Alerta',[reg.descricao,reg.recomendacoes?'Orientações: '+reg.recomendacoes:''].filter(Boolean).join('\n\n'),url),url);});}
+    var ma=preencher(modelo('novo_alerta'),{nivel:(STATUS[reg.nivel]||STATUS.alerta)[0],titulo:reg.titulo||'Alerta',mensagem:reg.descricao||'',orientacoes:reg.recomendacoes||(STATUS_REC[reg.nivel]||'').replace(/^\S+\s/,''),regiao:reg.regiao_afetada||'Ivatuba',link_arte:url});
+    var qa=await enfileirarWhatsApp(ma,reg.id);
+    avisoAuto('Novo alerta: '+(reg.titulo||''),ma,url,qa);});}
   catch(e){console.warn('Arte automática do alerta:',e);}
 }
+function preencherPainelModelos(){if(!document.getElementById('mod-atencao'))return;
+  MODELOS_NOMES.forEach(function(m){var el=document.getElementById('mod-'+m[0]);if(el&&!el.dataset.mexeu){el.value=modelo(m[0]);el.oninput=function(){el.dataset.mexeu='1';};}});
+  var f=document.getElementById('mod-fila');if(f)f.checked=filaWaAuto;}
 /* Observa as gravações do painel */
 var _patch=sbPatch,_post=sbPost;
 sbPatch=async function(t,q,d){var r=await _patch.apply(this,arguments);
