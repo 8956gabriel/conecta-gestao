@@ -225,7 +225,17 @@ async function postarComoComunicado(t,urlPronta){
   await sbPatch('dc_comunicados','id=eq.'+reg.id,{imagem_url:url});
   return reg;
 }
-/* ---------- Divulgar: Comunicados, Alertas Climáticos, WhatsApp e SMS ---------- */
+/* ---------- Divulgar: Comunicados, Alertas Climáticos, WhatsApp, Canal Oficial e SMS ---------- */
+var CANAL_PADRAO='https://whatsapp.com/channel/0029Vb9xa3aKGGGLJOJSpd1L';
+async function postarNoCanal(msg,blob,link){
+  try{await navigator.clipboard.writeText(msg);}catch(e){}
+  var f=new File([blob],nomeArquivo(),{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){
+    try{await navigator.share({files:[f],text:msg});return;}catch(e){}}
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nomeArquivo();a.click();
+  window.open(link,'_blank','noopener');
+  alert('Pronto!\n\n1. A arte foi baixada no seu computador.\n2. A mensagem já está copiada.\n3. No Canal Oficial que abriu, clique para postar: anexe a imagem e cole a mensagem (Ctrl+V).');
+}
 function infoArte(){
   var t=tipoArte(),hoje=new Date().toLocaleDateString('pt-BR'),lv,titulo,texto,risco=false;
   var rec=(V('arte-recado','')||'').trim();
@@ -250,18 +260,19 @@ function abrirDivulgar(){
     linha('dv-com',true,'📢 Comunicados (site)',inf.t==='comunicado'?'Coloca a arte neste comunicado.':'Cria um comunicado com a arte no site Ivatuba Protegida.')+
     linha('dv-ale',inf.t==='alerta'||inf.risco,'⚠️ Alertas Climáticos (site)',inf.t==='alerta'?'Coloca a arte neste alerta.':'Cria um alerta (nível '+(STATUS[inf.lv]||STATUS.normal)[0]+') com a arte. O alerta anterior do mesmo tipo sai do ar.')+
     linha('dv-wa',true,'📲 WhatsApp','Abre a lista de pessoas cadastradas para enviar a mensagem com o link da arte.')+
+    linha('dv-canal',true,'📢 Canal Oficial do WhatsApp','Copia a mensagem e a arte e abre o Canal Oficial da Defesa Civil para você postar.')+
     linha('dv-sms',false,'📱 SMS','Coloca na fila de SMS (mensagem curta com o link do site) para quem aceita SMS.')+
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button class="btn-ghost" id="dv-cancelar">Cancelar</button><button class="btn-accent" id="dv-ok" style="background:linear-gradient(135deg,#16A34A,#15803D);">📤 Divulgar agora</button></div>'+
     '<div id="dv-res" style="margin-top:10px;font-size:13px;"></div></div>';
   document.body.appendChild(d);
   d.onclick=function(e){if(e.target===d)d.remove();};
   document.getElementById('dv-cancelar').onclick=function(){d.remove();};
-  document.getElementById('dv-ok').onclick=function(){divulgar(inf,{com:dv('dv-com'),ale:dv('dv-ale'),wa:dv('dv-wa'),sms:dv('dv-sms')});};
+  document.getElementById('dv-ok').onclick=function(){divulgar(inf,{com:dv('dv-com'),ale:dv('dv-ale'),wa:dv('dv-wa'),canal:dv('dv-canal'),sms:dv('dv-sms')});};
   function dv(id){return document.getElementById(id).checked;}
 }
 async function divulgar(inf,op){
   var b=document.getElementById('dv-ok'),res=document.getElementById('dv-res'),feito=[];
-  if(!op.com&&!op.ale&&!op.wa&&!op.sms){res.textContent='Marque pelo menos uma opção.';return;}
+  if(!op.com&&!op.ale&&!op.wa&&!op.canal&&!op.sms){res.textContent='Marque pelo menos uma opção.';return;}
   if(inf.t==='previsao'&&!dados){res.textContent='A previsão ainda não carregou. Clique em Atualizar previsão.';return;}
   if((inf.t==='alerta'&&!alertaSel())||(inf.t==='comunicado'&&!comSel())){res.textContent='Escolha o registro na lista primeiro.';return;}
   if(op.sms&&!confirm('Confirma colocar a mensagem na fila de SMS para todas as pessoas cadastradas que aceitam SMS?'))return;
@@ -296,9 +307,17 @@ async function divulgar(inf,op){
         var n=0;for(var k=0;k<pessoas.length;k++){var p=pessoas[k],ph=(p.telefone||p.whatsapp||'').replace(/\D/g,'');if(p.receber_sms===false||ph.length<10)continue;
           try{await sbPost('dc_notification_queue',{tenant_id:tid(),pessoa_id:p.id,alerta_id:alertaId,canal:'sms',telefone:ph,mensagem:curto+lk,status:'pendente',provider:'sandbox',tentativas:0});n++;}catch(e){}}
         log('✅ SMS: '+n+' mensagem(ns) na fila — envie em Dashboard › 📤 Processar Fila');}
-      if(op.wa){if(!pessoas.length)log('⚠️ WhatsApp: nenhuma pessoa cadastrada em Pessoas Cadastradas');
-        else{log('✅ WhatsApp: lista aberta para envio');document.getElementById('arte-divulgar').remove();abrirNotificarWhatsApp(alertaId,msg,pessoas);}}
     }
+    var blobArte=await blobDe(document.getElementById('arte-canvas'));
+    var botoes=[];
+    if(op.canal){var link=CANAL_PADRAO;try{var g=await sbGet('dc_grupo_oficial','select=link_whatsapp&order=atualizado_em.desc&limit=1');if(g[0]&&/^https:\/\//.test(g[0].link_whatsapp||''))link=g[0].link_whatsapp;}catch(e){}
+      botoes.push(['📢 Postar no Canal Oficial','#128C7E',function(){postarNoCanal(msg,blobArte,link);}]);}
+    if(op.wa){if(!pessoas||!pessoas.length)log('⚠️ WhatsApp: nenhuma pessoa cadastrada em Pessoas Cadastradas');
+      else botoes.push(['📲 Enviar para '+pessoas.length+' pessoa(s) no WhatsApp','#25D366',function(){document.getElementById('arte-divulgar').remove();abrirNotificarWhatsApp(alertaId,msg,pessoas);}]);}
+    if(botoes.length){var box=document.createElement('div');box.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:12px;';
+      box.innerHTML='<div style="font-size:12px;color:#64748B;">Agora é só tocar para enviar:</div>';
+      botoes.forEach(function(x){var bt=document.createElement('button');bt.textContent=x[0];bt.style.cssText='padding:11px;border:none;border-radius:10px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;background:'+x[1]+';';bt.onclick=x[2];box.appendChild(bt);});
+      res.appendChild(box);}
     b.textContent='✔ Divulgado';if(typeof toast==='function')toast('📤 Arte divulgada');
     try{statusAtual();}catch(e){}
   }catch(e){log('❌ Erro: '+String(e.message||e).slice(0,180));b.disabled=false;b.textContent='📤 Tentar de novo';}
