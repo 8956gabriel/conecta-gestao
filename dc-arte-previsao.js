@@ -208,6 +208,23 @@ async function publicarArte(tipo,reg,canvasPronto){
   await sbPatch(TABELA[tipo],'id=eq.'+reg.id,{imagem_url:url});
   return url;
 }
+/* Previsão e status viram um comunicado no site (com a arte). O post anterior do mesmo tipo sai do ar. */
+var MARCA={previsao:'🌤️ Previsão do tempo',status:'🚦 Status do município'};
+async function postarComoComunicado(t){
+  var hoje=new Date().toLocaleDateString('pt-BR');
+  var lv=V('arte-status-mun','')||cfgMun.status_municipio||'normal';
+  var titulo=t==='previsao'?MARCA.previsao+' — '+(document.getElementById('arte-periodo').selectedOptions[0].text)+' ('+hoje+')'
+                           :MARCA.status+': '+((STATUS[lv]||STATUS.normal)[0])+' ('+hoje+')';
+  var prio=t==='status'?({emergencia:'urgente',alerta:'alta',atencao:'media'}[lv]||'baixa'):'media';
+  var texto=(V('arte-recado','')||'').trim()||(t==='status'?(cfgMun.status_mensagem||STATUS_REC[lv]):'Confira a previsão do tempo para Ivatuba.');
+  try{var antigos=await sbGet('dc_comunicados','select=id,titulo&ativo=eq.true&titulo=like.'+encodeURIComponent(MARCA[t]+'*'));
+    for(var i=0;i<antigos.length;i++)await sbPatch('dc_comunicados','id=eq.'+antigos[i].id,{ativo:false});}catch(e){}
+  var res=await sbPost('dc_comunicados',{tenant_id:tid(),titulo:titulo,tipo:t==='status'?'mudanca_situacao':'comunicado',texto:texto,prioridade:prio,publico_alvo:'Toda a população',ativo:true});
+  var reg=res&&res[0];if(!reg)throw new Error('O comunicado não foi criado.');
+  var url=await subirArte(await blobDe(document.getElementById('arte-canvas')),'comunicado-'+reg.id+'.png');
+  await sbPatch('dc_comunicados','id=eq.'+reg.id,{imagem_url:url});
+  return url;
+}
 window.dcPublicarArte=async function(tipo,id,btn){
   var t0=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='⏳ Gerando...';}
   try{var rows=await sbGet(TABELA[tipo],'select=*&id=eq.'+id);var url=await publicarArte(tipo,rows[0]);
@@ -274,7 +291,6 @@ function trocarTipo(){
   document.getElementById('arte-box-alerta').style.display=t==='alerta'?'':'none';
   document.getElementById('arte-box-status').style.display=(t==='alerta'||t==='comunicado')?'none':'';
   document.getElementById('arte-box-com').style.display=t==='comunicado'?'':'none';
-  document.getElementById('arte-publicar').style.display=(t==='alerta'||t==='comunicado')?'':'none';
   var ti=document.getElementById('arte-titulo');if(!ti.dataset.editado)ti.value=TITULOS[t];
   delete document.getElementById('arte-recado').dataset.editado;
   autoRecado();desenhar();
@@ -297,7 +313,7 @@ buildViews=function(){
   if(document.getElementById('view-arte_previsao'))return;
   var sec=document.createElement('section');sec.className='view';sec.id='view-arte_previsao';
   sec.innerHTML='<div class="topbar"><div><h1>🎨 Artes da Defesa Civil</h1><div class="sub">Artes prontas para WhatsApp, Instagram e Facebook: previsão do tempo, status do município e alertas climáticos</div></div>'+
-   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-ghost" id="arte-publicar" style="display:none;border-color:#F28C28;color:#C2410C;">📤 Publicar no site</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-accent" id="arte-publicar" style="background:linear-gradient(135deg,#16A34A,#15803D);">📤 Postar no site</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
    '<div style="display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:20px;align-items:start;" class="arte-grid">'+
     '<div class="panel">'+
      '<div class="field"><label>Tipo de arte</label><select id="arte-tipo"><option value="previsao">🌤️ Previsão do tempo</option><option value="status">🚦 Status do município</option><option value="alerta">⚠️ Alerta climático</option><option value="comunicado">📢 Comunicado</option></select></div>'+
@@ -328,12 +344,22 @@ buildViews=function(){
   document.getElementById('arte-tipo').onchange=trocarTipo;
   document.getElementById('arte-comunicado').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
   document.getElementById('arte-publicar').onclick=async function(){
-    var t=tipoArte(),reg=t==='alerta'?alertaSel():comSel(),b=this;if(!reg){alert('Escolha o registro primeiro.');return;}
-    b.disabled=true;var t0=b.textContent;b.textContent='⏳ Publicando...';
-    try{await publicarArte(t,reg,document.getElementById('arte-canvas'));b.textContent='✔ Publicada no site';}catch(e){alert('Não foi possível publicar: '+e.message);b.textContent=t0;}
-    finally{b.disabled=false;setTimeout(function(){b.textContent='📤 Publicar no site';},2500);}
-  };
-  document.getElementById('arte-alerta').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
+    var b=this,t=tipoArte(),t0='📤 Postar no site';
+    b.disabled=true;b.textContent='⏳ Postando...';
+    try{
+      if(t==='alerta'||t==='comunicado'){
+        var reg=t==='alerta'?alertaSel():comSel();if(!reg)throw new Error('Escolha o '+(t==='alerta'?'alerta':'comunicado')+' na lista.');
+        await publicarArte(t,reg,document.getElementById('arte-canvas'));
+      }else{
+        if(t==='previsao'&&!dados)throw new Error('A previsão ainda não carregou. Clique em Atualizar previsão.');
+        await postarComoComunicado(t);
+      }
+      b.textContent='✔ Postado no site';
+      if(typeof toast==='function')toast('📤 Arte postada no site Ivatuba Protegida');
+      else alert('Arte postada no site Ivatuba Protegida!');
+    }catch(e){alert('Não foi possível postar: '+e.message);b.textContent=t0;}
+    finally{b.disabled=false;setTimeout(function(){b.textContent=t0;},3000);}
+  };  document.getElementById('arte-alerta').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
   trocarTipo();
