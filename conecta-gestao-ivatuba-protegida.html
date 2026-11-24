@@ -1127,6 +1127,15 @@ async function loadStatus(){
   }catch(e){}
 }
 
+/* Arte publicada pela Defesa Civil (imagem pronta para compartilhar) */
+function arteHtml(u,alt){
+  if(!u||!/^https:\/\//i.test(u))return '';
+  var e=escHtml(u).replace(/"/g,'&quot;');
+  return '<div class="arte-pub" style="margin-top:12px;"><a href="'+e+'" target="_blank" rel="noopener"><img src="'+e+'" alt="'+escHtml(alt).replace(/"/g,'&quot;')+'" loading="lazy" style="width:100%;max-width:420px;display:block;border-radius:12px;box-shadow:0 4px 14px rgba(15,23,42,.15);"></a>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><a href="'+e+'" target="_blank" rel="noopener" download style="font-size:13px;font-weight:700;color:#1E5FAF;">⬇️ Baixar imagem</a>'+
+    '<a href="https://wa.me/?text='+encodeURIComponent(alt+' — '+u)+'" target="_blank" rel="noopener" style="font-size:13px;font-weight:700;color:#16A34A;">📲 Enviar no WhatsApp</a></div></div>';
+}
+
 /* ===== LOAD ALERTAS ===== */
 async function loadAlertas(){
   try{
@@ -1144,6 +1153,7 @@ async function loadAlertas(){
         (a.recomendacoes?'<p style="margin-top:6px;"><strong>Orientações:</strong> '+escHtml(a.recomendacoes)+'</p>':'')+
         '<div class="al-meta">'+(a.regiao_afetada?'Região: '+escHtml(a.regiao_afetada)+' · ':'')+fmtDateTime(a.inicio)+(a.termino?' até '+fmtDateTime(a.termino):'')+'</div>'+
         (a.fonte?'<div class="al-fonte">Fonte: '+escHtml(a.fonte)+'</div>':'')+
+        arteHtml(a.imagem_url,'Arte do alerta: '+a.titulo)+
         '</div>';
     }).join('');
     renderAlertaDestaque(al[0]);
@@ -1185,7 +1195,7 @@ async function loadComunicados(){
     const el=document.getElementById('comunicados-list');
     const icos={alerta:'🚨',comunicado:'📢',orientacao:'📋',prevencao:'🛡️',encerramento:'✅',mudanca_situacao:'🔄'};
     el.innerHTML=com.length?com.map(c=>
-      '<div class="comunicado-card"><div class="com-tipo">'+(icos[c.tipo]||'📢')+' '+escHtml(c.tipo)+'</div><h4>'+escHtml(c.titulo)+'</h4>'+(c.texto?'<p>'+escHtml(c.texto)+'</p>':'')+'<div class="com-meta">'+fmtDateTime(c.criado_em)+(c.criado_por?' · '+escHtml(c.criado_por):'')+'</div></div>'
+      '<div class="comunicado-card"><div class="com-tipo">'+(icos[c.tipo]||'📢')+' '+escHtml(c.tipo)+'</div><h4>'+escHtml(c.titulo)+'</h4>'+(c.texto?'<p>'+escHtml(c.texto)+'</p>':'')+arteHtml(c.imagem_url,'Arte do comunicado: '+c.titulo)+'<div class="com-meta">'+fmtDateTime(c.criado_em)+(c.criado_por?' · '+escHtml(c.criado_por):'')+'</div></div>'
     ).join(''):'<div class="empty">Nenhum comunicado publicado.</div>';
   }catch(e){}
 }

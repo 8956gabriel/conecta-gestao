@@ -19,8 +19,14 @@ var STATUS_REC={normal:'✅ Situação normal no município. Em caso de emergên
   emergencia:'🚨 Siga as orientações da Defesa Civil. Procure um local seguro e, se precisar, vá para um abrigo.'};
 var TEL_PADRAO=[['199','Defesa Civil'],['193','Bombeiros'],['192','SAMU'],['190','Polícia Militar']];
 var telefones=TEL_PADRAO, alertas=[], cfgMun={status_municipio:'normal',status_mensagem:''};
-function tipoArte(){return (document.getElementById('arte-tipo')||{}).value||'previsao';}
-function alertaSel(){var id=(document.getElementById('arte-alerta')||{}).value;return alertas.find(function(a){return String(a.id)===String(id);})||null;}
+var OVR=null; /* geração automática: {tipo,formato,titulo,recado,registro,canvas} */
+var comunicados=[];
+var COM_TIPO={comunicado:['📢','COMUNICADO'],alerta:['🚨','ALERTA'],orientacao:['📋','ORIENTAÇÃO'],prevencao:['🛡️','PREVENÇÃO'],encerramento:['✅','ENCERRAMENTO'],mudanca_situacao:['🔄','MUDANÇA DE SITUAÇÃO']};
+var COM_PRIO={urgente:['URGENTE','#DC2626'],alta:['PRIORIDADE ALTA','#EA580C'],media:['INFORMATIVO','#2563EB'],baixa:['INFORMATIVO','#16A34A']};
+function V(id,def){if(OVR){var m={'arte-formato':'formato','arte-titulo':'titulo','arte-recado':'recado'}[id];if(m&&OVR[m]!=null)return OVR[m];}var e=document.getElementById(id);return e?e.value:def;}
+function tipoArte(){return OVR?OVR.tipo:((document.getElementById('arte-tipo')||{}).value||'previsao');}
+function comSel(){if(OVR&&OVR.tipo==='comunicado')return OVR.registro;var id=(document.getElementById('arte-comunicado')||{}).value;return comunicados.find(function(c){return String(c.id)===String(id);})||null;}
+function alertaSel(){if(OVR&&OVR.tipo==='alerta')return OVR.registro;var id=(document.getElementById('arte-alerta')||{}).value;return alertas.find(function(a){return String(a.id)===String(id);})||null;}
 function fmtDH(v){if(!v)return'';var d=new Date(v);return isNaN(d)?'':String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+'h'+(d.getMinutes()?String(d.getMinutes()).padStart(2,'0'):'');}
 
 function tempo(c){
@@ -60,8 +66,8 @@ function txt(ctx,t,x,y,size,cor,peso,alin){ctx.font=(peso||700)+' '+size+'px '+F
 function emoji(ctx,e,x,y,size){ctx.font=size+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#000';ctx.globalAlpha=1;ctx.fillText(e,x,y);}
 
 function desenhar(){
-  var cv=document.getElementById('arte-canvas'); if(!cv||(!dados&&tipoArte()==='previsao'))return;
-  var formato=document.getElementById('arte-formato').value, periodo=document.getElementById('arte-periodo').value;
+  var cv=OVR?OVR.canvas:document.getElementById('arte-canvas'); if(!cv||(!dados&&tipoArte()==='previsao'))return;
+  var formato=V('arte-formato','feed'), periodo=V('arte-periodo','hoje');
   var W=1080,H=formato==='story'?1920:1350; cv.width=W;cv.height=H;
   var ctx=cv.getContext('2d'), S=formato==='story'?1.6:1;
   var g=ctx.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,AZUL1);g.addColorStop(1,AZUL2);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -72,7 +78,7 @@ function desenhar(){
   var y=60*S;
   if(logoImg&&logoImg.complete&&logoImg.naturalWidth){var lh=150;ctx.drawImage(logoImg,60,y,lh*logoImg.naturalWidth/logoImg.naturalHeight,lh);}
   txt(ctx,'DEFESA CIVIL',240,y+68,46,'#fff',800);txt(ctx,'IVATUBA - PR',240,y+120,40,LARANJA,800);
-  var stv=(document.getElementById('arte-status-mun')||{}).value, tipo=tipoArte();
+  var stv=OVR?'':(document.getElementById('arte-status-mun')||{}).value, tipo=tipoArte();
   if(tipo==='previsao'&&stv&&STATUS[stv]){var sl=STATUS[stv][0],sc=STATUS[stv][1];ctx.font='800 34px '+FONTE;var pw=ctx.measureText(sl).width+90,px=W-60-pw,py=y+52;
     txt(ctx,'STATUS DO MUNICÍPIO',W-60,y+36,20,'#CFE0F5',700,'right');
     rr(ctx,px,py,pw,70,35);ctx.fillStyle=sc;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.stroke();
@@ -80,7 +86,7 @@ function desenhar(){
     txt(ctx,sl,px+60,py+47,34,'#fff',800);}
   y+=210*S;
   rr(ctx,60,y,W-120,96,48);ctx.fillStyle=LARANJA;ctx.fill();
-  txt(ctx,(document.getElementById('arte-titulo').value||'PREVISÃO DO TEMPO').toUpperCase(),W/2,y+64,46,'#fff',800,'center');
+  txt(ctx,(V('arte-titulo','')||'PREVISÃO DO TEMPO').toUpperCase(),W/2,y+64,46,'#fff',800,'center');
   y+=140*S;
 
   if(tipo!=='previsao'){y=corpoAviso(ctx,y,W,H,S,tipo,formato);}
@@ -117,7 +123,7 @@ function desenhar(){
   }
 
   // Recado
-  var rec=(document.getElementById('arte-recado').value||'').trim();
+  var rec=(V('arte-recado','')||'').trim();
   var RF=formato==='story'?1.15:1,RL=46*RF,maxL=Math.max(1,Math.min(5,Math.floor((H-200-y-46)/RL)));
   if(rec){ctx.font='700 '+Math.round(34*RF)+'px '+FONTE;var ls=quebra(ctx,rec,W-200);if(ls.length>maxL){ls=ls.slice(0,maxL);ls[maxL-1]=ls[maxL-1].replace(/\s*\S*$/,'')+'…';}var rh=46+ls.length*RL;
     rr(ctx,60,y,W-120,rh,30);ctx.fillStyle='#fff';ctx.fill();ctx.fillStyle=LARANJA;rr(ctx,60,y,14,rh,7);ctx.fill();
@@ -138,6 +144,7 @@ function desenhar(){
 /* ---------- Arte de status / alerta ---------- */
 function linhas(ctx,t,size,peso,maxW,max){ctx.font=peso+' '+size+'px '+FONTE;var ls=quebra(ctx,t||'',maxW);if(ls.length>max){ls=ls.slice(0,max);ls[max-1]=ls[max-1].replace(/\s*\S*$/,'')+'…';}return ls;}
 function corpoAviso(ctx,y,W,H,S,tipo,formato){
+  if(tipo==='comunicado')return corpoComunicado(ctx,y,W,H,S,formato);
   var a=tipo==='alerta'?alertaSel():null;
   var lv=tipo==='alerta'?((a&&a.nivel)||'alerta'):((document.getElementById('arte-status-mun')||{}).value||cfgMun.status_municipio||'normal');
   if(!STATUS[lv])lv='alerta';
@@ -158,6 +165,54 @@ function corpoAviso(ctx,y,W,H,S,tipo,formato){
   return y+(story?90:44);
 }
 
+function corpoComunicado(ctx,y,W,H,S,formato){
+  var c=comSel()||{titulo:'Escolha um comunicado na lista',tipo:'comunicado',prioridade:'media'};
+  var story=formato==='story',F=story?1.2:1,ti=COM_TIPO[c.tipo]||COM_TIPO.comunicado,pr=COM_PRIO[c.prioridade]||COM_PRIO.media;
+  ctx.font='800 '+Math.round(34*F)+'px '+FONTE;var lw=ctx.measureText(ti[1]).width+110*F,bh=78*F;
+  rr(ctx,60,y,lw,bh,bh/2);ctx.fillStyle=pr[1];ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.stroke();
+  emoji(ctx,ti[0],60+44*F,y+bh/2+2,38*F);txt(ctx,ti[1],60+80*F,y+bh/2+12*F,34*F,'#fff',800);
+  if(c.prioridade==='urgente'||c.prioridade==='alta')txt(ctx,pr[0],W-60,y+bh/2+10,26*F,'#FFD7B0',800,'right');
+  y+=bh+(story?100:80);
+  var lt=linhas(ctx,c.titulo,56*F,800,W-120,3),lh=66*F;
+  lt.forEach(function(l,k){txt(ctx,l,60,y+k*lh,56*F,'#fff',800);});y+=(lt.length-1)*lh;
+  if(c.texto){y+=60*F;var dl=48*F,maxT=Math.max(2,Math.floor((H-230-y)/dl)-(V('arte-recado','')?3:0));var ld=linhas(ctx,c.texto,36*F,500,W-120,Math.min(story?12:8,maxT));
+    ld.forEach(function(l,k){txt(ctx,l,60,y+k*dl,36*F,'#E6EEF9',500);});y+=(ld.length-1)*dl;}
+  if(c.criado_em){y+=54*F;txt(ctx,'Publicado em '+new Date(c.criado_em).toLocaleDateString('pt-BR'),60,y,26*F,'#CFE0F5',600);}
+  return y+(story?80:44);
+}
+
+/* ---------- Publicar arte (gera, guarda no Storage e liga ao registro) ---------- */
+var TABELA={alerta:'dc_alertas',comunicado:'dc_comunicados'};
+async function subirArte(blob,nome){
+  var path='artes/'+nome;
+  var r=await fetch(SB_URL+'/storage/v1/object/dc-arquivos/'+path,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'image/png','x-upsert':'true'},body:blob});
+  if(!r.ok)throw new Error((await r.text()).slice(0,150));
+  return SB_URL+'/storage/v1/object/public/dc-arquivos/'+path+'?v='+Date.now();
+}
+function blobDe(cv){return new Promise(function(ok){cv.toBlob(ok,'image/png');});}
+var baseCarregada=null;
+function garantirBase(){if(!baseCarregada)baseCarregada=statusAtual();return baseCarregada;}
+async function publicarArte(tipo,reg,canvasPronto){
+  if(!reg||!reg.id)throw new Error('Registro não encontrado');
+  var cv=canvasPronto;
+  if(!cv){await garantirBase();if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    cv=document.createElement('canvas');
+    OVR={tipo:tipo,formato:'feed',registro:reg,canvas:cv,titulo:tipo==='alerta'?'Alerta Climático':'Comunicado Oficial',
+      recado:tipo==='alerta'?(reg.recomendacoes||STATUS_REC[reg.nivel]||''):''};
+    try{desenhar();}finally{OVR=null;}}
+  var url=await subirArte(await blobDe(cv),tipo+'-'+reg.id+'.png');
+  await sbPatch(TABELA[tipo],'id=eq.'+reg.id,{imagem_url:url});
+  return url;
+}
+window.dcPublicarArte=async function(tipo,id,btn){
+  var t0=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='⏳ Gerando...';}
+  try{var rows=await sbGet(TABELA[tipo],'select=*&id=eq.'+id);var url=await publicarArte(tipo,rows[0]);
+    if(btn){btn.textContent='✔ Publicada';}
+    if(confirm('Arte gerada e publicada no site Ivatuba Protegida!\n\nQuer abrir a imagem para baixar ou compartilhar no WhatsApp/Instagram?'))window.open(url,'_blank','noopener');
+  }catch(e){alert('Não foi possível publicar a arte: '+e.message);if(btn)btn.textContent=t0;}
+  finally{if(btn){btn.disabled=false;setTimeout(function(){btn.textContent='🖼️ Publicar arte';},2500);}}
+};
+
 /* ---------- Dados ---------- */
 async function carregar(){
   var st=document.getElementById('arte-status');st.textContent='Buscando a previsão de Ivatuba...';
@@ -171,7 +226,7 @@ async function carregar(){
 function autoRecado(){
   var el=document.getElementById('arte-recado'),tipo=tipoArte();
   if(tipo!=='previsao'){
-    if(!el.dataset.editado){if(tipo==='alerta'){var a=alertaSel();el.value=(a&&a.recomendacoes)||STATUS_REC[(a&&a.nivel)||'alerta']||'';}
+    if(!el.dataset.editado){if(tipo==='comunicado')el.value='';else if(tipo==='alerta'){var a=alertaSel();el.value=(a&&a.recomendacoes)||STATUS_REC[(a&&a.nivel)||'alerta']||'';}
       else el.value=STATUS_REC[document.getElementById('arte-status-mun').value||cfgMun.status_municipio]||'';}
     desenhar();return;}
   if(!dados)return;var p=document.getElementById('arte-periodo').value,ini=p==='amanha'?1:0,n=p==='3'?3:p==='5'?5:1,ds=[];
@@ -179,7 +234,7 @@ function autoRecado(){
   var el=document.getElementById('arte-recado');if(!el.dataset.editado)el.value=recadoAuto(ds);
   desenhar();
 }
-function nomeArquivo(){var t=tipoArte();return (t==='previsao'?'previsao-ivatuba-'+document.getElementById('arte-periodo').value:t==='status'?'status-ivatuba':'alerta-ivatuba')+'-'+new Date().toISOString().slice(0,10)+'.png';}
+function nomeArquivo(){var t=tipoArte();return (t==='previsao'?'previsao-ivatuba-'+document.getElementById('arte-periodo').value:t==='status'?'status-ivatuba':t==='comunicado'?'comunicado-ivatuba':'alerta-ivatuba')+'-'+new Date().toISOString().slice(0,10)+'.png';}
 function baixar(){var cv=document.getElementById('arte-canvas');cv.toBlob(function(b){var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nomeArquivo();a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},2000);},'image/png');}
 function compartilhar(){var cv=document.getElementById('arte-canvas');cv.toBlob(async function(b){
   var f=new File([b],nomeArquivo(),{type:'image/png'});
@@ -199,21 +254,32 @@ async function statusAtual(){
     ok.sort(function(a,b){return String(a.numero).replace(/\D/g,'').length-String(b.numero).replace(/\D/g,'').length;});
     if(ok.length)telefones=ok.slice(0,4).map(function(t){return[String(t.numero).trim(),String(t.nome).trim()];});}catch(e){}
   try{alertas=await sbGet('dc_alertas','select=*&order=criado_em.desc&limit=50')||[];}catch(e){alertas=[];}
+  try{comunicados=await sbGet('dc_comunicados','select=*&order=criado_em.desc&limit=50')||[];}catch(e){comunicados=[];}
+  var sc=document.getElementById('arte-comunicado');
+  if(sc){var cc=sc.dataset.querido||sc.value||'';sc.innerHTML=comunicados.length?comunicados.map(function(c){return'<option value="'+c.id+'">'+(c.ativo?'● ':'○ ')+String(c.titulo||'Comunicado').replace(/[<>&"]/g,'')+'</option>';}).join(''):'<option value="">Nenhum comunicado cadastrado</option>';
+    if(cc&&comunicados.some(function(c){return String(c.id)===String(cc);}))sc.value=cc;delete sc.dataset.querido;}
   var sa=document.getElementById('arte-alerta');
   if(sa){var cur=sa.dataset.querido||sa.value||'';sa.innerHTML=alertas.length?alertas.map(function(a){return'<option value="'+a.id+'">'+(a.ativo?'● ':'○ ')+String(a.titulo||'Alerta').replace(/[<>&"]/g,'')+(a.nivel?' ('+(STATUS[a.nivel]||[a.nivel])[0]+')':'')+'</option>';}).join(''):'<option value="">Nenhum alerta cadastrado</option>';
     if(cur&&alertas.some(function(a){return String(a.id)===String(cur);}))sa.value=cur;delete sa.dataset.querido;}
   autoRecado();desenhar();
 }
-var TITULOS={previsao:'Previsão do Tempo',status:'Status do Município',alerta:'Alerta Climático'};
+var TITULOS={previsao:'Previsão do Tempo',status:'Status do Município',alerta:'Alerta Climático',comunicado:'Comunicado Oficial'};
 function trocarTipo(){
   var t=tipoArte();
   document.getElementById('arte-box-periodo').style.display=t==='previsao'?'':'none';
   document.getElementById('arte-box-alerta').style.display=t==='alerta'?'':'none';
-  document.getElementById('arte-box-status').style.display=t==='alerta'?'none':'';
+  document.getElementById('arte-box-status').style.display=(t==='alerta'||t==='comunicado')?'none':'';
+  document.getElementById('arte-box-com').style.display=t==='comunicado'?'':'none';
+  document.getElementById('arte-publicar').style.display=(t==='alerta'||t==='comunicado')?'':'none';
   var ti=document.getElementById('arte-titulo');if(!ti.dataset.editado)ti.value=TITULOS[t];
   delete document.getElementById('arte-recado').dataset.editado;
   autoRecado();desenhar();
 }
+window.dcArteComunicado=function(id){
+  navigateTo('arte_previsao');
+  document.getElementById('arte-tipo').value='comunicado';
+  var sc=document.getElementById('arte-comunicado');sc.dataset.querido=id;sc.value=id;trocarTipo();
+};
 window.dcArteAlerta=function(id){
   navigateTo('arte_previsao');
   var tp=document.getElementById('arte-tipo');tp.value='alerta';
@@ -227,10 +293,11 @@ buildViews=function(){
   if(document.getElementById('view-arte_previsao'))return;
   var sec=document.createElement('section');sec.className='view';sec.id='view-arte_previsao';
   sec.innerHTML='<div class="topbar"><div><h1>🎨 Artes da Defesa Civil</h1><div class="sub">Artes prontas para WhatsApp, Instagram e Facebook: previsão do tempo, status do município e alertas climáticos</div></div>'+
-   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-ghost" id="arte-atualizar">🔄 Atualizar previsão</button><button class="btn-ghost" id="arte-compartilhar">📲 Compartilhar</button><button class="btn-ghost" id="arte-publicar" style="display:none;border-color:#F28C28;color:#C2410C;">📤 Publicar no site</button><button class="btn-accent" id="arte-baixar">⬇️ Baixar arte (PNG)</button></div></div>'+
    '<div style="display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:20px;align-items:start;" class="arte-grid">'+
     '<div class="panel">'+
-     '<div class="field"><label>Tipo de arte</label><select id="arte-tipo"><option value="previsao">🌤️ Previsão do tempo</option><option value="status">🚦 Status do município</option><option value="alerta">⚠️ Alerta climático</option></select></div>'+
+     '<div class="field"><label>Tipo de arte</label><select id="arte-tipo"><option value="previsao">🌤️ Previsão do tempo</option><option value="status">🚦 Status do município</option><option value="alerta">⚠️ Alerta climático</option><option value="comunicado">📢 Comunicado</option></select></div>'+
+     '<div class="field" id="arte-box-com" style="display:none"><label>Comunicado</label><select id="arte-comunicado"><option value="">Carregando...</option></select><div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">● ativo · ○ inativo. Cadastre em Comunicados.</div></div>'+
      '<div class="field" id="arte-box-alerta" style="display:none"><label>Alerta</label><select id="arte-alerta"><option value="">Carregando...</option></select><div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">● ativo · ○ encerrado. Cadastre em Alertas Climáticos.</div></div>'+
      '<div id="arte-box-periodo"><div class="field"><label>Período</label><select id="arte-periodo"><option value="hoje">Hoje</option><option value="amanha">Amanhã</option><option value="3">Próximos 3 dias</option><option value="5">Próximos 5 dias</option></select></div></div>'+
      '<div class="field"><label>Formato</label><select id="arte-formato"><option value="feed">Feed (1080×1350)</option><option value="story">Story / Status (1080×1920)</option></select></div>'+
@@ -242,6 +309,10 @@ buildViews=function(){
      '<p id="arte-status" style="font-size:12.5px;color:var(--ink-soft);margin:0;"></p></div>'+
     '<div class="panel" style="text-align:center;"><canvas id="arte-canvas" style="width:100%;max-width:460px;height:auto;border-radius:14px;box-shadow:0 8px 30px rgba(15,23,42,.18);"></canvas></div>'+
    '</div><style>@media(max-width:820px){.arte-grid{grid-template-columns:1fr!important}}</style>';
+  ['alertas_dc','comunicados_dc'].forEach(function(k){var sb=document.getElementById('sb-'+k);if(!sb||document.getElementById('arte-auto-'+k))return;
+    var l=document.createElement('label');l.style.cssText='display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 12px;cursor:pointer;';
+    l.innerHTML='<input type="checkbox" id="arte-auto-'+k+'" checked style="width:auto;"> 🖼️ Gerar a arte e publicar no site automaticamente ao salvar';
+    var fa=sb.parentNode;fa.parentNode.insertBefore(l,fa);});
   var ultima=document.querySelectorAll('section.view');var pai=ultima.length?ultima[ultima.length-1].parentNode:document.body;pai.appendChild(sec);
   document.getElementById('arte-atualizar').onclick=carregar;
   document.getElementById('arte-baixar').onclick=baixar;
@@ -251,6 +322,13 @@ buildViews=function(){
   var sm=document.getElementById('arte-status-mun');sm.onchange=function(){sm.dataset.mexeu='1';if(tipoArte()==='status'){delete document.getElementById('arte-recado').dataset.editado;autoRecado();}else desenhar();};
   var ti=document.getElementById('arte-titulo');ti.oninput=function(){ti.dataset.editado='1';desenhar();};
   document.getElementById('arte-tipo').onchange=trocarTipo;
+  document.getElementById('arte-comunicado').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
+  document.getElementById('arte-publicar').onclick=async function(){
+    var t=tipoArte(),reg=t==='alerta'?alertaSel():comSel(),b=this;if(!reg){alert('Escolha o registro primeiro.');return;}
+    b.disabled=true;var t0=b.textContent;b.textContent='⏳ Publicando...';
+    try{await publicarArte(t,reg,document.getElementById('arte-canvas'));b.textContent='✔ Publicada no site';}catch(e){alert('Não foi possível publicar: '+e.message);b.textContent=t0;}
+    finally{b.disabled=false;setTimeout(function(){b.textContent='📤 Publicar no site';},2500);}
+  };
   document.getElementById('arte-alerta').onchange=function(){delete document.getElementById('arte-recado').dataset.editado;autoRecado();};
   var rec=document.getElementById('arte-recado');rec.oninput=function(){rec.dataset.editado='1';desenhar();};
   document.getElementById('arte-recado-auto').onclick=function(){delete rec.dataset.editado;autoRecado();};
@@ -261,11 +339,35 @@ buildViews=function(){
 var _ld=loadData;
 loadData=async function(k){
   var r=await _ld.apply(this,arguments);
-  if(k==='alertas_dc'){document.querySelectorAll('#tbl-alertas_dc button[onclick^="notificarAlertaWA"]').forEach(function(b){
-    if(b.previousElementSibling&&b.previousElementSibling.dataset.arte)return;var m=/notificarAlertaWA\('([^']+)'\)/.exec(b.getAttribute('onclick'));if(!m)return;
-    var n=document.createElement('button');n.dataset.arte='1';n.textContent='🎨 Arte';n.title='Gerar arte para divulgar este alerta';
-    n.style.cssText='padding:4px 8px;font-size:11px;margin-right:4px;background:#F28C28;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;';
-    n.onclick=function(){window.dcArteAlerta(m[1]);};b.parentNode.insertBefore(n,b);});}
+  if(k==='alertas_dc'||k==='comunicados_dc'){var tipo=k==='alertas_dc'?'alerta':'comunicado',rows=caches[k+'_data']||[];
+    document.querySelectorAll('#tbl-'+k+' button[onclick*="deleteCrud"]').forEach(function(b){
+      var m=/deleteCrud\('[^']+','([^']+)'\)/.exec(b.getAttribute('onclick')||'');if(!m)return;var td=b.parentNode;if(td.querySelector('[data-arte]'))return;
+      var reg=rows.find(function(x){return String(x.id)===m[1];})||{};
+      var est='padding:4px 8px;font-size:11px;margin-right:4px;border:none;border-radius:7px;font-weight:700;cursor:pointer;color:#fff;';
+      var a=document.createElement('button');a.dataset.arte='1';a.textContent='🎨 Arte';a.title='Abrir e ajustar a arte';a.style.cssText=est+'background:#F28C28;';
+      a.onclick=function(){tipo==='alerta'?window.dcArteAlerta(m[1]):window.dcArteComunicado(m[1]);};
+      var p=document.createElement('button');p.dataset.arte='1';p.textContent=reg.imagem_url?'🖼️ Republicar arte':'🖼️ Publicar arte';p.title='Gerar a arte e publicar no site automaticamente';p.style.cssText=est+'background:#1E5FAF;';
+      p.onclick=function(){window.dcPublicarArte(tipo,m[1],p);};
+      td.insertBefore(p,td.firstChild);td.insertBefore(a,td.firstChild);
+      if(reg.imagem_url&&/^https:\/\//.test(reg.imagem_url)){var v=document.createElement('a');v.dataset.arte='1';v.href=reg.imagem_url;v.target='_blank';v.rel='noopener';v.textContent='👁️';v.title='Ver arte publicada';v.style.cssText='margin-right:6px;text-decoration:none;';td.insertBefore(v,td.firstChild);}
+    });}
+  return r;
+};
+
+/* Ao salvar alerta/comunicado: gera e publica a arte sozinho (se a caixinha estiver marcada) */
+var _sc2=submitCrud;
+submitCrud=async function(k){
+  if(k!=='alertas_dc'&&k!=='comunicados_dc')return _sc2.apply(this,arguments);
+  var auto=document.getElementById('arte-auto-'+k),gerar=!auto||auto.checked,ed=editingId[k],tipo=k==='alertas_dc'?'alerta':'comunicado';
+  var antes=new Date(Date.now()-60000).toISOString();
+  var r=await _sc2.apply(this,arguments);
+  if(!gerar)return r;
+  try{
+    var rows=ed?await sbGet(TABELA[tipo],'select=*&id=eq.'+ed):await sbGet(TABELA[tipo],'select=*&criado_em=gte.'+antes+'&order=criado_em.desc&limit=1');
+    var reg=rows&&rows[0];if(!reg||reg.ativo===false||(!ed&&editingId[k]))return r;
+    await publicarArte(tipo,reg);loadData(k);
+    if(typeof toast==='function')toast('🖼️ Arte gerada e publicada no site');
+  }catch(e){console.warn('Arte automática:',e);alert('O registro foi salvo, mas a arte não pôde ser gerada: '+e.message+'\nUse o botão "🖼️ Publicar arte" na lista.');}
   return r;
 };
 
